@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 import 'engine/risk_engine.dart';
+import 'models/official_weather_warning.dart';
 import 'pages/locations_page.dart';
 import 'services/location_storage_service.dart';
+import 'services/warning_providers/dwd_cap_download_client.dart';
+import 'services/warning_providers/dwd_warning_provider.dart';
 import 'services/weather_service.dart';
 import 'settings/unit_settings.dart';
 import 'settings/unit_settings_page.dart';
@@ -44,6 +48,9 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
   final RiskEngine riskEngine = const RiskEngine();
   final UnitSettingsService unitSettingsService = UnitSettingsService();
 
+  late final http.Client dwdHttpClient;
+  late final DwdWarningProvider dwdWarningProvider;
+
   UnitSettings unitSettings = const UnitSettings();
 
   final List<String> places = [];
@@ -52,14 +59,39 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
   WeatherData? weatherData;
   RiskResult? riskResult;
 
+  List<OfficialWeatherWarning> officialWarnings = [];
+  bool officialWarningsSupported = false;
+  bool officialWarningsLoading = false;
+  String? officialWarningsError;
+
   bool isLoading = false;
   String? errorMessage;
 
   @override
   void initState() {
     super.initState();
+
+    dwdHttpClient = http.Client();
+    dwdWarningProvider = DwdWarningProvider(
+      downloadClient: DwdCapDownloadClient(
+        httpClient: dwdHttpClient,
+        sourceUri: Uri.parse(
+          'https://opendata.dwd.de/weather/alerts/cap/'
+          'COMMUNEUNION_DWD_STAT/'
+          'Z_CAP_C_EDZW_LATEST_PVW_STATUS_PREMIUMDWD_'
+          'COMMUNEUNION_DE.zip',
+        ),
+      ),
+    );
+
     initializeUnitSettings();
     initializeLocations();
+  }
+
+  @override
+  void dispose() {
+    dwdHttpClient.close();
+    super.dispose();
   }
 
   Future<void> initializeUnitSettings() async {
@@ -114,11 +146,40 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
     setState(() {
       isLoading = true;
       errorMessage = null;
+      officialWarnings = [];
+      officialWarningsError = null;
+      officialWarningsLoading = false;
     });
 
     try {
       final data = await weatherService.fetchWeather(place);
       final risk = riskEngine.evaluate(data);
+
+      final warningsSupported = dwdWarningProvider.supportsLocation(
+        latitude: data.latitude,
+        longitude: data.longitude,
+      );
+
+      var warnings = <OfficialWeatherWarning>[];
+      String? warningsError;
+
+      if (warningsSupported) {
+        if (mounted) {
+          setState(() {
+            officialWarningsLoading = true;
+          });
+        }
+
+        try {
+          warnings = await dwdWarningProvider.fetchWarnings(
+            latitude: data.latitude,
+            longitude: data.longitude,
+          );
+        } catch (error) {
+          warningsError =
+              'Amtliche DWD-Warnungen konnten nicht geladen werden: $error';
+        }
+      }
 
       if (!mounted) return;
 
@@ -126,12 +187,18 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
         weatherData = data;
         riskResult = risk;
         selectedPlace = data.place;
+
+        officialWarningsSupported = warningsSupported;
+        officialWarnings = warnings;
+        officialWarningsError = warningsError;
+        officialWarningsLoading = false;
       });
     } catch (error) {
       if (!mounted) return;
 
       setState(() {
         errorMessage = error.toString();
+        officialWarningsLoading = false;
       });
     } finally {
       if (mounted) {
@@ -356,6 +423,13 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                     else if (data != null && risk != null) ...[
                       WeatherCard(data: data, unitSettings: unitSettings),
                       const SizedBox(height: 18),
+                      OfficialWeatherWarningsCard(
+                        warnings: officialWarnings,
+                        isSupported: officialWarningsSupported,
+                        isLoading: officialWarningsLoading,
+                        errorMessage: officialWarningsError,
+                      ),
+                      const SizedBox(height: 18),
                       RiskCard(result: risk),
                       const SizedBox(height: 18),
                       WarningLevelBar(result: risk),
@@ -431,6 +505,189 @@ class PlaceSelector extends StatelessWidget {
             onDeleted: places.length > 1 ? () => onDelete(place) : null,
           );
         },
+      ),
+    );
+  }
+}
+
+class OfficialWeatherWarningsCard extends StatelessWidget {
+  final List<OfficialWeatherWarning> warnings;
+  final bool isSupported;
+  final bool isLoading;
+  final String? errorMessage;
+
+  const OfficialWeatherWarningsCard({
+    super.key,
+    required this.warnings,
+    required this.isSupported,
+    required this.isLoading,
+    required this.errorMessage,
+  });
+
+  Color severityColor(OfficialWarningSeverity severity) {
+    switch (severity) {
+      case OfficialWarningSeverity.minor:
+        return const Color(0xFFD1A928);
+      case OfficialWarningSeverity.moderate:
+        return const Color(0xFFD77B2E);
+      case OfficialWarningSeverity.severe:
+        return const Color(0xFFB94A48);
+      case OfficialWarningSeverity.extreme:
+        return const Color(0xFF7E2634);
+      case OfficialWarningSeverity.unknown:
+        return const Color(0xFF607D86);
+    }
+  }
+
+  String severityText(OfficialWarningSeverity severity) {
+    switch (severity) {
+      case OfficialWarningSeverity.minor:
+        return 'Geringe Warnstufe';
+      case OfficialWarningSeverity.moderate:
+        return 'Erhöhte Warnstufe';
+      case OfficialWarningSeverity.severe:
+        return 'Schwere Warnlage';
+      case OfficialWarningSeverity.extreme:
+        return 'Extreme Warnlage';
+      case OfficialWarningSeverity.unknown:
+        return 'Warnstufe nicht angegeben';
+    }
+  }
+
+  String formatWarningTime(DateTime value) {
+    final local = value.toLocal();
+    final day = local.day.toString().padLeft(2, '0');
+    final month = local.month.toString().padLeft(2, '0');
+    final hour = local.hour.toString().padLeft(2, '0');
+    final minute = local.minute.toString().padLeft(2, '0');
+
+    return '$day.$month. · $hour:$minute Uhr';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CardBox(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Amtliche Wetterwarnungen',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Externe Warnquelle – getrennt von der ORTHA-Risikoanalyse',
+            style: TextStyle(fontSize: 13, color: Color(0xFF4F6F7A)),
+          ),
+          const SizedBox(height: 14),
+          if (isLoading)
+            const Row(
+              children: [
+                SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                SizedBox(width: 10),
+                Text('Amtliche Warnungen werden geladen …'),
+              ],
+            )
+          else if (!isSupported)
+            const Text(
+              'Für diesen Ort ist derzeit noch keine amtliche Warnquelle angebunden.',
+            )
+          else if (errorMessage != null)
+            Text(
+              errorMessage!,
+              style: const TextStyle(color: Color(0xFFB94A48)),
+            )
+          else if (warnings.isEmpty)
+            const Row(
+              children: [
+                Icon(Icons.check_circle_outline, color: Color(0xFF4F8A70)),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Aktuell liegen für diesen Ort keine amtlichen DWD-Warnungen vor.',
+                  ),
+                ),
+              ],
+            )
+          else
+            ...warnings.map((warning) {
+              final color = severityColor(warning.severity);
+
+              return Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: color.withValues(alpha: 0.45)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      severityText(warning.severity),
+                      style: TextStyle(
+                        color: color,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      warning.title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (warning.areaDescriptions.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        warning.areaDescriptions.join(', '),
+                        style: const TextStyle(color: Color(0xFF4F6F7A)),
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    Text(
+                      'Gültig: ${formatWarningTime(warning.validFrom)}'
+                      ' bis ${formatWarningTime(warning.validUntil)}',
+                    ),
+                    if (warning.description.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Text(warning.description),
+                    ],
+                    if (warning.instruction.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        'Hinweis: ${warning.instruction}',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    Text(
+                      'Quelle: ${warning.source}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF4F6F7A),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+        ],
       ),
     );
   }
