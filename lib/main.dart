@@ -376,7 +376,9 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
 
   void handleNavigationSelection(int index) {
     if (index == 4) {
-      openLocationsPage();
+      setState(() {
+        selectedNavigationIndex = index;
+      });
       return;
     }
 
@@ -397,29 +399,6 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
     setState(() {
       selectedNavigationIndex = index;
     });
-  }
-
-  void _showNavigationPreview(String title, String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: orthaSurfaceElevated,
-          content: Row(
-            children: [
-              const Icon(Icons.info_outline, color: orthaAccent),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  '$title · $message',
-                  style: const TextStyle(color: orthaPrimaryText),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
   }
 
   @override
@@ -986,6 +965,198 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                               data: data,
                               unitSettings: unitSettings,
                             ),
+                          const SizedBox(height: 30),
+                        ],
+                      )
+                    : selectedNavigationIndex == 4
+                    ? ListView(
+                        children: [
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: orthaSurface,
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(
+                                color: orthaBorder.withValues(alpha: 0.85),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: orthaAccent.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(15),
+                                    border: Border.all(
+                                      color: orthaAccent.withValues(
+                                        alpha: 0.35,
+                                      ),
+                                    ),
+                                  ),
+                                  child: const Icon(
+                                    Icons.location_on_outlined,
+                                    color: orthaAccent,
+                                    size: 27,
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Meine Orte',
+                                        style: TextStyle(
+                                          fontSize: 22,
+                                          fontWeight: FontWeight.bold,
+                                          color: orthaPrimaryText,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '${places.length} gespeicherte Orte',
+                                        style: const TextStyle(
+                                          color: orthaSecondaryText,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                IconButton(
+                                  tooltip: 'Ort hinzufügen',
+                                  onPressed: addPlace,
+                                  icon: const Icon(
+                                    Icons.add_location_alt_outlined,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          CardBox(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Row(
+                                  children: [
+                                    Icon(
+                                      Icons.bookmarks_outlined,
+                                      color: orthaAccent,
+                                    ),
+                                    SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        'Gespeicherte Orte',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                ...places.map((place) {
+                                  final selected = place == selectedPlace;
+
+                                  return Container(
+                                    width: double.infinity,
+                                    margin: const EdgeInsets.only(bottom: 10),
+                                    decoration: BoxDecoration(
+                                      color: selected
+                                          ? orthaAccent.withValues(alpha: 0.10)
+                                          : orthaSurfaceElevated,
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: selected
+                                            ? orthaAccent.withValues(
+                                                alpha: 0.55,
+                                              )
+                                            : orthaBorder.withValues(
+                                                alpha: 0.75,
+                                              ),
+                                      ),
+                                    ),
+                                    child: ListTile(
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 14,
+                                            vertical: 5,
+                                          ),
+                                      leading: Icon(
+                                        selected
+                                            ? Icons.location_on
+                                            : Icons.location_on_outlined,
+                                        color: selected
+                                            ? orthaAccent
+                                            : orthaSecondaryText,
+                                      ),
+                                      title: Text(
+                                        place,
+                                        style: TextStyle(
+                                          color: orthaPrimaryText,
+                                          fontWeight: selected
+                                              ? FontWeight.bold
+                                              : FontWeight.normal,
+                                        ),
+                                      ),
+                                      subtitle: selected
+                                          ? const Text(
+                                              'Aktuell ausgewählter Ort',
+                                              style: TextStyle(
+                                                color: orthaSecondaryText,
+                                              ),
+                                            )
+                                          : null,
+                                      onTap: () async {
+                                        setState(() {
+                                          selectedPlace = place;
+                                        });
+
+                                        await locationStorageService
+                                            .saveSelectedLocation(place);
+                                        await loadWeather(place);
+                                      },
+                                      trailing: places.length > 1
+                                          ? IconButton(
+                                              tooltip: 'Ort löschen',
+                                              onPressed: () =>
+                                                  deletePlace(place),
+                                              icon: const Icon(
+                                                Icons.delete_outline,
+                                                color: orthaSecondaryText,
+                                              ),
+                                            )
+                                          : null,
+                                    ),
+                                  );
+                                }),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 54,
+                            child: FilledButton.icon(
+                              onPressed: addPlace,
+                              icon: const Icon(Icons.add_location_alt_outlined),
+                              label: const Text('Neuen Ort hinzufügen'),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 50,
+                            child: OutlinedButton.icon(
+                              onPressed: () => openLocationsPage(),
+                              icon: const Icon(Icons.tune_outlined),
+                              label: const Text('Sortieren und umbenennen'),
+                            ),
+                          ),
                           const SizedBox(height: 30),
                         ],
                       )
