@@ -306,12 +306,178 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
     await loadWeather(selectedPlace);
   }
 
+  Future<void> openLocationsPage() async {
+    await Navigator.push<void>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => LocationsPage(
+          places: places,
+          selectedPlace: selectedPlace,
+          onSelect: (place) async {
+            setState(() {
+              selectedPlace = place;
+            });
+
+            await locationStorageService.saveSelectedLocation(place);
+            await loadWeather(place);
+          },
+          onDelete: (place) {
+            deletePlace(place);
+          },
+          onReorder: (newPlaces) async {
+            setState(() {
+              places
+                ..clear()
+                ..addAll(newPlaces);
+            });
+
+            await locationStorageService.saveLocations(places);
+          },
+          onRename: (oldPlace, newPlace) async {
+            final cleanedName = newPlace.trim();
+
+            if (cleanedName.isEmpty ||
+                cleanedName == oldPlace ||
+                places.contains(cleanedName)) {
+              return;
+            }
+
+            final placeIndex = places.indexOf(oldPlace);
+
+            if (placeIndex < 0) {
+              return;
+            }
+
+            setState(() {
+              places[placeIndex] = cleanedName;
+
+              if (selectedPlace == oldPlace) {
+                selectedPlace = cleanedName;
+              }
+            });
+
+            await locationStorageService.saveLocations(places);
+            await locationStorageService.saveSelectedLocation(selectedPlace);
+
+            if (selectedPlace == cleanedName) {
+              await loadWeather(cleanedName);
+            }
+          },
+        ),
+      ),
+    );
+
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void handleNavigationSelection(int index) {
+    switch (index) {
+      case 0:
+        return;
+      case 1:
+        _showNavigationPreview(
+          'Warnungen',
+          'Die eigenständige Warnungsansicht wird als Nächstes aufgebaut.',
+        );
+      case 2:
+        _showNavigationPreview(
+          'Risiken',
+          'Die vollständige ORTHA-Risikoübersicht wird als eigene Maske aufgebaut.',
+        );
+      case 3:
+        _showNavigationPreview(
+          'Radar',
+          'Die Radar- und Kartenansicht folgt in einer kommenden Entwicklungsphase.',
+        );
+      case 4:
+        openLocationsPage();
+    }
+  }
+
+  void _showNavigationPreview(String title, String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: orthaSurfaceElevated,
+          content: Row(
+            children: [
+              const Icon(Icons.info_outline, color: orthaAccent),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  '$title · $message',
+                  style: const TextStyle(color: orthaPrimaryText),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+  }
+
   @override
   Widget build(BuildContext context) {
     final data = weatherData;
     final risk = riskResult;
 
     return Scaffold(
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: orthaSurface,
+          border: Border(
+            top: BorderSide(color: orthaBorder.withValues(alpha: 0.85)),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.28),
+              blurRadius: 20,
+              offset: const Offset(0, -6),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          top: false,
+          child: NavigationBar(
+            height: 72,
+            selectedIndex: 0,
+            onDestinationSelected: handleNavigationSelection,
+            backgroundColor: orthaSurface,
+            indicatorColor: orthaAccent.withValues(alpha: 0.18),
+            labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+            destinations: const [
+              NavigationDestination(
+                icon: Icon(Icons.home_outlined),
+                selectedIcon: Icon(Icons.home, color: orthaAccent),
+                label: 'Heute',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.warning_amber_outlined),
+                selectedIcon: Icon(Icons.warning_amber, color: orthaAccent),
+                label: 'Warnungen',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.shield_outlined),
+                selectedIcon: Icon(Icons.shield, color: orthaAccent),
+                label: 'Risiken',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.radar_outlined),
+                selectedIcon: Icon(Icons.radar, color: orthaAccent),
+                label: 'Radar',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.location_on_outlined),
+                selectedIcon: Icon(Icons.location_on, color: orthaAccent),
+                label: 'Orte',
+              ),
+            ],
+          ),
+        ),
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(22),
