@@ -319,108 +319,152 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      'ORTHA Wetter',
-                      style: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.bold,
-                        color: orthaPrimaryText,
-                      ),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: orthaSurface,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: orthaBorder.withValues(alpha: 0.85),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.22),
+                      blurRadius: 24,
+                      offset: const Offset(0, 10),
                     ),
-                  ),
-                  IconButton(
-                    tooltip: 'Einheiten',
-                    onPressed: openUnitSettings,
-                    icon: const Icon(Icons.straighten_outlined),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                'Wetter- und Risikoanalyse für Alltag, Arbeit und Reisen',
-                style: TextStyle(fontSize: 15, color: orthaSecondaryText),
-              ),
-              const SizedBox(height: 22),
-              Align(
-                alignment: Alignment.centerRight,
-                child: OutlinedButton.icon(
-                  onPressed: () async {
-                    await Navigator.push<void>(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => LocationsPage(
-                          places: places,
-                          selectedPlace: selectedPlace,
-                          onSelect: (place) async {
-                            setState(() {
-                              selectedPlace = place;
-                            });
-
-                            await locationStorageService.saveSelectedLocation(
-                              place,
-                            );
-                            await loadWeather(place);
-                          },
-                          onDelete: (place) {
-                            deletePlace(place);
-                          },
-                          onReorder: (newPlaces) async {
-                            setState(() {
-                              places
-                                ..clear()
-                                ..addAll(newPlaces);
-                            });
-
-                            await locationStorageService.saveLocations(places);
-                          },
-                          onRename: (oldPlace, newPlace) async {
-                            final cleanedName = newPlace.trim();
-
-                            if (cleanedName.isEmpty ||
-                                cleanedName == oldPlace ||
-                                places.contains(cleanedName)) {
-                              return;
-                            }
-
-                            final placeIndex = places.indexOf(oldPlace);
-
-                            if (placeIndex < 0) {
-                              return;
-                            }
-
-                            setState(() {
-                              places[placeIndex] = cleanedName;
-
-                              if (selectedPlace == oldPlace) {
-                                selectedPlace = cleanedName;
-                              }
-                            });
-
-                            await locationStorageService.saveLocations(places);
-                            await locationStorageService.saveSelectedLocation(
-                              selectedPlace,
-                            );
-
-                            if (selectedPlace == cleanedName) {
-                              await loadWeather(cleanedName);
-                            }
-                          },
+                  ],
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        color: orthaAccent.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: orthaAccent.withValues(alpha: 0.35),
                         ),
                       ),
-                    );
+                      child: const Icon(
+                        Icons.cloud_outlined,
+                        color: orthaAccent,
+                        size: 30,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'ORTHA METEO Ω',
+                            style: TextStyle(
+                              fontSize: 27,
+                              fontWeight: FontWeight.bold,
+                              color: orthaPrimaryText,
+                              letterSpacing: 0.4,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Wetter · Warnungen · Risikoanalyse',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: orthaSecondaryText,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Einheiten',
+                      onPressed: openUnitSettings,
+                      icon: const Icon(Icons.straighten_outlined),
+                    ),
+                    const SizedBox(width: 4),
+                    OutlinedButton.icon(
+                      onPressed: () async {
+                        await Navigator.push<void>(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => LocationsPage(
+                              places: places,
+                              selectedPlace: selectedPlace,
+                              onSelect: (place) async {
+                                setState(() {
+                                  selectedPlace = place;
+                                });
 
-                    if (mounted) {
-                      setState(() {});
-                    }
-                  },
-                  icon: const Icon(Icons.location_city_outlined),
-                  label: const Text('Meine Orte'),
+                                await locationStorageService
+                                    .saveSelectedLocation(place);
+                                await loadWeather(place);
+                              },
+                              onDelete: (place) {
+                                deletePlace(place);
+                              },
+                              onReorder: (newPlaces) async {
+                                setState(() {
+                                  places
+                                    ..clear()
+                                    ..addAll(newPlaces);
+                                });
+
+                                await locationStorageService.saveLocations(
+                                  places,
+                                );
+                              },
+                              onRename: (oldPlace, newPlace) async {
+                                final cleanedName = newPlace.trim();
+
+                                if (cleanedName.isEmpty ||
+                                    cleanedName == oldPlace ||
+                                    places.contains(cleanedName)) {
+                                  return;
+                                }
+
+                                final placeIndex = places.indexOf(oldPlace);
+
+                                if (placeIndex < 0) {
+                                  return;
+                                }
+
+                                setState(() {
+                                  places[placeIndex] = cleanedName;
+
+                                  if (selectedPlace == oldPlace) {
+                                    selectedPlace = cleanedName;
+                                  }
+                                });
+
+                                await locationStorageService.saveLocations(
+                                  places,
+                                );
+                                await locationStorageService
+                                    .saveSelectedLocation(selectedPlace);
+
+                                if (selectedPlace == cleanedName) {
+                                  await loadWeather(cleanedName);
+                                }
+                              },
+                            ),
+                          ),
+                        );
+
+                        if (mounted) {
+                          setState(() {});
+                        }
+                      },
+                      icon: const Icon(Icons.location_city_outlined),
+                      label: const Text('Meine Orte'),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 18),
               PlaceSelector(
                 places: places,
                 selectedPlace: selectedPlace,
@@ -445,6 +489,13 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                     else if (data != null && risk != null) ...[
                       WeatherCard(data: data, unitSettings: unitSettings),
                       const SizedBox(height: 18),
+                      WarningLevelBar(result: risk),
+                      const SizedBox(height: 18),
+                      HourlyForecastCard(
+                        forecast: data.hourlyForecast,
+                        unitSettings: unitSettings,
+                      ),
+                      const SizedBox(height: 18),
                       OfficialWeatherWarningsCard(
                         warnings: officialWarnings,
                         isSupported: officialWarningsSupported,
@@ -454,14 +505,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                       const SizedBox(height: 18),
                       RiskCard(result: risk),
                       const SizedBox(height: 18),
-                      WarningLevelBar(result: risk),
-                      const SizedBox(height: 18),
                       RiskCategoriesCard(categories: risk.categories),
-                      const SizedBox(height: 18),
-                      HourlyForecastCard(
-                        forecast: data.hourlyForecast,
-                        unitSettings: unitSettings,
-                      ),
                       const SizedBox(height: 18),
                       DailyForecastCard(
                         forecast: data.dailyForecast,
@@ -472,18 +516,19 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                         data: data,
                         unitSettings: unitSettings,
                       ),
+                      const SizedBox(height: 18),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 54,
+                        child: FilledButton.icon(
+                          onPressed: addPlace,
+                          icon: const Icon(Icons.add_location_alt_outlined),
+                          label: const Text('Ort hinzufügen'),
+                        ),
+                      ),
                     ],
                     const SizedBox(height: 30),
                   ],
-                ),
-              ),
-              SizedBox(
-                width: double.infinity,
-                height: 54,
-                child: FilledButton.icon(
-                  onPressed: addPlace,
-                  icon: const Icon(Icons.add_location_alt_outlined),
-                  label: const Text('Ort hinzufügen'),
                 ),
               ),
             ],
