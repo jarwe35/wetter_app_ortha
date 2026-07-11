@@ -12,6 +12,14 @@ import 'settings/unit_settings.dart';
 import 'settings/unit_settings_page.dart';
 import 'settings/unit_settings_service.dart';
 
+const Color orthaBackground = Color(0xFF08131F);
+const Color orthaSurface = Color(0xFF102235);
+const Color orthaSurfaceElevated = Color(0xFF153149);
+const Color orthaPrimaryText = Color(0xFFF2F7FA);
+const Color orthaSecondaryText = Color(0xFF9FB3C2);
+const Color orthaAccent = Color(0xFFD5A84A);
+const Color orthaBorder = Color(0xFF27465D);
+
 void main() {
   runApp(const OrthaWeatherApp());
 }
@@ -25,8 +33,22 @@ class OrthaWeatherApp extends StatelessWidget {
       title: 'ORTHA Wetter',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        scaffoldBackgroundColor: const Color(0xFFEAF4F8),
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF7FB3C8)),
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: orthaBackground,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: orthaAccent,
+          brightness: Brightness.dark,
+          surface: orthaSurface,
+        ),
+        textTheme: const TextTheme(
+          bodyLarge: TextStyle(color: orthaPrimaryText),
+          bodyMedium: TextStyle(color: orthaPrimaryText),
+          bodySmall: TextStyle(color: orthaSecondaryText),
+          titleLarge: TextStyle(color: orthaPrimaryText),
+          titleMedium: TextStyle(color: orthaPrimaryText),
+          titleSmall: TextStyle(color: orthaPrimaryText),
+        ),
+        iconTheme: const IconThemeData(color: orthaPrimaryText),
         useMaterial3: true,
       ),
       home: const WeatherHomePage(),
@@ -305,7 +327,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                       style: TextStyle(
                         fontSize: 30,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF143642),
+                        color: orthaPrimaryText,
                       ),
                     ),
                   ),
@@ -319,7 +341,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
               const SizedBox(height: 6),
               const Text(
                 'Wetter- und Risikoanalyse für Alltag, Arbeit und Reisen',
-                style: TextStyle(fontSize: 15, color: Color(0xFF4F6F7A)),
+                style: TextStyle(fontSize: 15, color: orthaSecondaryText),
               ),
               const SizedBox(height: 22),
               Align(
@@ -572,7 +594,7 @@ class OfficialWeatherWarningsCard extends StatelessWidget {
         children: [
           const Row(
             children: [
-              Icon(Icons.warning_amber_rounded),
+              Icon(Icons.campaign_outlined, color: orthaAccent),
               SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -584,42 +606,58 @@ class OfficialWeatherWarningsCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           const Text(
-            'Externe Warnquelle – getrennt von der ORTHA-Risikoanalyse',
-            style: TextStyle(fontSize: 13, color: Color(0xFF4F6F7A)),
+            'Offizielle externe Warnquelle – unabhängig von ORTHA',
+            style: TextStyle(fontSize: 13, color: orthaSecondaryText),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           if (isLoading)
-            const Row(
-              children: [
-                SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-                SizedBox(width: 10),
-                Text('Amtliche Warnungen werden geladen …'),
-              ],
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: orthaSurfaceElevated,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: orthaBorder.withValues(alpha: 0.72)),
+              ),
+              child: const Row(
+                children: [
+                  SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: orthaAccent,
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Amtliche Warnungen werden geladen …',
+                      style: TextStyle(color: orthaSecondaryText),
+                    ),
+                  ),
+                ],
+              ),
             )
           else if (!isSupported)
-            const Text(
-              'Für diesen Ort ist derzeit noch keine amtliche Warnquelle angebunden.',
+            const _OfficialWarningStatusBox(
+              icon: Icons.public_off_outlined,
+              color: orthaSecondaryText,
+              text:
+                  'Für diesen Ort ist derzeit noch keine amtliche Warnquelle angebunden.',
             )
           else if (errorMessage != null)
-            Text(
-              errorMessage!,
-              style: const TextStyle(color: Color(0xFFB94A48)),
+            _OfficialWarningStatusBox(
+              icon: Icons.error_outline,
+              color: Color(0xFFB94A48),
+              text: errorMessage!,
             )
           else if (warnings.isEmpty)
-            const Row(
-              children: [
-                Icon(Icons.check_circle_outline, color: Color(0xFF4F8A70)),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Aktuell liegen für diesen Ort keine amtlichen DWD-Warnungen vor.',
-                  ),
-                ),
-              ],
+            const _OfficialWarningStatusBox(
+              icon: Icons.verified_outlined,
+              color: Color(0xFF4F8A70),
+              text:
+                  'Aktuell liegen für diesen Ort keine amtlichen DWD-Warnungen vor.',
             )
           else
             ...warnings.map((warning) {
@@ -628,65 +666,178 @@ class OfficialWeatherWarningsCard extends StatelessWidget {
               return Container(
                 width: double.infinity,
                 margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(14),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: color.withValues(alpha: 0.45)),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: color.withValues(alpha: 0.50)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.10),
+                      blurRadius: 14,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      severityText(warning.severity),
-                      style: TextStyle(
-                        color: color,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      warning.title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha: 0.16),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: color),
+                          ),
+                          child: Icon(
+                            Icons.warning_amber_rounded,
+                            color: color,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                severityText(warning.severity),
+                                style: TextStyle(
+                                  color: color,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                warning.title,
+                                style: const TextStyle(
+                                  color: orthaPrimaryText,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                     if (warning.areaDescriptions.isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        warning.areaDescriptions.join(', '),
-                        style: const TextStyle(color: Color(0xFF4F6F7A)),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.location_on_outlined,
+                            size: 18,
+                            color: orthaSecondaryText,
+                          ),
+                          const SizedBox(width: 7),
+                          Expanded(
+                            child: Text(
+                              warning.areaDescriptions.join(', '),
+                              style: const TextStyle(color: orthaSecondaryText),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
-                    const SizedBox(height: 8),
-                    Text(
-                      'Gültig: ${formatWarningTime(warning.validFrom)}'
-                      ' bis ${formatWarningTime(warning.validUntil)}',
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.schedule_outlined,
+                          size: 18,
+                          color: orthaSecondaryText,
+                        ),
+                        const SizedBox(width: 7),
+                        Expanded(
+                          child: Text(
+                            'Gültig: ${formatWarningTime(warning.validFrom)}'
+                            ' bis ${formatWarningTime(warning.validUntil)}',
+                            style: const TextStyle(color: orthaSecondaryText),
+                          ),
+                        ),
+                      ],
                     ),
                     if (warning.description.isNotEmpty) ...[
-                      const SizedBox(height: 10),
-                      Text(warning.description),
-                    ],
-                    if (warning.instruction.isNotEmpty) ...[
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 14),
                       Text(
-                        'Hinweis: ${warning.instruction}',
-                        style: const TextStyle(fontWeight: FontWeight.w600),
+                        warning.description,
+                        style: const TextStyle(
+                          color: orthaPrimaryText,
+                          height: 1.35,
+                        ),
                       ),
                     ],
-                    const SizedBox(height: 8),
+                    if (warning.instruction.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: orthaSurfaceElevated,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: orthaBorder.withValues(alpha: 0.72),
+                          ),
+                        ),
+                        child: Text(
+                          'Hinweis: ${warning.instruction}',
+                          style: const TextStyle(
+                            color: orthaPrimaryText,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 10),
                     Text(
                       'Quelle: ${warning.source}',
                       style: const TextStyle(
                         fontSize: 12,
-                        color: Color(0xFF4F6F7A),
+                        color: orthaSecondaryText,
                       ),
                     ),
                   ],
                 ),
               );
             }),
+        ],
+      ),
+    );
+  }
+}
+
+class _OfficialWarningStatusBox extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String text;
+
+  const _OfficialWarningStatusBox({
+    required this.icon,
+    required this.color,
+    required this.text,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: orthaSurfaceElevated,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: 0.42)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(text, style: const TextStyle(color: orthaPrimaryText)),
+          ),
         ],
       ),
     );
@@ -746,6 +897,19 @@ class RiskCard extends StatelessWidget {
     }
   }
 
+  String riskLabel() {
+    switch (result.level) {
+      case RiskLevel.green:
+        return 'Geringe Belastung';
+      case RiskLevel.yellow:
+        return 'Erhöhte Aufmerksamkeit';
+      case RiskLevel.orange:
+        return 'Deutliche Belastung';
+      case RiskLevel.red:
+        return result.score >= 85 ? 'Extreme Belastung' : 'Hohe Belastung';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final color = riskColor();
@@ -754,60 +918,128 @@ class RiskCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'ORTHA Risikoanalyse',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 14),
-          Row(
+          const Row(
             children: [
-              Container(
-                width: 14,
-                height: 14,
-                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-              ),
-              const SizedBox(width: 10),
+              Icon(Icons.psychology_alt_outlined, color: orthaAccent),
+              SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  result.title,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  'ORTHA Risikoanalyse',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          Text(
-            'Risikoscore ${result.score} / 100',
-            style: TextStyle(fontWeight: FontWeight.bold, color: color),
+          const SizedBox(height: 6),
+          const Text(
+            'Eigenständige Bewertung aus aktuellen Messwerten und Prognosen',
+            style: TextStyle(color: orthaSecondaryText, fontSize: 13),
           ),
-          const SizedBox(height: 8),
-          LinearProgressIndicator(
-            value: result.score / 100,
-            minHeight: 8,
-            borderRadius: BorderRadius.circular(8),
-            color: color,
-            backgroundColor: color.withValues(alpha: 0.16),
+          const SizedBox(height: 18),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: color.withValues(alpha: 0.50)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.18),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: color),
+                  ),
+                  child: Icon(Icons.shield_outlined, color: color),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        riskLabel(),
+                        style: TextStyle(
+                          color: color,
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        result.title,
+                        style: const TextStyle(
+                          color: orthaPrimaryText,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 16),
-          Text(result.message),
+          Row(
+            children: [
+              Expanded(
+                child: LinearProgressIndicator(
+                  value: result.score / 100,
+                  minHeight: 9,
+                  borderRadius: BorderRadius.circular(10),
+                  color: color,
+                  backgroundColor: color.withValues(alpha: 0.16),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                '${result.score} / 100',
+                style: TextStyle(color: color, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            result.message,
+            style: const TextStyle(color: orthaPrimaryText, height: 1.35),
+          ),
           if (result.factors.isNotEmpty) ...[
             const SizedBox(height: 18),
             const Text(
               'Erkannte Risikofaktoren',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             ...result.factors.map(
-              (factor) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
+              (factor) => Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: orthaSurfaceElevated,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: orthaBorder.withValues(alpha: 0.72),
+                  ),
+                ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('• '),
-                    Expanded(child: Text(factor)),
+                    Icon(Icons.circle, size: 8, color: color),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        factor,
+                        style: const TextStyle(color: orthaSecondaryText),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -940,23 +1172,42 @@ class HourlyForecastCard extends StatelessWidget {
                   width: 92,
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEAF4F8),
+                    color: orthaSurfaceElevated,
                     borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: orthaBorder.withValues(alpha: 0.85),
+                    ),
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(shortTime(item.time)),
-                      Icon(weatherIcon(item.weatherCode)),
+                      Text(
+                        shortTime(item.time),
+                        style: const TextStyle(
+                          color: orthaSecondaryText,
+                          fontSize: 12,
+                        ),
+                      ),
+                      Icon(weatherIcon(item.weatherCode), color: orthaAccent),
                       Text(
                         formatTemperature(
                           item.temperature,
                           unitSettings,
                           decimals: 0,
                         ),
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          color: orthaPrimaryText,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                      Text('${item.precipitationProbability} % Regen'),
+                      Text(
+                        '${item.precipitationProbability} % Regen',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: orthaSecondaryText,
+                          fontSize: 12,
+                        ),
+                      ),
                     ],
                   ),
                 );
@@ -991,22 +1242,45 @@ class DailyForecastCard extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           ...forecast.map(
-            (day) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+            (day) => Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: orthaSurfaceElevated,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: orthaBorder.withValues(alpha: 0.85)),
+              ),
               child: Row(
                 children: [
-                  SizedBox(width: 54, child: Text(shortDate(day.date))),
-                  Icon(weatherIcon(day.weatherCode)),
+                  SizedBox(
+                    width: 54,
+                    child: Text(
+                      shortDate(day.date),
+                      style: const TextStyle(color: orthaSecondaryText),
+                    ),
+                  ),
+                  Icon(weatherIcon(day.weatherCode), color: orthaAccent),
                   const SizedBox(width: 10),
-                  Expanded(child: Text(weatherText(day.weatherCode))),
+                  Expanded(
+                    child: Text(
+                      weatherText(day.weatherCode),
+                      style: const TextStyle(color: orthaPrimaryText),
+                    ),
+                  ),
                   Text(
                     '${formatTemperature(day.temperatureMin, unitSettings, decimals: 0)}'
                     ' / '
                     '${formatTemperature(day.temperatureMax, unitSettings, decimals: 0)}',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: orthaPrimaryText,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(width: 10),
-                  Text('${day.precipitationProbability} %'),
+                  Text(
+                    '${day.precipitationProbability} %',
+                    style: const TextStyle(color: orthaSecondaryText),
+                  ),
                 ],
               ),
             ),
@@ -1053,33 +1327,53 @@ class WeatherDetailsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Messwerte',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          const Row(
+            children: [
+              Icon(Icons.monitor_heart_outlined, color: orthaAccent),
+              SizedBox(width: 10),
+              Text(
+                'Messwerte',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           DetailRow(
+            icon: Icons.water_drop_outlined,
             label: 'Niederschlag',
             value: formatPrecipitation(data.precipitation, unitSettings),
           ),
           DetailRow(
+            icon: Icons.air,
             label: 'Wind',
             value: formatWindSpeed(data.windSpeed, unitSettings),
           ),
           DetailRow(
+            icon: Icons.storm_outlined,
             label: 'Böen',
             value: formatWindSpeed(data.windGusts, unitSettings),
           ),
           DetailRow(
+            icon: Icons.speed_outlined,
             label: 'Luftdruck',
             value: '${data.pressure.toStringAsFixed(0)} hPa',
           ),
-          DetailRow(label: 'Bewölkung', value: '${data.cloudCover} %'),
           DetailRow(
+            icon: Icons.cloud_outlined,
+            label: 'Bewölkung',
+            value: '${data.cloudCover} %',
+          ),
+          DetailRow(
+            icon: Icons.visibility_outlined,
             label: 'Sichtweite',
             value: formatVisibility(data.visibility, unitSettings),
           ),
-          DetailRow(label: 'UV-Index', value: data.uvIndex.toStringAsFixed(1)),
+          DetailRow(
+            icon: Icons.wb_sunny_outlined,
+            label: 'UV-Index',
+            value: data.uvIndex.toStringAsFixed(1),
+            accentValue: true,
+          ),
         ],
       ),
     );
@@ -1087,20 +1381,46 @@ class WeatherDetailsCard extends StatelessWidget {
 }
 
 class DetailRow extends StatelessWidget {
+  final IconData icon;
   final String label;
   final String value;
+  final bool accentValue;
 
-  const DetailRow({super.key, required this.label, required this.value});
+  const DetailRow({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.accentValue = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: orthaSurfaceElevated,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: orthaBorder.withValues(alpha: 0.72)),
+      ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: Color(0xFF4F6F7A))),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Icon(icon, size: 20, color: orthaSecondaryText),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(color: orthaSecondaryText),
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              color: accentValue ? orthaAccent : orthaPrimaryText,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ],
       ),
     );
@@ -1118,13 +1438,14 @@ class CardBox extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(26),
+        color: orthaSurface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: orthaBorder.withValues(alpha: 0.85)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
+            color: Colors.black.withValues(alpha: 0.28),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
           ),
         ],
       ),
@@ -1139,36 +1460,60 @@ class WarningLevelBar extends StatelessWidget {
   const WarningLevelBar({super.key, required this.result});
 
   int get activeLevel {
-    switch (result.level) {
-      case RiskLevel.green:
-        return 0;
-      case RiskLevel.yellow:
-        return 1;
-      case RiskLevel.orange:
-        return 2;
-      case RiskLevel.red:
-        return 3;
+    if (result.score >= 85) return 4;
+    if (result.score >= 70) return 3;
+    if (result.score >= 40) return 2;
+    if (result.score >= 15) return 1;
+    return 0;
+  }
+
+  String get activeDescription {
+    switch (activeLevel) {
+      case 4:
+        return 'Extreme Wetterbelastung';
+      case 3:
+        return 'Hohe Wetterbelastung';
+      case 2:
+        return 'Deutliche Wetterbelastung';
+      case 1:
+        return 'Erhöhte Aufmerksamkeit';
+      case 0:
+        return 'Geringe Wetterbelastung';
+      default:
+        return 'Wetterlage';
     }
   }
 
   @override
   Widget build(BuildContext context) {
     const levels = [
-      ('Grün', Color(0xFF4F8A70)),
-      ('Gelb', Color(0xFFD1A928)),
-      ('Orange', Color(0xFFD77B2E)),
-      ('Rot', Color(0xFFB94A48)),
+      (number: '0', label: 'Gering', color: Color(0xFF4F8A70)),
+      (number: '1', label: 'Erhöht', color: Color(0xFFD1A928)),
+      (number: '2', label: 'Deutlich', color: Color(0xFFD77B2E)),
+      (number: '3', label: 'Hoch', color: Color(0xFFB94A48)),
+      (number: '4', label: 'Extrem', color: Color(0xFF7E2634)),
     ];
 
     return CardBox(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Aktuelle Warnstufe',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          const Row(
+            children: [
+              Icon(Icons.shield_outlined, color: orthaAccent),
+              SizedBox(width: 10),
+              Text(
+                'ORTHA Warnstufe',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 6),
+          Text(
+            'Stufe $activeLevel · $activeDescription',
+            style: const TextStyle(color: orthaSecondaryText),
+          ),
+          const SizedBox(height: 18),
           Row(
             children: List.generate(levels.length, (index) {
               final level = levels[index];
@@ -1177,37 +1522,75 @@ class WarningLevelBar extends StatelessWidget {
               return Expanded(
                 child: Container(
                   margin: EdgeInsets.only(
-                    right: index < levels.length - 1 ? 6 : 0,
+                    right: index < levels.length - 1 ? 7 : 0,
                   ),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: isActive
-                        ? level.$2
-                        : level.$2.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(12),
+                        ? level.color
+                        : level.color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: level.$2,
+                      color: isActive
+                          ? level.color
+                          : level.color.withValues(alpha: 0.55),
                       width: isActive ? 2 : 1,
                     ),
+                    boxShadow: isActive
+                        ? [
+                            BoxShadow(
+                              color: level.color.withValues(alpha: 0.35),
+                              blurRadius: 14,
+                              offset: const Offset(0, 6),
+                            ),
+                          ]
+                        : null,
                   ),
-                  child: Text(
-                    level.$1,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontWeight: isActive
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                      color: isActive ? Colors.white : level.$2,
-                    ),
+                  child: Column(
+                    children: [
+                      Text(
+                        level.number,
+                        style: TextStyle(
+                          color: isActive ? Colors.white : level.color,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        level.label,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: isActive ? Colors.white : orthaSecondaryText,
+                          fontSize: 10,
+                          fontWeight: isActive
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               );
             }),
           ),
           const SizedBox(height: 14),
-          Text(
-            'Risikoscore ${result.score} von 100 · ${result.title}',
-            style: const TextStyle(fontWeight: FontWeight.w600),
+          Row(
+            children: [
+              const Icon(
+                Icons.analytics_outlined,
+                size: 18,
+                color: orthaSecondaryText,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Interner Risikowert: ${result.score} / 100',
+                style: const TextStyle(color: orthaSecondaryText, fontSize: 13),
+              ),
+            ],
           ),
         ],
       ),
