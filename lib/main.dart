@@ -89,6 +89,8 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
   bool isLoading = false;
   String? errorMessage;
 
+  int selectedNavigationIndex = 0;
+
   @override
   void initState() {
     super.initState();
@@ -373,27 +375,30 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
   }
 
   void handleNavigationSelection(int index) {
-    switch (index) {
-      case 0:
-        return;
-      case 1:
-        _showNavigationPreview(
-          'Warnungen',
-          'Die eigenständige Warnungsansicht wird als Nächstes aufgebaut.',
-        );
-      case 2:
-        _showNavigationPreview(
-          'Risiken',
-          'Die vollständige ORTHA-Risikoübersicht wird als eigene Maske aufgebaut.',
-        );
-      case 3:
-        _showNavigationPreview(
-          'Radar',
-          'Die Radar- und Kartenansicht folgt in einer kommenden Entwicklungsphase.',
-        );
-      case 4:
-        openLocationsPage();
+    if (index == 4) {
+      openLocationsPage();
+      return;
     }
+
+    if (index == 2) {
+      _showNavigationPreview(
+        'Risiken',
+        'Die vollständige ORTHA-Risikoübersicht wird als Nächstes aufgebaut.',
+      );
+      return;
+    }
+
+    if (index == 3) {
+      _showNavigationPreview(
+        'Radar',
+        'Die Radar- und Kartenansicht folgt in einer kommenden Entwicklungsphase.',
+      );
+      return;
+    }
+
+    setState(() {
+      selectedNavigationIndex = index;
+    });
   }
 
   void _showNavigationPreview(String title, String message) {
@@ -443,7 +448,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
           top: false,
           child: NavigationBar(
             height: 72,
-            selectedIndex: 0,
+            selectedIndex: selectedNavigationIndex,
             onDestinationSelected: handleNavigationSelection,
             backgroundColor: orthaSurface,
             indicatorColor: orthaAccent.withValues(alpha: 0.18),
@@ -645,56 +650,144 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
               ),
               const SizedBox(height: 18),
               Expanded(
-                child: ListView(
-                  children: [
-                    if (isLoading)
-                      const CardBox(child: Text('Wetterdaten werden geladen …'))
-                    else if (errorMessage != null)
-                      CardBox(child: Text(errorMessage!))
-                    else if (data != null && risk != null) ...[
-                      WeatherCard(data: data, unitSettings: unitSettings),
-                      const SizedBox(height: 18),
-                      WarningLevelBar(result: risk),
-                      const SizedBox(height: 18),
-                      HourlyForecastCard(
-                        forecast: data.hourlyForecast,
-                        unitSettings: unitSettings,
+                child: selectedNavigationIndex == 1
+                    ? ListView(
+                        children: [
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: orthaSurface,
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(
+                                color: orthaBorder.withValues(alpha: 0.85),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: orthaAccent.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(15),
+                                    border: Border.all(
+                                      color: orthaAccent.withValues(
+                                        alpha: 0.35,
+                                      ),
+                                    ),
+                                  ),
+                                  child: const Icon(
+                                    Icons.warning_amber_rounded,
+                                    color: orthaAccent,
+                                    size: 27,
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Warnungen',
+                                        style: TextStyle(
+                                          fontSize: 22,
+                                          fontWeight: FontWeight.bold,
+                                          color: orthaPrimaryText,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Amtliche Wetterwarnungen für $selectedPlace',
+                                        style: const TextStyle(
+                                          color: orthaSecondaryText,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                IconButton(
+                                  tooltip: 'Warnungen aktualisieren',
+                                  onPressed: () => loadWeather(selectedPlace),
+                                  icon: const Icon(Icons.refresh),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          if (isLoading)
+                            const CardBox(
+                              child: Text(
+                                'Wetter- und Warnungsdaten werden geladen …',
+                              ),
+                            )
+                          else if (errorMessage != null)
+                            CardBox(child: Text(errorMessage!))
+                          else
+                            OfficialWeatherWarningsCard(
+                              warnings: officialWarnings,
+                              isSupported: officialWarningsSupported,
+                              isLoading: officialWarningsLoading,
+                              errorMessage: officialWarningsError,
+                            ),
+                          const SizedBox(height: 30),
+                        ],
+                      )
+                    : ListView(
+                        children: [
+                          if (isLoading)
+                            const CardBox(
+                              child: Text('Wetterdaten werden geladen …'),
+                            )
+                          else if (errorMessage != null)
+                            CardBox(child: Text(errorMessage!))
+                          else if (data != null && risk != null) ...[
+                            WeatherCard(data: data, unitSettings: unitSettings),
+                            const SizedBox(height: 18),
+                            WarningLevelBar(result: risk),
+                            const SizedBox(height: 18),
+                            HourlyForecastCard(
+                              forecast: data.hourlyForecast,
+                              unitSettings: unitSettings,
+                            ),
+                            const SizedBox(height: 18),
+                            OfficialWeatherWarningsCard(
+                              warnings: officialWarnings,
+                              isSupported: officialWarningsSupported,
+                              isLoading: officialWarningsLoading,
+                              errorMessage: officialWarningsError,
+                            ),
+                            const SizedBox(height: 18),
+                            RiskCard(result: risk),
+                            const SizedBox(height: 18),
+                            RiskCategoriesCard(categories: risk.categories),
+                            const SizedBox(height: 18),
+                            DailyForecastCard(
+                              forecast: data.dailyForecast,
+                              unitSettings: unitSettings,
+                            ),
+                            const SizedBox(height: 18),
+                            WeatherDetailsCard(
+                              data: data,
+                              unitSettings: unitSettings,
+                            ),
+                            const SizedBox(height: 18),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 54,
+                              child: FilledButton.icon(
+                                onPressed: addPlace,
+                                icon: const Icon(
+                                  Icons.add_location_alt_outlined,
+                                ),
+                                label: const Text('Ort hinzufügen'),
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 30),
+                        ],
                       ),
-                      const SizedBox(height: 18),
-                      OfficialWeatherWarningsCard(
-                        warnings: officialWarnings,
-                        isSupported: officialWarningsSupported,
-                        isLoading: officialWarningsLoading,
-                        errorMessage: officialWarningsError,
-                      ),
-                      const SizedBox(height: 18),
-                      RiskCard(result: risk),
-                      const SizedBox(height: 18),
-                      RiskCategoriesCard(categories: risk.categories),
-                      const SizedBox(height: 18),
-                      DailyForecastCard(
-                        forecast: data.dailyForecast,
-                        unitSettings: unitSettings,
-                      ),
-                      const SizedBox(height: 18),
-                      WeatherDetailsCard(
-                        data: data,
-                        unitSettings: unitSettings,
-                      ),
-                      const SizedBox(height: 18),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 54,
-                        child: FilledButton.icon(
-                          onPressed: addPlace,
-                          icon: const Icon(Icons.add_location_alt_outlined),
-                          label: const Text('Ort hinzufügen'),
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 30),
-                  ],
-                ),
               ),
             ],
           ),
