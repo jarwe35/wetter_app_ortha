@@ -198,8 +198,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
             longitude: data.longitude,
           );
         } catch (error) {
-          warningsError =
-              'Amtliche DWD-Warnungen konnten nicht geladen werden: $error';
+          warningsError = 'Amtliche Warnungen sind derzeit nicht verfügbar.';
         }
       }
 
