@@ -1774,83 +1774,157 @@ class RiskCategoriesCard extends StatelessWidget {
     }
   }
 
+  IconData iconForCategory(String name) {
+    switch (name) {
+      case 'Hitze':
+        return Icons.thermostat_outlined;
+      case 'UV':
+        return Icons.wb_sunny_outlined;
+      case 'Wind/Sturm':
+        return Icons.air;
+      case 'Niederschlag':
+        return Icons.water_drop_outlined;
+      case 'Sicht':
+        return Icons.visibility_outlined;
+      case 'Gewitter':
+        return Icons.thunderstorm_outlined;
+      default:
+        return Icons.analytics_outlined;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return CardBox(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Risikokategorien',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          const Row(
+            children: [
+              Icon(Icons.dashboard_customize_outlined, color: orthaAccent),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Risikokategorien',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 6),
+          const Text(
+            'Einzelbewertung der wichtigsten Wetterrisiken',
+            style: TextStyle(color: orthaSecondaryText, fontSize: 13),
+          ),
+          const SizedBox(height: 16),
           ...categories.map((category) {
             final color = colorForLevel(category.level);
 
-            return InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: () {
-                showDialog<void>(
-                  context: context,
-                  builder: (dialogContext) {
-                    return AlertDialog(
-                      title: Text(category.name),
-                      content: Text(
-                        'Warnstufe: ${riskLevelText(category.level)}\n\n'
-                        'Aktuell: ${category.displayValue}\n'
-                        'Prognose: ${category.forecastDisplayValue}\n\n'
-                        'Begründung: ${category.message}\n\n'
-                        'Empfehlung: ${recommendationForCategory(category)}',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(dialogContext),
-                          child: const Text('Schließen'),
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              decoration: BoxDecoration(
+                color: orthaSurfaceElevated,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: color.withValues(alpha: 0.38)),
+              ),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: () {
+                  showDialog<void>(
+                    context: context,
+                    builder: (dialogContext) {
+                      return AlertDialog(
+                        title: Text(category.name),
+                        content: Text(
+                          'Warnstufe: ${riskLevelText(category.level)}\n\n'
+                          'Aktuell: ${category.displayValue}\n'
+                          'Prognose: ${category.forecastDisplayValue}\n\n'
+                          'Begründung: ${category.message}\n\n'
+                          'Empfehlung: ${recommendationForCategory(category)}',
                         ),
-                      ],
-                    );
-                  },
-                );
-              },
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: color,
-                        shape: BoxShape.circle,
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(dialogContext),
+                            child: const Text('Schließen'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(13),
+                          border: Border.all(
+                            color: color.withValues(alpha: 0.55),
+                          ),
+                        ),
+                        child: Icon(
+                          iconForCategory(category.name),
+                          color: color,
+                          size: 22,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    SizedBox(
-                      width: 92,
-                      child: Text(
-                        category.name,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    category.name,
+                                    style: const TextStyle(
+                                      color: orthaPrimaryText,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  '${category.score} / 100',
+                                  style: TextStyle(
+                                    color: color,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            LinearProgressIndicator(
+                              value: category.score / 100,
+                              minHeight: 7,
+                              borderRadius: BorderRadius.circular(8),
+                              color: color,
+                              backgroundColor: color.withValues(alpha: 0.14),
+                            ),
+                            const SizedBox(height: 7),
+                            Text(
+                              category.message,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: orthaSecondaryText,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    Expanded(
-                      child: LinearProgressIndicator(
-                        value: category.score / 100,
-                        minHeight: 7,
-                        borderRadius: BorderRadius.circular(8),
-                        color: color,
-                        backgroundColor: color.withValues(alpha: 0.14),
+                      const SizedBox(width: 8),
+                      const Icon(
+                        Icons.chevron_right,
+                        color: orthaSecondaryText,
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    SizedBox(
-                      width: 34,
-                      child: Text(
-                        '${category.score}',
-                        textAlign: TextAlign.right,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             );
