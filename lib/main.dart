@@ -388,10 +388,9 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
     }
 
     if (index == 3) {
-      _showNavigationPreview(
-        'Radar',
-        'Die Radar- und Kartenansicht folgt in einer kommenden Entwicklungsphase.',
-      );
+      setState(() {
+        selectedNavigationIndex = index;
+      });
       return;
     }
 
@@ -814,6 +813,179 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                             const SizedBox(height: 18),
                             RiskCategoriesCard(categories: risk.categories),
                           ],
+                          const SizedBox(height: 30),
+                        ],
+                      )
+                    : selectedNavigationIndex == 3
+                    ? ListView(
+                        children: [
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: orthaSurface,
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(
+                                color: orthaBorder.withValues(alpha: 0.85),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: orthaAccent.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(15),
+                                    border: Border.all(
+                                      color: orthaAccent.withValues(
+                                        alpha: 0.35,
+                                      ),
+                                    ),
+                                  ),
+                                  child: const Icon(
+                                    Icons.radar_outlined,
+                                    color: orthaAccent,
+                                    size: 27,
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'ORTHA Radar',
+                                        style: TextStyle(
+                                          fontSize: 22,
+                                          fontWeight: FontWeight.bold,
+                                          color: orthaPrimaryText,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Radar- und Niederschlagslage für $selectedPlace',
+                                        style: const TextStyle(
+                                          color: orthaSecondaryText,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                IconButton(
+                                  tooltip: 'Wetterdaten aktualisieren',
+                                  onPressed: () => loadWeather(selectedPlace),
+                                  icon: const Icon(Icons.refresh),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          CardBox(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Row(
+                                  children: [
+                                    Icon(
+                                      Icons.layers_outlined,
+                                      color: orthaAccent,
+                                    ),
+                                    SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        'Niederschlagsradar',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 18),
+                                Container(
+                                  width: double.infinity,
+                                  constraints: const BoxConstraints(
+                                    minHeight: 280,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: orthaSurfaceElevated,
+                                    borderRadius: BorderRadius.circular(18),
+                                    border: Border.all(
+                                      color: orthaBorder.withValues(
+                                        alpha: 0.85,
+                                      ),
+                                    ),
+                                  ),
+                                  child: const Padding(
+                                    padding: EdgeInsets.all(24),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.radar_outlined,
+                                          size: 64,
+                                          color: orthaAccent,
+                                        ),
+                                        SizedBox(height: 18),
+                                        Text(
+                                          'Radar-Datenquelle noch nicht angebunden',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: orthaPrimaryText,
+                                          ),
+                                        ),
+                                        SizedBox(height: 10),
+                                        Text(
+                                          'Diese Ansicht ist für die spätere '
+                                          'Integration von Niederschlagsradar, '
+                                          'Radar-Zeitverlauf und Kartenebenen '
+                                          'vorbereitet.',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            color: orthaSecondaryText,
+                                            height: 1.5,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                const Row(
+                                  children: [
+                                    Icon(
+                                      Icons.info_outline,
+                                      size: 18,
+                                      color: orthaSecondaryText,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        'Es werden derzeit keine simulierten '
+                                        'oder erfundenen Radardaten angezeigt.',
+                                        style: TextStyle(
+                                          color: orthaSecondaryText,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          if (data != null)
+                            WeatherDetailsCard(
+                              data: data,
+                              unitSettings: unitSettings,
+                            ),
                           const SizedBox(height: 30),
                         ],
                       )
