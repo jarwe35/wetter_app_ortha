@@ -5,6 +5,8 @@ import 'engine/risk_engine.dart';
 import 'models/official_weather_warning.dart';
 import 'models/saved_location.dart';
 import 'pages/locations_page.dart';
+import 'services/location_migration_service.dart';
+import 'services/location_service.dart';
 import 'services/location_storage_service.dart';
 import 'services/warning_providers/dwd_cap_download_client.dart';
 import 'services/warning_providers/dwd_warning_provider.dart';
@@ -66,11 +68,23 @@ class WeatherHomePage extends StatefulWidget {
 }
 
 class _WeatherHomePageState extends State<WeatherHomePage> {
+  static const SavedLocation _defaultLocation = SavedLocation(
+    name: 'Duisburg',
+    latitude: 51.4344,
+    longitude: 6.7623,
+    country: 'Deutschland',
+    timezone: 'Europe/Berlin',
+  );
+
   final WeatherService weatherService = WeatherService();
   final LocationStorageService locationStorageService =
       LocationStorageService();
   final RiskEngine riskEngine = const RiskEngine();
   final UnitSettingsService unitSettingsService = UnitSettingsService();
+
+  late final http.Client locationHttpClient;
+  late final LocationService locationService;
+  late final LocationMigrationService locationMigrationService;
 
   late final http.Client dwdHttpClient;
   late final DwdWarningProvider dwdWarningProvider;
@@ -98,6 +112,13 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
   void initState() {
     super.initState();
 
+    locationHttpClient = http.Client();
+    locationService = LocationService(httpClient: locationHttpClient);
+    locationMigrationService = LocationMigrationService(
+      storageService: locationStorageService,
+      locationService: locationService,
+    );
+
     dwdHttpClient = http.Client();
     dwdWarningProvider = DwdWarningProvider(
       downloadClient: DwdCapDownloadClient(
@@ -117,6 +138,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
 
   @override
   void dispose() {
+    locationHttpClient.close();
     dwdHttpClient.close();
     super.dispose();
   }
@@ -149,9 +171,16 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
   }
 
   Future<void> initializeLocations() async {
+    await locationMigrationService.migrateLegacyLocations();
+
     final storedPlaces = await locationStorageService.loadLocations();
     final storedSelectedPlace = await locationStorageService
         .loadSelectedLocation();
+
+    final savedLocations = await locationStorageService.loadSavedLocations();
+
+    final storedSelectedSavedLocationName = await locationStorageService
+        .loadSelectedSavedLocationName();
 
     if (!mounted) return;
 
@@ -159,14 +188,44 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
         ? storedSelectedPlace
         : storedPlaces.first;
 
+    SavedLocation? initialSavedLocation;
+
+    if (storedSelectedSavedLocationName != null) {
+      for (final location in savedLocations) {
+        if (location.name.toLowerCase() ==
+            storedSelectedSavedLocationName.toLowerCase()) {
+          initialSavedLocation = location;
+          break;
+        }
+      }
+    }
+
+    initialSavedLocation ??= savedLocations.cast<SavedLocation?>().firstWhere(
+      (location) => location?.name.toLowerCase() == initialPlace.toLowerCase(),
+      orElse: () => null,
+    );
+
+    if (initialSavedLocation == null &&
+        initialPlace.toLowerCase() == _defaultLocation.name.toLowerCase()) {
+      initialSavedLocation = _defaultLocation;
+
+      final locationsWithDefault = [...savedLocations, _defaultLocation];
+
+      await locationStorageService.saveSavedLocations(locationsWithDefault);
+      await locationStorageService.saveSelectedSavedLocationName(
+        _defaultLocation.name,
+      );
+    }
+
     setState(() {
       places
         ..clear()
         ..addAll(storedPlaces);
-      selectedPlace = initialPlace;
+      selectedPlace = initialSavedLocation?.name ?? initialPlace;
+      selectedLocation = initialSavedLocation;
     });
 
-    await loadWeather(initialPlace);
+    await loadWeather(selectedPlace);
   }
 
   Future<SavedLocation?> _findSavedLocation(String place) async {
