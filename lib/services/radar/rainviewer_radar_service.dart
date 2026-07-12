@@ -102,7 +102,7 @@ class RainViewerRadarService {
       return pendingRequest;
     }
 
-    final request = _fetchMetadataFromNetwork();
+    final request = _fetchMetadataWithFallback(allowStaleCache: !forceRefresh);
     _pendingRequest = request;
 
     return request.whenComplete(() {
@@ -110,6 +110,22 @@ class RainViewerRadarService {
         _pendingRequest = null;
       }
     });
+  }
+
+  Future<RainViewerRadarMetadata> _fetchMetadataWithFallback({
+    required bool allowStaleCache,
+  }) async {
+    try {
+      return await _fetchMetadataFromNetwork();
+    } on RainViewerRadarException {
+      final cachedMetadata = _cachedMetadata;
+
+      if (allowStaleCache && cachedMetadata != null) {
+        return cachedMetadata;
+      }
+
+      rethrow;
+    }
   }
 
   Future<RainViewerRadarMetadata> _fetchMetadataFromNetwork() async {

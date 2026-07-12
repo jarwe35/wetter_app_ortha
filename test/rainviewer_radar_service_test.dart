@@ -223,6 +223,88 @@ void main() {
       expect(identical(results[0], results[1]), isTrue);
     });
 
+    test('verwendet abgelaufenen Cache bei Radarserver-Ausfall', () async {
+      var requestCount = 0;
+
+      final client = MockClient((request) async {
+        requestCount += 1;
+
+        if (requestCount == 1) {
+          return Response('''
+{
+  "generated": 1710000300,
+  "host": "https://tilecache.rainviewer.com",
+  "radar": {
+    "past": [
+      {
+        "time": 1710000000,
+        "path": "/v2/radar/1710000000"
+      }
+    ]
+  }
+}
+''', 200);
+        }
+
+        return Response('Serverfehler', 503);
+      });
+
+      final service = RainViewerRadarService(
+        httpClient: client,
+        cacheDuration: Duration.zero,
+      );
+
+      final first = await service.fetchMetadata();
+      final fallback = await service.fetchMetadata();
+
+      expect(requestCount, 2);
+      expect(identical(first, fallback), isTrue);
+    });
+
+    test(
+      'forceRefresh verwendet bei Serverfehler keinen alten Cache',
+      () async {
+        var requestCount = 0;
+
+        final client = MockClient((request) async {
+          requestCount += 1;
+
+          if (requestCount == 1) {
+            return Response('''
+{
+  "generated": 1710000300,
+  "host": "https://tilecache.rainviewer.com",
+  "radar": {
+    "past": [
+      {
+        "time": 1710000000,
+        "path": "/v2/radar/1710000000"
+      }
+    ]
+  }
+}
+''', 200);
+          }
+
+          return Response('Serverfehler', 503);
+        });
+
+        final service = RainViewerRadarService(
+          httpClient: client,
+          cacheDuration: Duration.zero,
+        );
+
+        await service.fetchMetadata();
+
+        await expectLater(
+          service.fetchMetadata(forceRefresh: true),
+          throwsA(isA<RainViewerRadarException>()),
+        );
+
+        expect(requestCount, 2);
+      },
+    );
+
     test('meldet HTTP-Fehler kontrolliert', () async {
       final client = MockClient((request) async {
         return Response('Serverfehler', 503);
