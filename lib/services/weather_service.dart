@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../models/saved_location.dart';
+
 class HourlyForecast {
   final String time;
   final double temperature;
@@ -85,6 +87,20 @@ class WeatherData {
 }
 
 class WeatherService {
+  final http.Client? httpClient;
+
+  const WeatherService({this.httpClient});
+
+  Future<http.Response> _get(Uri uri) {
+    final client = httpClient;
+
+    if (client != null) {
+      return client.get(uri);
+    }
+
+    return http.get(uri);
+  }
+
   Future<WeatherData> fetchWeather(String place) async {
     final geoUrl = Uri.https('geocoding-api.open-meteo.com', '/v1/search', {
       'name': place,
@@ -93,9 +109,7 @@ class WeatherService {
       'format': 'json',
     });
 
-    final geoResponse = await http
-        .get(geoUrl)
-        .timeout(const Duration(seconds: 15));
+    final geoResponse = await _get(geoUrl).timeout(const Duration(seconds: 15));
 
     if (geoResponse.statusCode != 200) {
       throw Exception(
@@ -115,6 +129,26 @@ class WeatherService {
     final longitude = (result['longitude'] as num).toDouble();
     final resolvedName = result['name'] as String;
 
+    return fetchWeatherForLocation(
+      SavedLocation(
+        name: resolvedName,
+        latitude: latitude,
+        longitude: longitude,
+        country: result['country'] is String
+            ? result['country'] as String
+            : null,
+        timezone: result['timezone'] is String
+            ? result['timezone'] as String
+            : null,
+      ),
+    );
+  }
+
+  Future<WeatherData> fetchWeatherForLocation(SavedLocation location) async {
+    final latitude = location.latitude;
+    final longitude = location.longitude;
+    final resolvedName = location.name;
+
     final weatherUrl = Uri.https('api.open-meteo.com', '/v1/forecast', {
       'latitude': latitude.toString(),
       'longitude': longitude.toString(),
@@ -133,9 +167,9 @@ class WeatherService {
       'timezone': 'auto',
     });
 
-    final weatherResponse = await http
-        .get(weatherUrl)
-        .timeout(const Duration(seconds: 15));
+    final weatherResponse = await _get(
+      weatherUrl,
+    ).timeout(const Duration(seconds: 15));
 
     if (weatherResponse.statusCode != 200) {
       throw Exception(
