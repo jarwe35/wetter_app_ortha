@@ -23,12 +23,23 @@ class RainViewerRadarMetadata {
   final String host;
   final DateTime generatedAt;
   final List<RainViewerRadarFrame> frames;
+  final bool isStale;
 
   const RainViewerRadarMetadata({
     required this.host,
     required this.generatedAt,
     required this.frames,
+    this.isStale = false,
   });
+
+  RainViewerRadarMetadata copyWith({bool? isStale}) {
+    return RainViewerRadarMetadata(
+      host: host,
+      generatedAt: generatedAt,
+      frames: frames,
+      isStale: isStale ?? this.isStale,
+    );
+  }
 
   RainViewerRadarFrame get latestFrame {
     if (frames.isEmpty) {
@@ -121,7 +132,7 @@ class RainViewerRadarService {
       final cachedMetadata = _cachedMetadata;
 
       if (allowStaleCache && cachedMetadata != null) {
-        return cachedMetadata;
+        return cachedMetadata.copyWith(isStale: true);
       }
 
       rethrow;

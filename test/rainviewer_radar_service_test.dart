@@ -258,7 +258,11 @@ void main() {
       final fallback = await service.fetchMetadata();
 
       expect(requestCount, 2);
-      expect(identical(first, fallback), isTrue);
+      expect(first.isStale, isFalse);
+      expect(fallback.isStale, isTrue);
+      expect(fallback.host, first.host);
+      expect(fallback.generatedAt, first.generatedAt);
+      expect(fallback.frames, same(first.frames));
     });
 
     test(

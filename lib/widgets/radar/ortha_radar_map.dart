@@ -336,6 +336,32 @@ class _OrthaRadarMapState extends State<OrthaRadarMap> {
           ),
           const SizedBox(height: 14),
         ],
+        if (metadata.isStale) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.orange.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Colors.orange.withValues(alpha: 0.55)),
+            ),
+            child: const Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.history_toggle_off_outlined),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Radarserver derzeit nicht erreichbar. '
+                    'Es wird der letzte verfügbare Radarstand angezeigt.',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+        ],
         Wrap(
           spacing: 12,
           runSpacing: 8,
