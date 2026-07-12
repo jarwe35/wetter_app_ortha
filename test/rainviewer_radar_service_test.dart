@@ -122,6 +122,42 @@ void main() {
       expect(identical(first, second), isTrue);
     });
 
+    test('lädt Metadaten nach Ablauf des Cache erneut', () async {
+      var requestCount = 0;
+
+      final client = MockClient((request) async {
+        requestCount += 1;
+
+        return Response('''
+{
+  "generated": 1710000300,
+  "host": "https://tilecache.rainviewer.com",
+  "radar": {
+    "past": [
+      {
+        "time": 1710000000,
+        "path": "/v2/radar/1710000000"
+      }
+    ]
+  }
+}
+''', 200);
+      });
+
+      final service = RainViewerRadarService(
+        httpClient: client,
+        cacheDuration: const Duration(milliseconds: 5),
+      );
+
+      await service.fetchMetadata();
+
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      await service.fetchMetadata();
+
+      expect(requestCount, 2);
+    });
+
     test('forceRefresh umgeht den Metadaten-Cache', () async {
       var requestCount = 0;
 
