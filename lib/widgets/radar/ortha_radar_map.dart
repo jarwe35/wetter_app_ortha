@@ -290,50 +290,56 @@ class _OrthaRadarMapState extends State<OrthaRadarMap> {
               Text('${_selectedFrameIndex + 1}/${metadata.frames.length}'),
             ],
           ),
+          const SizedBox(height: 10),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: Theme.of(
+                  context,
+                ).colorScheme.primary.withValues(alpha: 0.35),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.schedule_outlined, size: 20),
+                const SizedBox(width: 10),
+                const Text(
+                  'Aktueller Radarstand:',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                const Spacer(),
+                Text(
+                  _formatFrameTime(metadata.frames[_selectedFrameIndex].time),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: 8),
-          RangeSlider(
-            values: RangeValues(
-              _rangeStartIndex.toDouble(),
-              _rangeEndIndex.toDouble(),
-            ),
-            min: 0,
-            max: (metadata.frames.length - 1).toDouble(),
-            divisions: metadata.frames.length - 1,
-            labels: RangeLabels(
-              _formatFrameTime(metadata.frames[_rangeStartIndex].time),
-              _formatFrameTime(metadata.frames[_rangeEndIndex].time),
-            ),
-            onChanged: (values) {
-              final startIndex = values.start.round();
-              final endIndex = values.end.round();
+          Slider(
+            value: _selectedFrameIndex.toDouble(),
+            min: _rangeStartIndex.toDouble(),
+            max: _rangeEndIndex.toDouble(),
+            divisions: _rangeEndIndex - _rangeStartIndex,
+            label: _formatFrameTime(metadata.frames[_selectedFrameIndex].time),
+            onChanged: (value) {
+              final frameIndex = value.round();
 
               _stopAnimation();
 
               setState(() {
-                _rangeStartIndex = startIndex;
-                _rangeEndIndex = endIndex;
-                _selectedFrameIndex = startIndex;
-                _selectedFrame = metadata.frames[startIndex];
+                _selectedFrameIndex = frameIndex;
+                _selectedFrame = metadata.frames[frameIndex];
               });
             },
           ),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Start: ${_formatFrameTime(metadata.frames[_rangeStartIndex].time)}',
-                  style: const TextStyle(fontSize: 12),
-                ),
-              ),
-              Expanded(
-                child: Text(
-                  'Ende: ${_formatFrameTime(metadata.frames[_rangeEndIndex].time)}',
-                  textAlign: TextAlign.right,
-                  style: const TextStyle(fontSize: 12),
-                ),
-              ),
-            ],
-          ),
+          const SizedBox(height: 8),
           const SizedBox(height: 14),
         ],
         if (metadata.isStale) ...[
