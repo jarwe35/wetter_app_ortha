@@ -56,7 +56,7 @@ class _OrthaRadarMapState extends State<OrthaRadarMap> {
     super.dispose();
   }
 
-  Future<void> _loadRadar() async {
+  Future<void> _loadRadar({bool forceRefresh = false}) async {
     _stopAnimation();
 
     if (mounted) {
@@ -67,7 +67,9 @@ class _OrthaRadarMapState extends State<OrthaRadarMap> {
     }
 
     try {
-      final metadata = await _radarService.fetchMetadata();
+      final metadata = await _radarService.fetchMetadata(
+        forceRefresh: forceRefresh,
+      );
       final latestFrame = metadata.latestFrame;
       final lastIndex = metadata.frames.length - 1;
 
@@ -346,7 +348,7 @@ class _OrthaRadarMapState extends State<OrthaRadarMap> {
             ),
             Text('Radarstand: ${_formatFrameTime(selectedFrame.time)}'),
             OutlinedButton.icon(
-              onPressed: _loadRadar,
+              onPressed: () => _loadRadar(forceRefresh: true),
               icon: const Icon(Icons.refresh, size: 18),
               label: const Text('Radar aktualisieren'),
             ),

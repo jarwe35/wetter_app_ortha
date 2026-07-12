@@ -91,6 +91,102 @@ void main() {
       );
     });
 
+    test('verwendet gültige Metadaten aus dem Cache', () async {
+      var requestCount = 0;
+
+      final client = MockClient((request) async {
+        requestCount += 1;
+
+        return Response('''
+{
+  "generated": 1710000300,
+  "host": "https://tilecache.rainviewer.com",
+  "radar": {
+    "past": [
+      {
+        "time": 1710000000,
+        "path": "/v2/radar/1710000000"
+      }
+    ]
+  }
+}
+''', 200);
+      });
+
+      final service = RainViewerRadarService(httpClient: client);
+
+      final first = await service.fetchMetadata();
+      final second = await service.fetchMetadata();
+
+      expect(requestCount, 1);
+      expect(identical(first, second), isTrue);
+    });
+
+    test('forceRefresh umgeht den Metadaten-Cache', () async {
+      var requestCount = 0;
+
+      final client = MockClient((request) async {
+        requestCount += 1;
+
+        return Response('''
+{
+  "generated": 1710000300,
+  "host": "https://tilecache.rainviewer.com",
+  "radar": {
+    "past": [
+      {
+        "time": 1710000000,
+        "path": "/v2/radar/1710000000"
+      }
+    ]
+  }
+}
+''', 200);
+      });
+
+      final service = RainViewerRadarService(httpClient: client);
+
+      await service.fetchMetadata();
+      await service.fetchMetadata(forceRefresh: true);
+
+      expect(requestCount, 2);
+    });
+
+    test('fasst parallele Metadaten-Abrufe zusammen', () async {
+      var requestCount = 0;
+
+      final client = MockClient((request) async {
+        requestCount += 1;
+
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+
+        return Response('''
+{
+  "generated": 1710000300,
+  "host": "https://tilecache.rainviewer.com",
+  "radar": {
+    "past": [
+      {
+        "time": 1710000000,
+        "path": "/v2/radar/1710000000"
+      }
+    ]
+  }
+}
+''', 200);
+      });
+
+      final service = RainViewerRadarService(httpClient: client);
+
+      final results = await Future.wait([
+        service.fetchMetadata(),
+        service.fetchMetadata(),
+      ]);
+
+      expect(requestCount, 1);
+      expect(identical(results[0], results[1]), isTrue);
+    });
+
     test('meldet HTTP-Fehler kontrolliert', () async {
       final client = MockClient((request) async {
         return Response('Serverfehler', 503);

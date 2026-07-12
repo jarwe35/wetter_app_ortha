@@ -72,14 +72,47 @@ class RainViewerRadarService {
   final http.Client httpClient;
   final Uri metadataUri;
   final Duration requestTimeout;
+  final Duration cacheDuration;
+
+  RainViewerRadarMetadata? _cachedMetadata;
+  DateTime? _cachedAt;
+  Future<RainViewerRadarMetadata>? _pendingRequest;
 
   RainViewerRadarService({
     required this.httpClient,
     Uri? metadataUri,
     this.requestTimeout = const Duration(seconds: 15),
+    this.cacheDuration = const Duration(minutes: 5),
   }) : metadataUri = metadataUri ?? defaultMetadataUri;
 
-  Future<RainViewerRadarMetadata> fetchMetadata() async {
+  Future<RainViewerRadarMetadata> fetchMetadata({bool forceRefresh = false}) {
+    final cachedMetadata = _cachedMetadata;
+    final cachedAt = _cachedAt;
+
+    if (!forceRefresh &&
+        cachedMetadata != null &&
+        cachedAt != null &&
+        DateTime.now().difference(cachedAt) < cacheDuration) {
+      return Future<RainViewerRadarMetadata>.value(cachedMetadata);
+    }
+
+    final pendingRequest = _pendingRequest;
+
+    if (!forceRefresh && pendingRequest != null) {
+      return pendingRequest;
+    }
+
+    final request = _fetchMetadataFromNetwork();
+    _pendingRequest = request;
+
+    return request.whenComplete(() {
+      if (identical(_pendingRequest, request)) {
+        _pendingRequest = null;
+      }
+    });
+  }
+
+  Future<RainViewerRadarMetadata> _fetchMetadataFromNetwork() async {
     http.Response response;
 
     try {
@@ -186,7 +219,7 @@ class RainViewerRadarService {
       );
     }
 
-    return RainViewerRadarMetadata(
+    final metadata = RainViewerRadarMetadata(
       host: host,
       generatedAt: DateTime.fromMillisecondsSinceEpoch(
         generated.toInt() * 1000,
@@ -194,5 +227,10 @@ class RainViewerRadarService {
       ),
       frames: List.unmodifiable(frames),
     );
+
+    _cachedMetadata = metadata;
+    _cachedAt = DateTime.now();
+
+    return metadata;
   }
 }
