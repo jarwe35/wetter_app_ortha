@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:http/http.dart' as http;
@@ -28,6 +30,12 @@ class _OrthaRadarMapState extends State<OrthaRadarMap> {
   RainViewerRadarMetadata? _metadata;
   RainViewerRadarFrame? _selectedFrame;
 
+  int _selectedFrameIndex = 0;
+  int _rangeStartIndex = 0;
+  int _rangeEndIndex = 0;
+
+  Timer? _animationTimer;
+  bool _isPlaying = false;
   bool _isLoading = true;
   String? _errorMessage;
 
@@ -43,11 +51,14 @@ class _OrthaRadarMapState extends State<OrthaRadarMap> {
 
   @override
   void dispose() {
+    _animationTimer?.cancel();
     _httpClient.close();
     super.dispose();
   }
 
   Future<void> _loadRadar() async {
+    _stopAnimation();
+
     if (mounted) {
       setState(() {
         _isLoading = true;
@@ -58,11 +69,15 @@ class _OrthaRadarMapState extends State<OrthaRadarMap> {
     try {
       final metadata = await _radarService.fetchMetadata();
       final latestFrame = metadata.latestFrame;
+      final lastIndex = metadata.frames.length - 1;
 
       if (!mounted) return;
 
       setState(() {
         _metadata = metadata;
+        _rangeStartIndex = 0;
+        _rangeEndIndex = lastIndex;
+        _selectedFrameIndex = lastIndex;
         _selectedFrame = latestFrame;
         _isLoading = false;
       });
@@ -72,6 +87,63 @@ class _OrthaRadarMapState extends State<OrthaRadarMap> {
       setState(() {
         _errorMessage = error.toString();
         _isLoading = false;
+      });
+    }
+  }
+
+  void _toggleAnimation() {
+    if (_isPlaying) {
+      _stopAnimation();
+    } else {
+      _startAnimation();
+    }
+  }
+
+  void _startAnimation() {
+    final metadata = _metadata;
+
+    if (metadata == null || _rangeEndIndex <= _rangeStartIndex) {
+      return;
+    }
+
+    _animationTimer?.cancel();
+
+    var initialIndex = _selectedFrameIndex;
+
+    if (initialIndex < _rangeStartIndex || initialIndex >= _rangeEndIndex) {
+      initialIndex = _rangeStartIndex;
+    }
+
+    setState(() {
+      _selectedFrameIndex = initialIndex;
+      _selectedFrame = metadata.frames[initialIndex];
+      _isPlaying = true;
+    });
+
+    _animationTimer = Timer.periodic(const Duration(milliseconds: 900), (_) {
+      if (!mounted) {
+        _animationTimer?.cancel();
+        return;
+      }
+
+      final nextIndex = _selectedFrameIndex >= _rangeEndIndex
+          ? _rangeStartIndex
+          : _selectedFrameIndex + 1;
+
+      setState(() {
+        _selectedFrameIndex = nextIndex;
+        _selectedFrame = metadata.frames[nextIndex];
+      });
+    });
+  }
+
+  void _stopAnimation() {
+    _animationTimer?.cancel();
+    _animationTimer = null;
+
+    if (mounted && _isPlaying) {
+      setState(() {
+        _isPlaying = false;
       });
     }
   }
@@ -159,6 +231,7 @@ class _OrthaRadarMapState extends State<OrthaRadarMap> {
                   userAgentPackageName: 'de.ortha.meteo',
                 ),
                 TileLayer(
+                  key: ValueKey(radarTileUrl),
                   urlTemplate: radarTileUrl,
                   userAgentPackageName: 'de.ortha.meteo',
                   maxNativeZoom: 7,
@@ -188,7 +261,75 @@ class _OrthaRadarMapState extends State<OrthaRadarMap> {
             ),
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
+        if (metadata.frames.length > 1) ...[
+          Row(
+            children: [
+              const Icon(Icons.history_outlined, size: 20),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'Radar-Zeitverlauf',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+              FilledButton.icon(
+                onPressed: _rangeEndIndex > _rangeStartIndex
+                    ? _toggleAnimation
+                    : null,
+                icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
+                label: Text(_isPlaying ? 'Pause' : 'Start'),
+              ),
+              const SizedBox(width: 10),
+              Text('${_selectedFrameIndex + 1}/${metadata.frames.length}'),
+            ],
+          ),
+          const SizedBox(height: 8),
+          RangeSlider(
+            values: RangeValues(
+              _rangeStartIndex.toDouble(),
+              _rangeEndIndex.toDouble(),
+            ),
+            min: 0,
+            max: (metadata.frames.length - 1).toDouble(),
+            divisions: metadata.frames.length - 1,
+            labels: RangeLabels(
+              _formatFrameTime(metadata.frames[_rangeStartIndex].time),
+              _formatFrameTime(metadata.frames[_rangeEndIndex].time),
+            ),
+            onChanged: (values) {
+              final startIndex = values.start.round();
+              final endIndex = values.end.round();
+
+              _stopAnimation();
+
+              setState(() {
+                _rangeStartIndex = startIndex;
+                _rangeEndIndex = endIndex;
+                _selectedFrameIndex = startIndex;
+                _selectedFrame = metadata.frames[startIndex];
+              });
+            },
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Start: ${_formatFrameTime(metadata.frames[_rangeStartIndex].time)}',
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  'Ende: ${_formatFrameTime(metadata.frames[_rangeEndIndex].time)}',
+                  textAlign: TextAlign.right,
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+        ],
         Wrap(
           spacing: 12,
           runSpacing: 8,
