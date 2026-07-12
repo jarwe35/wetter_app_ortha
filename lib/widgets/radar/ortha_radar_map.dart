@@ -183,7 +183,11 @@ class _OrthaRadarMapState extends State<OrthaRadarMap> {
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
-                Text(_errorMessage!, textAlign: TextAlign.center),
+                const Text(
+                  'Bitte prüfe die Internetverbindung oder versuche es '
+                  'in einigen Augenblicken erneut.',
+                  textAlign: TextAlign.center,
+                ),
                 const SizedBox(height: 18),
                 FilledButton.icon(
                   onPressed: _loadRadar,

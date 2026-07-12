@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -70,15 +71,23 @@ class RainViewerRadarService {
 
   final http.Client httpClient;
   final Uri metadataUri;
+  final Duration requestTimeout;
 
-  RainViewerRadarService({required this.httpClient, Uri? metadataUri})
-    : metadataUri = metadataUri ?? defaultMetadataUri;
+  RainViewerRadarService({
+    required this.httpClient,
+    Uri? metadataUri,
+    this.requestTimeout = const Duration(seconds: 15),
+  }) : metadataUri = metadataUri ?? defaultMetadataUri;
 
   Future<RainViewerRadarMetadata> fetchMetadata() async {
     http.Response response;
 
     try {
-      response = await httpClient.get(metadataUri);
+      response = await httpClient.get(metadataUri).timeout(requestTimeout);
+    } on TimeoutException {
+      throw const RainViewerRadarException(
+        'Der Radarserver hat nicht rechtzeitig geantwortet.',
+      );
     } catch (error) {
       throw RainViewerRadarException(
         'Netzwerkfehler beim Abruf der Radar-Metadaten: $error',

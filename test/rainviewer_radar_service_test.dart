@@ -67,6 +67,30 @@ void main() {
       );
     });
 
+    test('meldet Zeitüberschreitung kontrolliert', () async {
+      final client = MockClient((request) async {
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+
+        return Response('{}', 200);
+      });
+
+      final service = RainViewerRadarService(
+        httpClient: client,
+        requestTimeout: const Duration(milliseconds: 5),
+      );
+
+      expect(
+        service.fetchMetadata,
+        throwsA(
+          isA<RainViewerRadarException>().having(
+            (error) => error.message,
+            'message',
+            contains('nicht rechtzeitig'),
+          ),
+        ),
+      );
+    });
+
     test('meldet HTTP-Fehler kontrolliert', () async {
       final client = MockClient((request) async {
         return Response('Serverfehler', 503);
