@@ -7,6 +7,33 @@ import 'package:latlong2/latlong.dart';
 
 import '../../services/radar/rainviewer_radar_service.dart';
 
+class _RadarLegendEntry extends StatelessWidget {
+  final Color color;
+  final String label;
+
+  const _RadarLegendEntry({required this.color, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 18,
+          height: 12,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+          ),
+        ),
+        const SizedBox(width: 7),
+        Text(label, style: const TextStyle(fontSize: 12)),
+      ],
+    );
+  }
+}
+
 class OrthaRadarMap extends StatefulWidget {
   final double latitude;
   final double longitude;
@@ -342,6 +369,62 @@ class _OrthaRadarMapState extends State<OrthaRadarMap> {
           const SizedBox(height: 8),
           const SizedBox(height: 14),
         ],
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Theme.of(
+              context,
+            ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: Theme.of(
+                context,
+              ).colorScheme.outline.withValues(alpha: 0.35),
+            ),
+          ),
+          child: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.palette_outlined, size: 19),
+                  SizedBox(width: 8),
+                  Text(
+                    'Niederschlagsintensität',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+              SizedBox(height: 12),
+              Wrap(
+                spacing: 16,
+                runSpacing: 10,
+                children: [
+                  _RadarLegendEntry(
+                    color: Color(0xFFB8ECF4),
+                    label: 'Sehr schwach',
+                  ),
+                  _RadarLegendEntry(color: Color(0xFF48C8E8), label: 'Schwach'),
+                  _RadarLegendEntry(color: Color(0xFF078CCB), label: 'Mäßig'),
+                  _RadarLegendEntry(color: Color(0xFFFFE044), label: 'Stark'),
+                  _RadarLegendEntry(
+                    color: Color(0xFFFF9D24),
+                    label: 'Sehr stark',
+                  ),
+                  _RadarLegendEntry(color: Color(0xFFE84A3C), label: 'Extrem'),
+                ],
+              ),
+              SizedBox(height: 10),
+              Text(
+                'Die Farben zeigen die relative Radarintensität. '
+                'Sie sind keine direkte Niederschlagsmengen-Prognose.',
+                style: TextStyle(fontSize: 12, color: Colors.white70),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
         if (metadata.isStale) ...[
           Container(
             width: double.infinity,
