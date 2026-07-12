@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 
 import 'engine/risk_engine.dart';
 import 'models/official_weather_warning.dart';
+import 'models/saved_location.dart';
 import 'pages/locations_page.dart';
 import 'services/location_storage_service.dart';
 import 'services/warning_providers/dwd_cap_download_client.dart';
@@ -78,6 +79,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
 
   final List<String> places = [];
 
+  SavedLocation? selectedLocation;
   String selectedPlace = 'Duisburg';
   WeatherData? weatherData;
   RiskResult? riskResult;
@@ -167,6 +169,18 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
     await loadWeather(initialPlace);
   }
 
+  Future<SavedLocation?> _findSavedLocation(String place) async {
+    final locations = await locationStorageService.loadSavedLocations();
+
+    for (final location in locations) {
+      if (location.name == place) {
+        return location;
+      }
+    }
+
+    return null;
+  }
+
   Future<void> loadWeather(String place) async {
     setState(() {
       isLoading = true;
@@ -177,12 +191,26 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
     });
 
     try {
-      final data = await weatherService.fetchWeather(place);
+      final savedLocation = await _findSavedLocation(place);
+
+      if (mounted) {
+        setState(() {
+          selectedLocation = savedLocation;
+        });
+      }
+
+      final data = savedLocation == null
+          ? await weatherService.fetchWeather(place)
+          : await weatherService.fetchWeatherForLocation(savedLocation);
+
       final risk = riskEngine.evaluate(data);
 
+      final locationLatitude = savedLocation?.latitude ?? data.latitude;
+      final locationLongitude = savedLocation?.longitude ?? data.longitude;
+
       final warningsSupported = dwdWarningProvider.supportsLocation(
-        latitude: data.latitude,
-        longitude: data.longitude,
+        latitude: locationLatitude,
+        longitude: locationLongitude,
       );
 
       var warnings = <OfficialWeatherWarning>[];
@@ -197,8 +225,8 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
 
         try {
           warnings = await dwdWarningProvider.fetchWarnings(
-            latitude: data.latitude,
-            longitude: data.longitude,
+            latitude: locationLatitude,
+            longitude: locationLongitude,
           );
         } catch (error) {
           warningsError = 'Amtliche Warnungen sind derzeit nicht verfügbar.';
@@ -211,6 +239,13 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
         weatherData = data;
         riskResult = risk;
         selectedPlace = data.place;
+        selectedLocation =
+            savedLocation ??
+            SavedLocation(
+              name: data.place,
+              latitude: data.latitude,
+              longitude: data.longitude,
+            );
 
         officialWarningsSupported = warningsSupported;
         officialWarnings = warnings;
@@ -885,21 +920,21 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                                   ],
                                 ),
                                 const SizedBox(height: 18),
-                                if (data == null)
+                                if (selectedLocation == null)
                                   const SizedBox(
                                     height: 380,
                                     child: Center(
                                       child: Text(
                                         'Für die Radaransicht werden zunächst '
-                                        'Wetter- und Standortdaten geladen.',
+                                        'Standortdaten geladen.',
                                       ),
                                     ),
                                   )
                                 else
                                   OrthaRadarMap(
-                                    latitude: data.latitude,
-                                    longitude: data.longitude,
-                                    place: selectedPlace,
+                                    latitude: selectedLocation!.latitude,
+                                    longitude: selectedLocation!.longitude,
+                                    place: selectedLocation!.name,
                                   ),
                                 const SizedBox(height: 16),
                                 const Row(
