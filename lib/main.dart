@@ -8,6 +8,7 @@ import 'services/location_storage_service.dart';
 import 'services/warning_providers/dwd_cap_download_client.dart';
 import 'services/warning_providers/dwd_warning_provider.dart';
 import 'services/weather_service.dart';
+import 'widgets/radar/ortha_radar_map.dart';
 import 'settings/unit_settings.dart';
 import 'settings/unit_settings_page.dart';
 import 'settings/unit_settings_service.dart';
@@ -884,57 +885,22 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                                   ],
                                 ),
                                 const SizedBox(height: 18),
-                                Container(
-                                  width: double.infinity,
-                                  constraints: const BoxConstraints(
-                                    minHeight: 280,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: orthaSurfaceElevated,
-                                    borderRadius: BorderRadius.circular(18),
-                                    border: Border.all(
-                                      color: orthaBorder.withValues(
-                                        alpha: 0.85,
+                                if (data == null)
+                                  const SizedBox(
+                                    height: 380,
+                                    child: Center(
+                                      child: Text(
+                                        'Für die Radaransicht werden zunächst '
+                                        'Wetter- und Standortdaten geladen.',
                                       ),
                                     ),
+                                  )
+                                else
+                                  OrthaRadarMap(
+                                    latitude: data.latitude,
+                                    longitude: data.longitude,
+                                    place: selectedPlace,
                                   ),
-                                  child: const Padding(
-                                    padding: EdgeInsets.all(24),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.radar_outlined,
-                                          size: 64,
-                                          color: orthaAccent,
-                                        ),
-                                        SizedBox(height: 18),
-                                        Text(
-                                          'Radar-Datenquelle noch nicht angebunden',
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                            color: orthaPrimaryText,
-                                          ),
-                                        ),
-                                        SizedBox(height: 10),
-                                        Text(
-                                          'Diese Ansicht ist für die spätere '
-                                          'Integration von Niederschlagsradar, '
-                                          'Radar-Zeitverlauf und Kartenebenen '
-                                          'vorbereitet.',
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(
-                                            color: orthaSecondaryText,
-                                            height: 1.5,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
                                 const SizedBox(height: 16),
                                 const Row(
                                   children: [
@@ -946,8 +912,8 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                                     SizedBox(width: 8),
                                     Expanded(
                                       child: Text(
-                                        'Es werden derzeit keine simulierten '
-                                        'oder erfundenen Radardaten angezeigt.',
+                                        'Radarquelle: RainViewer · '
+                                        'Basiskarte: OpenStreetMap',
                                         style: TextStyle(
                                           color: orthaSecondaryText,
                                           fontSize: 13,
@@ -1080,57 +1046,62 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                                               ),
                                       ),
                                     ),
-                                    child: ListTile(
-                                      contentPadding:
-                                          const EdgeInsets.symmetric(
-                                            horizontal: 14,
-                                            vertical: 5,
-                                          ),
-                                      leading: Icon(
-                                        selected
-                                            ? Icons.location_on
-                                            : Icons.location_on_outlined,
-                                        color: selected
-                                            ? orthaAccent
-                                            : orthaSecondaryText,
-                                      ),
-                                      title: Text(
-                                        place,
-                                        style: TextStyle(
-                                          color: orthaPrimaryText,
-                                          fontWeight: selected
-                                              ? FontWeight.bold
-                                              : FontWeight.normal,
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      borderRadius: BorderRadius.circular(16),
+                                      clipBehavior: Clip.antiAlias,
+                                      child: ListTile(
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              horizontal: 14,
+                                              vertical: 5,
+                                            ),
+                                        leading: Icon(
+                                          selected
+                                              ? Icons.location_on
+                                              : Icons.location_on_outlined,
+                                          color: selected
+                                              ? orthaAccent
+                                              : orthaSecondaryText,
                                         ),
-                                      ),
-                                      subtitle: selected
-                                          ? const Text(
-                                              'Aktuell ausgewählter Ort',
-                                              style: TextStyle(
-                                                color: orthaSecondaryText,
-                                              ),
-                                            )
-                                          : null,
-                                      onTap: () async {
-                                        setState(() {
-                                          selectedPlace = place;
-                                        });
+                                        title: Text(
+                                          place,
+                                          style: TextStyle(
+                                            color: orthaPrimaryText,
+                                            fontWeight: selected
+                                                ? FontWeight.bold
+                                                : FontWeight.normal,
+                                          ),
+                                        ),
+                                        subtitle: selected
+                                            ? const Text(
+                                                'Aktuell ausgewählter Ort',
+                                                style: TextStyle(
+                                                  color: orthaSecondaryText,
+                                                ),
+                                              )
+                                            : null,
+                                        onTap: () async {
+                                          setState(() {
+                                            selectedPlace = place;
+                                          });
 
-                                        await locationStorageService
-                                            .saveSelectedLocation(place);
-                                        await loadWeather(place);
-                                      },
-                                      trailing: places.length > 1
-                                          ? IconButton(
-                                              tooltip: 'Ort löschen',
-                                              onPressed: () =>
-                                                  deletePlace(place),
-                                              icon: const Icon(
-                                                Icons.delete_outline,
-                                                color: orthaSecondaryText,
-                                              ),
-                                            )
-                                          : null,
+                                          await locationStorageService
+                                              .saveSelectedLocation(place);
+                                          await loadWeather(place);
+                                        },
+                                        trailing: places.length > 1
+                                            ? IconButton(
+                                                tooltip: 'Ort löschen',
+                                                onPressed: () =>
+                                                    deletePlace(place),
+                                                icon: const Icon(
+                                                  Icons.delete_outline,
+                                                  color: orthaSecondaryText,
+                                                ),
+                                              )
+                                            : null,
+                                      ),
                                     ),
                                   );
                                 }),

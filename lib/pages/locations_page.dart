@@ -261,85 +261,92 @@ class _LocationsPageState extends State<LocationsPage> {
                         ),
                       ],
                     ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      leading: Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: selected
-                              ? _orthaAccent.withValues(alpha: 0.16)
-                              : _orthaSurfaceElevated,
-                          borderRadius: BorderRadius.circular(13),
-                          border: Border.all(
+                    child: Material(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(18),
+                      clipBehavior: Clip.antiAlias,
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        leading: Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
                             color: selected
-                                ? _orthaAccent.withValues(alpha: 0.55)
-                                : _orthaBorder.withValues(alpha: 0.72),
-                          ),
-                        ),
-                        child: Icon(
-                          selected
-                              ? Icons.location_on
-                              : Icons.location_on_outlined,
-                          color: selected ? _orthaAccent : _orthaSecondaryText,
-                        ),
-                      ),
-                      title: Text(
-                        place,
-                        style: TextStyle(
-                          color: _orthaPrimaryText,
-                          fontWeight: selected
-                              ? FontWeight.bold
-                              : FontWeight.w600,
-                        ),
-                      ),
-                      subtitle: selected
-                          ? const Padding(
-                              padding: EdgeInsets.only(top: 4),
-                              child: Text(
-                                'Aktuell ausgewählter Ort',
-                                style: TextStyle(color: _orthaSecondaryText),
-                              ),
-                            )
-                          : null,
-                      onTap: () {
-                        widget.onSelect(place);
-                        Navigator.pop(context);
-                      },
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            tooltip: 'Ort umbenennen',
-                            icon: const Icon(
-                              Icons.edit_outlined,
-                              color: _orthaSecondaryText,
+                                ? _orthaAccent.withValues(alpha: 0.16)
+                                : _orthaSurfaceElevated,
+                            borderRadius: BorderRadius.circular(13),
+                            border: Border.all(
+                              color: selected
+                                  ? _orthaAccent.withValues(alpha: 0.55)
+                                  : _orthaBorder.withValues(alpha: 0.72),
                             ),
-                            onPressed: () => showRenameDialog(place),
                           ),
-                          if (orderedPlaces.length > 1)
+                          child: Icon(
+                            selected
+                                ? Icons.location_on
+                                : Icons.location_on_outlined,
+                            color: selected
+                                ? _orthaAccent
+                                : _orthaSecondaryText,
+                          ),
+                        ),
+                        title: Text(
+                          place,
+                          style: TextStyle(
+                            color: _orthaPrimaryText,
+                            fontWeight: selected
+                                ? FontWeight.bold
+                                : FontWeight.w600,
+                          ),
+                        ),
+                        subtitle: selected
+                            ? const Padding(
+                                padding: EdgeInsets.only(top: 4),
+                                child: Text(
+                                  'Aktuell ausgewählter Ort',
+                                  style: TextStyle(color: _orthaSecondaryText),
+                                ),
+                              )
+                            : null,
+                        onTap: () {
+                          widget.onSelect(place);
+                          Navigator.pop(context);
+                        },
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
                             IconButton(
-                              tooltip: 'Ort löschen',
+                              tooltip: 'Ort umbenennen',
                               icon: const Icon(
-                                Icons.delete_outline,
-                                color: _orthaDanger,
-                              ),
-                              onPressed: () => deletePlace(place),
-                            ),
-                          ReorderableDragStartListener(
-                            index: index,
-                            child: const Padding(
-                              padding: EdgeInsets.all(10),
-                              child: Icon(
-                                Icons.drag_handle,
+                                Icons.edit_outlined,
                                 color: _orthaSecondaryText,
                               ),
+                              onPressed: () => showRenameDialog(place),
                             ),
-                          ),
-                        ],
+                            if (orderedPlaces.length > 1)
+                              IconButton(
+                                tooltip: 'Ort löschen',
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  color: _orthaDanger,
+                                ),
+                                onPressed: () => deletePlace(place),
+                              ),
+                            ReorderableDragStartListener(
+                              index: index,
+                              child: const Padding(
+                                padding: EdgeInsets.all(10),
+                                child: Icon(
+                                  Icons.drag_handle,
+                                  color: _orthaSecondaryText,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   );
