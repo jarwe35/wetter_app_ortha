@@ -50,14 +50,32 @@ class LocationMigrationService {
           locationName,
         );
 
-        final duplicateLocation = migratedLocations.any(
-          (location) =>
-              location.name.toLowerCase() ==
-                  resolvedLocation.name.toLowerCase() ||
-              location.hasSameCoordinatesAs(resolvedLocation),
-        );
+        final sameNameLocation = migratedLocations
+            .cast<SavedLocation?>()
+            .firstWhere(
+              (location) =>
+                  location?.name.toLowerCase() ==
+                  resolvedLocation.name.toLowerCase(),
+              orElse: () => null,
+            );
 
-        if (!duplicateLocation) {
+        if (sameNameLocation != null) {
+          continue;
+        }
+
+        final sameCoordinatesLocation = migratedLocations
+            .cast<SavedLocation?>()
+            .firstWhere(
+              (location) =>
+                  location?.hasSameCoordinatesAs(resolvedLocation) == true,
+              orElse: () => null,
+            );
+
+        if (sameCoordinatesLocation != null) {
+          migratedLocations.add(
+            sameCoordinatesLocation.copyWith(name: locationName),
+          );
+        } else {
           migratedLocations.add(resolvedLocation);
         }
       } on LocationServiceException {

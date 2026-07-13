@@ -265,6 +265,58 @@ void main() {
       },
     );
 
+    test(
+      'ordnet Legacy-Namen bei gleichen Koordinaten einem strukturierten Ort zu',
+      () async {
+        const existingLocation = SavedLocation(
+          name: 'Denpasar',
+          latitude: -8.4095,
+          longitude: 115.1889,
+          country: 'Indonesien',
+          timezone: 'Asia/Makassar',
+        );
+
+        await storageService.saveSavedLocations([existingLocation]);
+        await storageService.saveLocations(['Bali']);
+
+        final client = MockClient((request) async {
+          expect(request.url.queryParameters['name'], 'Bali');
+
+          return Response('''
+{
+  "results": [
+    {
+      "name": "Bali",
+      "latitude": -8.4095,
+      "longitude": 115.1889,
+      "country": "Indonesien",
+      "timezone": "Asia/Makassar"
+    }
+  ]
+}
+''', 200);
+        });
+
+        final migrationService = LocationMigrationService(
+          storageService: storageService,
+          locationService: LocationService(httpClient: client),
+        );
+
+        final result = await migrationService.migrateLegacyLocations();
+
+        expect(result.isComplete, isTrue);
+
+        final migratedLegacyLocation = result.locations
+            .cast<SavedLocation?>()
+            .firstWhere(
+              (location) => location?.name.toLowerCase() == 'bali',
+              orElse: () => null,
+            );
+
+        expect(migratedLegacyLocation, isNotNull);
+      },
+    );
+
     test('erzeugt keine Dublette für bereits migrierten Ort', () async {
       const existingLocation = SavedLocation(
         name: 'Duisburg',
