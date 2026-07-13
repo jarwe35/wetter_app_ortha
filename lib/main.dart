@@ -613,17 +613,17 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
     if (!mounted) return;
 
     setState(() {
-      places
-        ..clear()
-        ..addAll(newPlaces);
-
       savedLocations
         ..clear()
         ..addAll(reorderedSavedLocations);
+
+      places
+        ..clear()
+        ..addAll(savedLocations.map((location) => location.name));
     });
 
-    await locationStorageService.saveLocations(places);
     await locationStorageService.saveSavedLocations(savedLocations);
+    await locationStorageService.saveLocations(places);
   }
 
   Future<void> openLocationsPage() async {
