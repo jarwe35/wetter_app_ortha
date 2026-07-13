@@ -837,10 +837,10 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
               ),
               const SizedBox(height: 18),
               PlaceSelector(
-                places: places,
-                selectedPlace: selectedPlace,
-                onSelect: _selectPlace,
-                onDelete: deletePlace,
+                locations: savedLocations,
+                selectedLocation: selectedLocation,
+                onSelect: (location) => _selectPlace(location.name),
+                onDelete: (location) => deletePlace(location.name),
               ),
               const SizedBox(height: 18),
               Expanded(
@@ -1403,15 +1403,15 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
 }
 
 class PlaceSelector extends StatelessWidget {
-  final List<String> places;
-  final String selectedPlace;
-  final ValueChanged<String> onSelect;
-  final ValueChanged<String> onDelete;
+  final List<SavedLocation> locations;
+  final SavedLocation? selectedLocation;
+  final ValueChanged<SavedLocation> onSelect;
+  final ValueChanged<SavedLocation> onDelete;
 
   const PlaceSelector({
     super.key,
-    required this.places,
-    required this.selectedPlace,
+    required this.locations,
+    required this.selectedLocation,
     required this.onSelect,
     required this.onDelete,
   });
@@ -1423,22 +1423,23 @@ class PlaceSelector extends StatelessWidget {
       child: ListView.separated(
         padding: const EdgeInsets.symmetric(horizontal: 4),
         scrollDirection: Axis.horizontal,
-        itemCount: places.length,
+        itemCount: locations.length,
         separatorBuilder: (_, index) => const SizedBox(width: 10),
         itemBuilder: (context, index) {
-          final place = places[index];
+          final location = locations[index];
           final selected =
-              place.trim().toLowerCase() == selectedPlace.trim().toLowerCase();
+              selectedLocation?.name.trim().toLowerCase() ==
+              location.name.trim().toLowerCase();
 
           return InputChip(
-            label: Text(place),
+            label: Text(location.name),
             selected: selected,
             onPressed: () {
-              onSelect(place);
+              onSelect(location);
             },
-            onDeleted: places.length > 1
+            onDeleted: locations.length > 1
                 ? () {
-                    onDelete(place);
+                    onDelete(location);
                   }
                 : null,
           );
