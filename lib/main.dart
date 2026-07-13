@@ -311,7 +311,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
       setState(() {
         weatherData = data;
         riskResult = risk;
-        selectedPlace = data.place;
+        selectedPlace = savedLocation?.name ?? data.place;
         selectedLocation =
             savedLocation ??
             SavedLocation(
@@ -442,6 +442,28 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
     await loadWeather(locationToSelect.name);
   }
 
+  Future<void> _selectPlace(String place) async {
+    final savedLocation = _findSavedLocation(place);
+    final canonicalPlace = savedLocation?.name ?? place;
+
+    if (!mounted) return;
+
+    setState(() {
+      selectedPlace = canonicalPlace;
+      selectedLocation = savedLocation;
+    });
+
+    await locationStorageService.saveSelectedLocation(canonicalPlace);
+
+    if (savedLocation != null) {
+      await locationStorageService.saveSelectedSavedLocationName(
+        savedLocation.name,
+      );
+    }
+
+    await loadWeather(canonicalPlace);
+  }
+
   Future<void> deletePlace(String place) async {
     if (places.length == 1) return;
 
@@ -489,14 +511,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
         builder: (context) => LocationsPage(
           places: places,
           selectedPlace: selectedPlace,
-          onSelect: (place) async {
-            setState(() {
-              selectedPlace = place;
-            });
-
-            await locationStorageService.saveSelectedLocation(place);
-            await loadWeather(place);
-          },
+          onSelect: _selectPlace,
           onDelete: (place) {
             deletePlace(place);
           },
@@ -715,15 +730,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                             builder: (context) => LocationsPage(
                               places: places,
                               selectedPlace: selectedPlace,
-                              onSelect: (place) async {
-                                setState(() {
-                                  selectedPlace = place;
-                                });
-
-                                await locationStorageService
-                                    .saveSelectedLocation(place);
-                                await loadWeather(place);
-                              },
+                              onSelect: _selectPlace,
                               onDelete: (place) {
                                 deletePlace(place);
                               },
@@ -789,14 +796,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
               PlaceSelector(
                 places: places,
                 selectedPlace: selectedPlace,
-                onSelect: (place) async {
-                  setState(() {
-                    selectedPlace = place;
-                  });
-
-                  await locationStorageService.saveSelectedLocation(place);
-                  await loadWeather(place);
-                },
+                onSelect: _selectPlace,
                 onDelete: deletePlace,
               ),
               const SizedBox(height: 18),
@@ -1254,15 +1254,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                                                 ),
                                               )
                                             : null,
-                                        onTap: () async {
-                                          setState(() {
-                                            selectedPlace = place;
-                                          });
-
-                                          await locationStorageService
-                                              .saveSelectedLocation(place);
-                                          await loadWeather(place);
-                                        },
+                                        onTap: () => _selectPlace(place),
                                         trailing: places.length > 1
                                             ? IconButton(
                                                 tooltip: 'Ort löschen',
@@ -1386,18 +1378,26 @@ class PlaceSelector extends StatelessWidget {
     return SizedBox(
       height: 46,
       child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
         scrollDirection: Axis.horizontal,
         itemCount: places.length,
         separatorBuilder: (_, index) => const SizedBox(width: 10),
         itemBuilder: (context, index) {
           final place = places[index];
-          final selected = place == selectedPlace;
+          final selected =
+              place.trim().toLowerCase() == selectedPlace.trim().toLowerCase();
 
           return InputChip(
             label: Text(place),
             selected: selected,
-            onPressed: () => onSelect(place),
-            onDeleted: places.length > 1 ? () => onDelete(place) : null,
+            onPressed: () {
+              onSelect(place);
+            },
+            onDeleted: places.length > 1
+                ? () {
+                    onDelete(place);
+                  }
+                : null,
           );
         },
       ),

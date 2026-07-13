@@ -79,6 +79,23 @@ class _OrthaRadarMapState extends State<OrthaRadarMap> {
   }
 
   @override
+  void didUpdateWidget(covariant OrthaRadarMap oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    final locationChanged =
+        oldWidget.latitude != widget.latitude ||
+        oldWidget.longitude != widget.longitude;
+
+    if (locationChanged) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+
+        _mapController.move(LatLng(widget.latitude, widget.longitude), 7.5);
+      });
+    }
+  }
+
+  @override
   void dispose() {
     _animationTimer?.cancel();
     _mapController.dispose();
