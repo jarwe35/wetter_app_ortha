@@ -430,8 +430,8 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
 
     final existingLocation = savedLocations.cast<SavedLocation?>().firstWhere(
       (location) =>
-          location?.name.toLowerCase() == resolvedLocation.name.toLowerCase() ||
-          location?.hasSameCoordinatesAs(resolvedLocation) == true,
+          location?.name.trim().toLowerCase() ==
+          resolvedLocation.name.trim().toLowerCase(),
       orElse: () => null,
     );
 
@@ -441,11 +441,9 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
       setState(() {
         savedLocations.add(resolvedLocation);
 
-        if (!places.any(
-          (place) => place.toLowerCase() == resolvedLocation.name.toLowerCase(),
-        )) {
-          places.add(resolvedLocation.name);
-        }
+        places
+          ..clear()
+          ..addAll(savedLocations.map((location) => location.name));
 
         selectedLocation = resolvedLocation;
         selectedPlace = resolvedLocation.name;
