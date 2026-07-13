@@ -493,42 +493,37 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
   }
 
   Future<void> deletePlace(String place) async {
-    if (places.length == 1) return;
+    if (savedLocations.length == 1) return;
 
     final normalizedPlace = place.trim().toLowerCase();
     final deletingSelectedPlace =
         selectedPlace.trim().toLowerCase() == normalizedPlace;
 
     setState(() {
-      places.removeWhere(
-        (storedPlace) => storedPlace.trim().toLowerCase() == normalizedPlace,
-      );
-
       savedLocations.removeWhere(
         (location) => location.name.trim().toLowerCase() == normalizedPlace,
       );
 
-      if (deletingSelectedPlace && places.isNotEmpty) {
-        selectedPlace = places.first;
-        selectedLocation = _findSavedLocation(selectedPlace);
+      places
+        ..clear()
+        ..addAll(savedLocations.map((location) => location.name));
+
+      if (deletingSelectedPlace && savedLocations.isNotEmpty) {
+        selectedLocation = savedLocations.first;
+        selectedPlace = selectedLocation!.name;
       }
     });
 
-    await locationStorageService.saveLocations(places);
     await locationStorageService.saveSavedLocations(savedLocations);
+    await locationStorageService.saveLocations(places);
 
-    if (deletingSelectedPlace && places.isNotEmpty) {
-      await locationStorageService.saveSelectedLocation(selectedPlace);
+    if (deletingSelectedPlace && selectedLocation != null) {
+      await locationStorageService.saveSelectedLocation(selectedLocation!.name);
+      await locationStorageService.saveSelectedSavedLocationName(
+        selectedLocation!.name,
+      );
 
-      final nextLocation = selectedLocation;
-
-      if (nextLocation != null) {
-        await locationStorageService.saveSelectedSavedLocationName(
-          nextLocation.name,
-        );
-      }
-
-      await loadWeather(selectedPlace);
+      await loadWeather(selectedLocation!.name);
     }
   }
 
