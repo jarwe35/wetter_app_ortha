@@ -445,17 +445,41 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
   Future<void> deletePlace(String place) async {
     if (places.length == 1) return;
 
-    setState(() {
-      places.remove(place);
+    final normalizedPlace = place.trim().toLowerCase();
+    final deletingSelectedPlace =
+        selectedPlace.trim().toLowerCase() == normalizedPlace;
 
-      if (selectedPlace == place) {
+    setState(() {
+      places.removeWhere(
+        (storedPlace) => storedPlace.trim().toLowerCase() == normalizedPlace,
+      );
+
+      savedLocations.removeWhere(
+        (location) => location.name.trim().toLowerCase() == normalizedPlace,
+      );
+
+      if (deletingSelectedPlace && places.isNotEmpty) {
         selectedPlace = places.first;
+        selectedLocation = _findSavedLocation(selectedPlace);
       }
     });
 
     await locationStorageService.saveLocations(places);
-    await locationStorageService.saveSelectedLocation(selectedPlace);
-    await loadWeather(selectedPlace);
+    await locationStorageService.saveSavedLocations(savedLocations);
+
+    if (deletingSelectedPlace && places.isNotEmpty) {
+      await locationStorageService.saveSelectedLocation(selectedPlace);
+
+      final nextLocation = selectedLocation;
+
+      if (nextLocation != null) {
+        await locationStorageService.saveSelectedSavedLocationName(
+          nextLocation.name,
+        );
+      }
+
+      await loadWeather(selectedPlace);
+    }
   }
 
   Future<void> openLocationsPage() async {
