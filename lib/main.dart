@@ -91,6 +91,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
 
   UnitSettings unitSettings = const UnitSettings();
 
+  final List<SavedLocation> savedLocations = [];
   final List<String> places = [];
 
   SavedLocation? selectedLocation;
@@ -177,7 +178,8 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
     final storedSelectedPlace = await locationStorageService
         .loadSelectedLocation();
 
-    final savedLocations = await locationStorageService.loadSavedLocations();
+    final storedSavedLocations = await locationStorageService
+        .loadSavedLocations();
 
     final storedSelectedSavedLocationName = await locationStorageService
         .loadSelectedSavedLocationName();
@@ -191,7 +193,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
     SavedLocation? initialSavedLocation;
 
     if (storedSelectedSavedLocationName != null) {
-      for (final location in savedLocations) {
+      for (final location in storedSavedLocations) {
         if (location.name.toLowerCase() ==
             storedSelectedSavedLocationName.toLowerCase()) {
           initialSavedLocation = location;
@@ -200,16 +202,23 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
       }
     }
 
-    initialSavedLocation ??= savedLocations.cast<SavedLocation?>().firstWhere(
-      (location) => location?.name.toLowerCase() == initialPlace.toLowerCase(),
-      orElse: () => null,
-    );
+    initialSavedLocation ??= storedSavedLocations
+        .cast<SavedLocation?>()
+        .firstWhere(
+          (location) =>
+              location?.name.toLowerCase() == initialPlace.toLowerCase(),
+          orElse: () => null,
+        );
 
     if (initialSavedLocation == null &&
         initialPlace.toLowerCase() == _defaultLocation.name.toLowerCase()) {
       initialSavedLocation = _defaultLocation;
 
-      final locationsWithDefault = [...savedLocations, _defaultLocation];
+      final locationsWithDefault = [...storedSavedLocations, _defaultLocation];
+
+      storedSavedLocations
+        ..clear()
+        ..add(_defaultLocation);
 
       await locationStorageService.saveSavedLocations(locationsWithDefault);
       await locationStorageService.saveSelectedSavedLocationName(
@@ -218,9 +227,14 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
     }
 
     setState(() {
+      savedLocations
+        ..clear()
+        ..addAll(storedSavedLocations);
+
       places
         ..clear()
         ..addAll(storedPlaces);
+
       selectedPlace = initialSavedLocation?.name ?? initialPlace;
       selectedLocation = initialSavedLocation;
     });
@@ -228,11 +242,11 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
     await loadWeather(selectedPlace);
   }
 
-  Future<SavedLocation?> _findSavedLocation(String place) async {
-    final locations = await locationStorageService.loadSavedLocations();
+  SavedLocation? _findSavedLocation(String place) {
+    final normalizedPlace = place.trim().toLowerCase();
 
-    for (final location in locations) {
-      if (location.name == place) {
+    for (final location in savedLocations) {
+      if (location.name.trim().toLowerCase() == normalizedPlace) {
         return location;
       }
     }
@@ -250,7 +264,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
     });
 
     try {
-      final savedLocation = await _findSavedLocation(place);
+      final savedLocation = _findSavedLocation(place);
 
       if (mounted) {
         setState(() {
@@ -371,20 +385,61 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
 
     if (value.isEmpty) return;
 
-    if (!places.contains(value)) {
-      setState(() {
-        places.add(value);
-      });
-      await locationStorageService.saveLocations(places);
+    SavedLocation resolvedLocation;
+
+    try {
+      resolvedLocation = await locationService.resolveLocation(value);
+    } on LocationServiceException catch (error) {
+      if (!dialogContext.mounted) return;
+
+      ScaffoldMessenger.of(
+        dialogContext,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+      return;
     }
 
-    await locationStorageService.saveSelectedLocation(value);
+    final existingLocation = savedLocations.cast<SavedLocation?>().firstWhere(
+      (location) =>
+          location?.name.toLowerCase() == resolvedLocation.name.toLowerCase() ||
+          location?.hasSameCoordinatesAs(resolvedLocation) == true,
+      orElse: () => null,
+    );
+
+    final locationToSelect = existingLocation ?? resolvedLocation;
+
+    if (existingLocation == null) {
+      setState(() {
+        savedLocations.add(resolvedLocation);
+
+        if (!places.any(
+          (place) => place.toLowerCase() == resolvedLocation.name.toLowerCase(),
+        )) {
+          places.add(resolvedLocation.name);
+        }
+
+        selectedLocation = resolvedLocation;
+        selectedPlace = resolvedLocation.name;
+      });
+
+      await locationStorageService.saveSavedLocations(savedLocations);
+      await locationStorageService.saveLocations(places);
+    } else {
+      setState(() {
+        selectedLocation = existingLocation;
+        selectedPlace = existingLocation.name;
+      });
+    }
+
+    await locationStorageService.saveSelectedSavedLocationName(
+      locationToSelect.name,
+    );
+    await locationStorageService.saveSelectedLocation(locationToSelect.name);
 
     if (dialogContext.mounted) {
       Navigator.pop(dialogContext);
     }
 
-    await loadWeather(value);
+    await loadWeather(locationToSelect.name);
   }
 
   Future<void> deletePlace(String place) async {
