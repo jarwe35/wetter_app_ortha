@@ -504,6 +504,64 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
     }
   }
 
+  Future<void> _renamePlace(String oldPlace, String newPlace) async {
+    final cleanedName = newPlace.trim();
+
+    if (cleanedName.isEmpty ||
+        cleanedName.toLowerCase() == oldPlace.trim().toLowerCase() ||
+        places.any(
+          (place) =>
+              place.trim().toLowerCase() == cleanedName.toLowerCase() &&
+              place.trim().toLowerCase() != oldPlace.trim().toLowerCase(),
+        )) {
+      return;
+    }
+
+    final placeIndex = places.indexWhere(
+      (place) => place.trim().toLowerCase() == oldPlace.trim().toLowerCase(),
+    );
+
+    if (placeIndex < 0) {
+      return;
+    }
+
+    final savedLocationIndex = savedLocations.indexWhere(
+      (location) =>
+          location.name.trim().toLowerCase() == oldPlace.trim().toLowerCase(),
+    );
+
+    final renamingSelectedPlace =
+        selectedPlace.trim().toLowerCase() == oldPlace.trim().toLowerCase();
+
+    setState(() {
+      places[placeIndex] = cleanedName;
+
+      if (savedLocationIndex >= 0) {
+        savedLocations[savedLocationIndex] = savedLocations[savedLocationIndex]
+            .copyWith(name: cleanedName);
+      }
+
+      if (renamingSelectedPlace) {
+        selectedPlace = cleanedName;
+
+        if (savedLocationIndex >= 0) {
+          selectedLocation = savedLocations[savedLocationIndex];
+        }
+      }
+    });
+
+    await locationStorageService.saveLocations(places);
+    await locationStorageService.saveSavedLocations(savedLocations);
+
+    if (renamingSelectedPlace) {
+      await locationStorageService.saveSelectedLocation(cleanedName);
+
+      if (selectedLocation != null) {
+        await locationStorageService.saveSelectedSavedLocationName(cleanedName);
+      }
+    }
+  }
+
   Future<void> openLocationsPage() async {
     await Navigator.push<void>(
       context,
@@ -524,36 +582,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
 
             await locationStorageService.saveLocations(places);
           },
-          onRename: (oldPlace, newPlace) async {
-            final cleanedName = newPlace.trim();
-
-            if (cleanedName.isEmpty ||
-                cleanedName == oldPlace ||
-                places.contains(cleanedName)) {
-              return;
-            }
-
-            final placeIndex = places.indexOf(oldPlace);
-
-            if (placeIndex < 0) {
-              return;
-            }
-
-            setState(() {
-              places[placeIndex] = cleanedName;
-
-              if (selectedPlace == oldPlace) {
-                selectedPlace = cleanedName;
-              }
-            });
-
-            await locationStorageService.saveLocations(places);
-            await locationStorageService.saveSelectedLocation(selectedPlace);
-
-            if (selectedPlace == cleanedName) {
-              await loadWeather(cleanedName);
-            }
-          },
+          onRename: _renamePlace,
         ),
       ),
     );
@@ -745,39 +774,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                                   places,
                                 );
                               },
-                              onRename: (oldPlace, newPlace) async {
-                                final cleanedName = newPlace.trim();
-
-                                if (cleanedName.isEmpty ||
-                                    cleanedName == oldPlace ||
-                                    places.contains(cleanedName)) {
-                                  return;
-                                }
-
-                                final placeIndex = places.indexOf(oldPlace);
-
-                                if (placeIndex < 0) {
-                                  return;
-                                }
-
-                                setState(() {
-                                  places[placeIndex] = cleanedName;
-
-                                  if (selectedPlace == oldPlace) {
-                                    selectedPlace = cleanedName;
-                                  }
-                                });
-
-                                await locationStorageService.saveLocations(
-                                  places,
-                                );
-                                await locationStorageService
-                                    .saveSelectedLocation(selectedPlace);
-
-                                if (selectedPlace == cleanedName) {
-                                  await loadWeather(cleanedName);
-                                }
-                              },
+                              onRename: _renamePlace,
                             ),
                           ),
                         );
