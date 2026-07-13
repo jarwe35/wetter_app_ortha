@@ -84,8 +84,8 @@ class LocationStorageService {
     for (final location in locations) {
       final alreadyStored = uniqueLocations.any(
         (storedLocation) =>
-            storedLocation.name.toLowerCase() == location.name.toLowerCase() ||
-            storedLocation.hasSameCoordinatesAs(location),
+            storedLocation.name.trim().toLowerCase() ==
+            location.name.trim().toLowerCase(),
       );
 
       if (!alreadyStored) {

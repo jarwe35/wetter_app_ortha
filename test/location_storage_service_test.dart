@@ -66,23 +66,26 @@ void main() {
       expect(loaded.single.name, 'Duisburg');
     });
 
-    test('entfernt Orte mit identischen Koordinaten', () async {
-      const locations = [
-        SavedLocation(name: 'Duisburg', latitude: 51.4344, longitude: 6.7623),
-        SavedLocation(
-          name: 'Duisburg Zentrum',
-          latitude: 51.4344,
-          longitude: 6.7623,
-        ),
-      ];
+    test(
+      'behält unterschiedliche Ortsnamen mit identischen Koordinaten',
+      () async {
+        const locations = [
+          SavedLocation(name: 'Bali', latitude: -8.4095, longitude: 115.1889),
+          SavedLocation(
+            name: 'Denpasar',
+            latitude: -8.4095,
+            longitude: 115.1889,
+          ),
+        ];
 
-      await service.saveSavedLocations(locations);
+        await service.saveSavedLocations(locations);
 
-      final loaded = await service.loadSavedLocations();
+        final loaded = await service.loadSavedLocations();
 
-      expect(loaded, hasLength(1));
-      expect(loaded.single.name, 'Duisburg');
-    });
+        expect(loaded, hasLength(2));
+        expect(loaded.map((location) => location.name), ['Bali', 'Denpasar']);
+      },
+    );
 
     test('überspringt beschädigte strukturierte Datensätze', () async {
       SharedPreferences.setMockInitialValues({
