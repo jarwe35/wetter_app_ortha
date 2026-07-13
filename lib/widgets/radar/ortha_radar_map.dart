@@ -54,6 +54,8 @@ class _OrthaRadarMapState extends State<OrthaRadarMap> {
   late final http.Client _httpClient;
   late final RainViewerRadarService _radarService;
 
+  final MapController _mapController = MapController();
+
   RainViewerRadarMetadata? _metadata;
   RainViewerRadarFrame? _selectedFrame;
 
@@ -79,6 +81,7 @@ class _OrthaRadarMapState extends State<OrthaRadarMap> {
   @override
   void dispose() {
     _animationTimer?.cancel();
+    _mapController.dispose();
     _httpClient.close();
     super.dispose();
   }
@@ -177,6 +180,24 @@ class _OrthaRadarMapState extends State<OrthaRadarMap> {
     }
   }
 
+  void _zoomIn() {
+    final camera = _mapController.camera;
+    final targetZoom = (camera.zoom + 1).clamp(3.0, 12.0);
+
+    _mapController.move(camera.center, targetZoom);
+  }
+
+  void _zoomOut() {
+    final camera = _mapController.camera;
+    final targetZoom = (camera.zoom - 1).clamp(3.0, 12.0);
+
+    _mapController.move(camera.center, targetZoom);
+  }
+
+  void _centerOnLocation() {
+    _mapController.move(LatLng(widget.latitude, widget.longitude), 7.5);
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -251,44 +272,81 @@ class _OrthaRadarMapState extends State<OrthaRadarMap> {
           borderRadius: BorderRadius.circular(18),
           child: SizedBox(
             height: 420,
-            child: FlutterMap(
-              options: MapOptions(
-                initialCenter: center,
-                initialZoom: 7.5,
-                minZoom: 3,
-                maxZoom: 12,
-              ),
+            child: Stack(
               children: [
-                TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'de.ortha.meteo',
-                ),
-                TileLayer(
-                  key: ValueKey(radarTileUrl),
-                  urlTemplate: radarTileUrl,
-                  userAgentPackageName: 'de.ortha.meteo',
-                  maxNativeZoom: 7,
-                  maxZoom: 12,
-                ),
-                MarkerLayer(
-                  markers: [
-                    Marker(
-                      point: center,
-                      width: 52,
-                      height: 52,
-                      child: const Icon(
-                        Icons.location_on,
-                        size: 42,
-                        color: Colors.redAccent,
-                      ),
+                FlutterMap(
+                  mapController: _mapController,
+                  options: MapOptions(
+                    initialCenter: center,
+                    initialZoom: 7.5,
+                    minZoom: 3,
+                    maxZoom: 12,
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate:
+                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'de.ortha.meteo',
+                    ),
+                    TileLayer(
+                      key: ValueKey(radarTileUrl),
+                      urlTemplate: radarTileUrl,
+                      userAgentPackageName: 'de.ortha.meteo',
+                      maxNativeZoom: 7,
+                      maxZoom: 12,
+                    ),
+                    MarkerLayer(
+                      markers: [
+                        Marker(
+                          point: center,
+                          width: 52,
+                          height: 52,
+                          child: const Icon(
+                            Icons.location_on,
+                            size: 42,
+                            color: Colors.redAccent,
+                          ),
+                        ),
+                      ],
+                    ),
+                    RichAttributionWidget(
+                      attributions: [
+                        TextSourceAttribution('OpenStreetMap contributors'),
+                        TextSourceAttribution('RainViewer'),
+                      ],
                     ),
                   ],
                 ),
-                RichAttributionWidget(
-                  attributions: [
-                    TextSourceAttribution('OpenStreetMap contributors'),
-                    TextSourceAttribution('RainViewer'),
-                  ],
+                Positioned(
+                  top: 14,
+                  right: 14,
+                  child: Material(
+                    color: const Color(0xE6153149),
+                    borderRadius: BorderRadius.circular(14),
+                    elevation: 5,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          tooltip: 'Hineinzoomen',
+                          onPressed: _zoomIn,
+                          icon: const Icon(Icons.add),
+                        ),
+                        Container(width: 34, height: 1, color: Colors.white24),
+                        IconButton(
+                          tooltip: 'Herauszoomen',
+                          onPressed: _zoomOut,
+                          icon: const Icon(Icons.remove),
+                        ),
+                        Container(width: 34, height: 1, color: Colors.white24),
+                        IconButton(
+                          tooltip: 'Ort zentrieren',
+                          onPressed: _centerOnLocation,
+                          icon: const Icon(Icons.my_location_outlined),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),
