@@ -529,59 +529,56 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
 
   Future<void> _renamePlace(String oldPlace, String newPlace) async {
     final cleanedName = newPlace.trim();
+    final normalizedOldPlace = oldPlace.trim().toLowerCase();
+    final normalizedNewPlace = cleanedName.toLowerCase();
 
-    if (cleanedName.isEmpty ||
-        cleanedName.toLowerCase() == oldPlace.trim().toLowerCase() ||
-        places.any(
-          (place) =>
-              place.trim().toLowerCase() == cleanedName.toLowerCase() &&
-              place.trim().toLowerCase() != oldPlace.trim().toLowerCase(),
-        )) {
+    if (cleanedName.isEmpty || normalizedNewPlace == normalizedOldPlace) {
       return;
     }
 
-    final placeIndex = places.indexWhere(
-      (place) => place.trim().toLowerCase() == oldPlace.trim().toLowerCase(),
+    final nameAlreadyExists = savedLocations.any(
+      (location) =>
+          location.name.trim().toLowerCase() == normalizedNewPlace &&
+          location.name.trim().toLowerCase() != normalizedOldPlace,
     );
 
-    if (placeIndex < 0) {
+    if (nameAlreadyExists) {
       return;
     }
 
     final savedLocationIndex = savedLocations.indexWhere(
-      (location) =>
-          location.name.trim().toLowerCase() == oldPlace.trim().toLowerCase(),
+      (location) => location.name.trim().toLowerCase() == normalizedOldPlace,
     );
 
+    if (savedLocationIndex < 0) {
+      return;
+    }
+
     final renamingSelectedPlace =
-        selectedPlace.trim().toLowerCase() == oldPlace.trim().toLowerCase();
+        selectedPlace.trim().toLowerCase() == normalizedOldPlace;
 
     setState(() {
-      places[placeIndex] = cleanedName;
+      savedLocations[savedLocationIndex] = savedLocations[savedLocationIndex]
+          .copyWith(name: cleanedName);
 
-      if (savedLocationIndex >= 0) {
-        savedLocations[savedLocationIndex] = savedLocations[savedLocationIndex]
-            .copyWith(name: cleanedName);
-      }
+      places
+        ..clear()
+        ..addAll(savedLocations.map((location) => location.name));
 
       if (renamingSelectedPlace) {
-        selectedPlace = cleanedName;
-
-        if (savedLocationIndex >= 0) {
-          selectedLocation = savedLocations[savedLocationIndex];
-        }
+        selectedLocation = savedLocations[savedLocationIndex];
+        selectedPlace = selectedLocation!.name;
       }
     });
 
-    await locationStorageService.saveLocations(places);
     await locationStorageService.saveSavedLocations(savedLocations);
+    await locationStorageService.saveLocations(places);
 
-    if (renamingSelectedPlace) {
-      await locationStorageService.saveSelectedLocation(cleanedName);
-
-      if (selectedLocation != null) {
-        await locationStorageService.saveSelectedSavedLocationName(cleanedName);
-      }
+    if (renamingSelectedPlace && selectedLocation != null) {
+      await locationStorageService.saveSelectedLocation(selectedLocation!.name);
+      await locationStorageService.saveSelectedSavedLocationName(
+        selectedLocation!.name,
+      );
     }
   }
 
