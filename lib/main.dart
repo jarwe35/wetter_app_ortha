@@ -562,6 +562,50 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
     }
   }
 
+  Future<void> _reorderPlaces(List<String> newPlaces) async {
+    final locationsByName = {
+      for (final location in savedLocations)
+        location.name.trim().toLowerCase(): location,
+    };
+
+    final reorderedSavedLocations = <SavedLocation>[];
+
+    for (final place in newPlaces) {
+      final location = locationsByName[place.trim().toLowerCase()];
+
+      if (location != null) {
+        reorderedSavedLocations.add(location);
+      }
+    }
+
+    for (final location in savedLocations) {
+      final alreadyAdded = reorderedSavedLocations.any(
+        (storedLocation) =>
+            storedLocation.name.trim().toLowerCase() ==
+            location.name.trim().toLowerCase(),
+      );
+
+      if (!alreadyAdded) {
+        reorderedSavedLocations.add(location);
+      }
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      places
+        ..clear()
+        ..addAll(newPlaces);
+
+      savedLocations
+        ..clear()
+        ..addAll(reorderedSavedLocations);
+    });
+
+    await locationStorageService.saveLocations(places);
+    await locationStorageService.saveSavedLocations(savedLocations);
+  }
+
   Future<void> openLocationsPage() async {
     await Navigator.push<void>(
       context,
@@ -573,15 +617,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
           onDelete: (place) {
             deletePlace(place);
           },
-          onReorder: (newPlaces) async {
-            setState(() {
-              places
-                ..clear()
-                ..addAll(newPlaces);
-            });
-
-            await locationStorageService.saveLocations(places);
-          },
+          onReorder: _reorderPlaces,
           onRename: _renamePlace,
         ),
       ),
@@ -763,17 +799,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                               onDelete: (place) {
                                 deletePlace(place);
                               },
-                              onReorder: (newPlaces) async {
-                                setState(() {
-                                  places
-                                    ..clear()
-                                    ..addAll(newPlaces);
-                                });
-
-                                await locationStorageService.saveLocations(
-                                  places,
-                                );
-                              },
+                              onReorder: _reorderPlaces,
                               onRename: _renamePlace,
                             ),
                           ),
