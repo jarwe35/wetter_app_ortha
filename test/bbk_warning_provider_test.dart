@@ -16,6 +16,24 @@ class TestBbkWarningClient implements BbkWarningClient {
     callCount += 1;
     return payload;
   }
+
+  @override
+  Future<dynamic> fetchMapData() async {
+    return const [];
+  }
+
+  @override
+  Future<dynamic> fetchWarningDetail(String warningId) async {
+    return const <String, dynamic>{};
+  }
+
+  @override
+  Future<dynamic> fetchWarningGeometry(String warningId) async {
+    return const <String, dynamic>{
+      'type': 'FeatureCollection',
+      'features': <dynamic>[],
+    };
+  }
 }
 
 void main() {
