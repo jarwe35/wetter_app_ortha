@@ -470,45 +470,38 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
     await loadWeather(locationToSelect.name);
   }
 
-  Future<void> _selectPlace(String place) async {
-    final savedLocation = _findSavedLocation(place);
-    final canonicalPlace = savedLocation?.name ?? place;
-
+  Future<void> _selectSavedLocation(SavedLocation location) async {
     if (!mounted) return;
 
     setState(() {
-      selectedPlace = canonicalPlace;
-      selectedLocation = savedLocation;
+      selectedLocation = location;
+      selectedPlace = location.name;
     });
 
-    await locationStorageService.saveSelectedLocation(canonicalPlace);
+    await locationStorageService.saveSelectedLocation(location.name);
+    await locationStorageService.saveSelectedSavedLocationName(location.name);
 
-    if (savedLocation != null) {
-      await locationStorageService.saveSelectedSavedLocationName(
-        savedLocation.name,
-      );
-    }
-
-    await loadWeather(canonicalPlace);
+    await loadWeather(location.name);
   }
 
-  Future<void> deletePlace(String place) async {
+  Future<void> deleteSavedLocation(SavedLocation location) async {
     if (savedLocations.length == 1) return;
 
-    final normalizedPlace = place.trim().toLowerCase();
-    final deletingSelectedPlace =
-        selectedPlace.trim().toLowerCase() == normalizedPlace;
+    final normalizedName = location.name.trim().toLowerCase();
+    final deletingSelectedLocation =
+        selectedLocation?.name.trim().toLowerCase() == normalizedName;
 
     setState(() {
       savedLocations.removeWhere(
-        (location) => location.name.trim().toLowerCase() == normalizedPlace,
+        (storedLocation) =>
+            storedLocation.name.trim().toLowerCase() == normalizedName,
       );
 
       places
         ..clear()
-        ..addAll(savedLocations.map((location) => location.name));
+        ..addAll(savedLocations.map((storedLocation) => storedLocation.name));
 
-      if (deletingSelectedPlace && savedLocations.isNotEmpty) {
+      if (deletingSelectedLocation && savedLocations.isNotEmpty) {
         selectedLocation = savedLocations.first;
         selectedPlace = selectedLocation!.name;
       }
@@ -517,7 +510,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
     await locationStorageService.saveSavedLocations(savedLocations);
     await locationStorageService.saveLocations(places);
 
-    if (deletingSelectedPlace && selectedLocation != null) {
+    if (deletingSelectedLocation && selectedLocation != null) {
       await locationStorageService.saveSelectedLocation(selectedLocation!.name);
       await locationStorageService.saveSelectedSavedLocationName(
         selectedLocation!.name,
@@ -527,9 +520,12 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
     }
   }
 
-  Future<void> _renamePlace(String oldPlace, String newPlace) async {
+  Future<void> _renameSavedLocation(
+    SavedLocation location,
+    String newPlace,
+  ) async {
     final cleanedName = newPlace.trim();
-    final normalizedOldPlace = oldPlace.trim().toLowerCase();
+    final normalizedOldPlace = location.name.trim().toLowerCase();
     final normalizedNewPlace = cleanedName.toLowerCase();
 
     if (cleanedName.isEmpty || normalizedNewPlace == normalizedOldPlace) {
@@ -582,40 +578,13 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
     }
   }
 
-  Future<void> _reorderPlaces(List<String> newPlaces) async {
-    final locationsByName = {
-      for (final location in savedLocations)
-        location.name.trim().toLowerCase(): location,
-    };
-
-    final reorderedSavedLocations = <SavedLocation>[];
-
-    for (final place in newPlaces) {
-      final location = locationsByName[place.trim().toLowerCase()];
-
-      if (location != null) {
-        reorderedSavedLocations.add(location);
-      }
-    }
-
-    for (final location in savedLocations) {
-      final alreadyAdded = reorderedSavedLocations.any(
-        (storedLocation) =>
-            storedLocation.name.trim().toLowerCase() ==
-            location.name.trim().toLowerCase(),
-      );
-
-      if (!alreadyAdded) {
-        reorderedSavedLocations.add(location);
-      }
-    }
-
+  Future<void> _reorderSavedLocations(List<SavedLocation> newLocations) async {
     if (!mounted) return;
 
     setState(() {
       savedLocations
         ..clear()
-        ..addAll(reorderedSavedLocations);
+        ..addAll(newLocations);
 
       places
         ..clear()
@@ -631,14 +600,12 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
       context,
       MaterialPageRoute(
         builder: (context) => LocationsPage(
-          places: places,
-          selectedPlace: selectedPlace,
-          onSelect: _selectPlace,
-          onDelete: (place) {
-            deletePlace(place);
-          },
-          onReorder: _reorderPlaces,
-          onRename: _renamePlace,
+          locations: savedLocations,
+          selectedLocation: selectedLocation,
+          onSelect: _selectSavedLocation,
+          onDelete: deleteSavedLocation,
+          onReorder: _reorderSavedLocations,
+          onRename: _renameSavedLocation,
         ),
       ),
     );
@@ -813,14 +780,12 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                           context,
                           MaterialPageRoute(
                             builder: (context) => LocationsPage(
-                              places: places,
-                              selectedPlace: selectedPlace,
-                              onSelect: _selectPlace,
-                              onDelete: (place) {
-                                deletePlace(place);
-                              },
-                              onReorder: _reorderPlaces,
-                              onRename: _renamePlace,
+                              locations: savedLocations,
+                              selectedLocation: selectedLocation,
+                              onSelect: _selectSavedLocation,
+                              onDelete: deleteSavedLocation,
+                              onReorder: _reorderSavedLocations,
+                              onRename: _renameSavedLocation,
                             ),
                           ),
                         );
@@ -839,8 +804,8 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
               PlaceSelector(
                 locations: savedLocations,
                 selectedLocation: selectedLocation,
-                onSelect: (location) => _selectPlace(location.name),
-                onDelete: (location) => deletePlace(location.name),
+                onSelect: _selectSavedLocation,
+                onDelete: deleteSavedLocation,
               ),
               const SizedBox(height: 18),
               Expanded(
@@ -1297,12 +1262,28 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                                                 ),
                                               )
                                             : null,
-                                        onTap: () => _selectPlace(place),
+                                        onTap: () {
+                                          final location = _findSavedLocation(
+                                            place,
+                                          );
+
+                                          if (location != null) {
+                                            _selectSavedLocation(location);
+                                          }
+                                        },
                                         trailing: places.length > 1
                                             ? IconButton(
                                                 tooltip: 'Ort löschen',
-                                                onPressed: () =>
-                                                    deletePlace(place),
+                                                onPressed: () {
+                                                  final location =
+                                                      _findSavedLocation(place);
+
+                                                  if (location != null) {
+                                                    deleteSavedLocation(
+                                                      location,
+                                                    );
+                                                  }
+                                                },
                                                 icon: const Icon(
                                                   Icons.delete_outline,
                                                   color: orthaSecondaryText,

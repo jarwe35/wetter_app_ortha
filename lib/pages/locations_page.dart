@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../models/saved_location.dart';
+
 const Color _orthaBackground = Color(0xFF07131B);
 const Color _orthaSurface = Color(0xFF0D202B);
 const Color _orthaSurfaceElevated = Color(0xFF132B37);
@@ -10,17 +12,17 @@ const Color _orthaSecondaryText = Color(0xFF9EB1BA);
 const Color _orthaDanger = Color(0xFFB94A48);
 
 class LocationsPage extends StatefulWidget {
-  final List<String> places;
-  final String selectedPlace;
-  final ValueChanged<String> onSelect;
-  final ValueChanged<String> onDelete;
-  final ValueChanged<List<String>> onReorder;
-  final void Function(String oldPlace, String newPlace) onRename;
+  final List<SavedLocation> locations;
+  final SavedLocation? selectedLocation;
+  final ValueChanged<SavedLocation> onSelect;
+  final ValueChanged<SavedLocation> onDelete;
+  final ValueChanged<List<SavedLocation>> onReorder;
+  final void Function(SavedLocation location, String newName) onRename;
 
   const LocationsPage({
     super.key,
-    required this.places,
-    required this.selectedPlace,
+    required this.locations,
+    required this.selectedLocation,
     required this.onSelect,
     required this.onDelete,
     required this.onReorder,
@@ -32,12 +34,12 @@ class LocationsPage extends StatefulWidget {
 }
 
 class _LocationsPageState extends State<LocationsPage> {
-  late List<String> orderedPlaces;
+  late List<SavedLocation> orderedLocations;
 
   @override
   void initState() {
     super.initState();
-    orderedPlaces = List<String>.from(widget.places);
+    orderedLocations = List<SavedLocation>.from(widget.locations);
   }
 
   void reorderPlaces(int oldIndex, int newIndex) {
@@ -46,23 +48,27 @@ class _LocationsPageState extends State<LocationsPage> {
         newIndex -= 1;
       }
 
-      final place = orderedPlaces.removeAt(oldIndex);
-      orderedPlaces.insert(newIndex, place);
+      final location = orderedLocations.removeAt(oldIndex);
+      orderedLocations.insert(newIndex, location);
     });
 
-    widget.onReorder(List<String>.from(orderedPlaces));
+    widget.onReorder(List<SavedLocation>.from(orderedLocations));
   }
 
-  void deletePlace(String place) {
-    widget.onDelete(place);
+  void deletePlace(SavedLocation location) {
+    widget.onDelete(location);
 
     setState(() {
-      orderedPlaces.remove(place);
+      orderedLocations.removeWhere(
+        (storedLocation) =>
+            storedLocation.name.trim().toLowerCase() ==
+            location.name.trim().toLowerCase(),
+      );
     });
   }
 
-  void showRenameDialog(String place) {
-    final controller = TextEditingController(text: place);
+  void showRenameDialog(SavedLocation location) {
+    final controller = TextEditingController(text: location.name);
 
     showDialog<void>(
       context: context,
@@ -107,7 +113,7 @@ class _LocationsPageState extends State<LocationsPage> {
               ),
             ),
             onSubmitted: (_) {
-              renamePlace(place, controller.text, dialogContext);
+              renamePlace(location, controller.text, dialogContext);
             },
           ),
           actions: [
@@ -117,7 +123,7 @@ class _LocationsPageState extends State<LocationsPage> {
             ),
             FilledButton.icon(
               onPressed: () {
-                renamePlace(place, controller.text, dialogContext);
+                renamePlace(location, controller.text, dialogContext);
               },
               icon: const Icon(Icons.save_outlined),
               label: const Text('Speichern'),
@@ -129,20 +135,31 @@ class _LocationsPageState extends State<LocationsPage> {
   }
 
   void renamePlace(
-    String oldPlace,
-    String newPlace,
+    SavedLocation location,
+    String newName,
     BuildContext dialogContext,
   ) {
-    final cleanedName = newPlace.trim();
+    final cleanedName = newName.trim();
+    final normalizedCurrentName = location.name.trim().toLowerCase();
+    final normalizedNewName = cleanedName.toLowerCase();
+
+    final nameAlreadyExists = orderedLocations.any(
+      (storedLocation) =>
+          storedLocation.name.trim().toLowerCase() == normalizedNewName &&
+          storedLocation.name.trim().toLowerCase() != normalizedCurrentName,
+    );
 
     if (cleanedName.isEmpty ||
-        cleanedName == oldPlace ||
-        orderedPlaces.contains(cleanedName)) {
+        normalizedNewName == normalizedCurrentName ||
+        nameAlreadyExists) {
       Navigator.pop(dialogContext);
       return;
     }
 
-    final index = orderedPlaces.indexOf(oldPlace);
+    final index = orderedLocations.indexWhere(
+      (storedLocation) =>
+          storedLocation.name.trim().toLowerCase() == normalizedCurrentName,
+    );
 
     if (index < 0) {
       Navigator.pop(dialogContext);
@@ -150,10 +167,12 @@ class _LocationsPageState extends State<LocationsPage> {
     }
 
     setState(() {
-      orderedPlaces[index] = cleanedName;
+      orderedLocations[index] = orderedLocations[index].copyWith(
+        name: cleanedName,
+      );
     });
 
-    widget.onRename(oldPlace, cleanedName);
+    widget.onRename(location, cleanedName);
     Navigator.pop(dialogContext);
   }
 
@@ -234,14 +253,17 @@ class _LocationsPageState extends State<LocationsPage> {
             Expanded(
               child: ReorderableListView.builder(
                 padding: const EdgeInsets.fromLTRB(22, 0, 22, 24),
-                itemCount: orderedPlaces.length,
+                itemCount: orderedLocations.length,
                 onReorderItem: reorderPlaces,
                 itemBuilder: (context, index) {
-                  final place = orderedPlaces[index];
-                  final selected = place == widget.selectedPlace;
+                  final location = orderedLocations[index];
+                  final selected =
+                      widget.selectedLocation != null &&
+                      location.name.trim().toLowerCase() ==
+                          widget.selectedLocation!.name.trim().toLowerCase();
 
                   return Container(
-                    key: ValueKey(place),
+                    key: ValueKey(location.name.trim().toLowerCase()),
                     margin: const EdgeInsets.only(bottom: 12),
                     decoration: BoxDecoration(
                       color: selected
@@ -294,7 +316,7 @@ class _LocationsPageState extends State<LocationsPage> {
                           ),
                         ),
                         title: Text(
-                          place,
+                          location.name,
                           style: TextStyle(
                             color: _orthaPrimaryText,
                             fontWeight: selected
@@ -312,7 +334,7 @@ class _LocationsPageState extends State<LocationsPage> {
                               )
                             : null,
                         onTap: () {
-                          widget.onSelect(place);
+                          widget.onSelect(location);
                           Navigator.pop(context);
                         },
                         trailing: Row(
@@ -324,16 +346,16 @@ class _LocationsPageState extends State<LocationsPage> {
                                 Icons.edit_outlined,
                                 color: _orthaSecondaryText,
                               ),
-                              onPressed: () => showRenameDialog(place),
+                              onPressed: () => showRenameDialog(location),
                             ),
-                            if (orderedPlaces.length > 1)
+                            if (orderedLocations.length > 1)
                               IconButton(
                                 tooltip: 'Ort löschen',
                                 icon: const Icon(
                                   Icons.delete_outline,
                                   color: _orthaDanger,
                                 ),
-                                onPressed: () => deletePlace(place),
+                                onPressed: () => deletePlace(location),
                               ),
                             ReorderableDragStartListener(
                               index: index,
