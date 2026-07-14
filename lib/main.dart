@@ -11,6 +11,7 @@ import 'services/location_storage_service.dart';
 import 'services/warning_providers/dwd_cap_download_client.dart';
 import 'services/warning_providers/dwd_warning_provider.dart';
 import 'services/weather_service.dart';
+import 'widgets/location_search_result_dialog.dart';
 import 'widgets/radar/ortha_radar_map.dart';
 import 'settings/unit_settings.dart';
 import 'settings/unit_settings_page.dart';
@@ -371,46 +372,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
     return showDialog<SavedLocation>(
       context: context,
       builder: (selectionContext) {
-        return AlertDialog(
-          title: const Row(
-            children: [
-              Icon(Icons.location_searching_outlined),
-              SizedBox(width: 10),
-              Expanded(child: Text('Ort auswählen')),
-            ],
-          ),
-          content: SizedBox(
-            width: 520,
-            child: ListView.separated(
-              shrinkWrap: true,
-              itemCount: results.length,
-              separatorBuilder: (_, index) => const Divider(height: 1),
-              itemBuilder: (context, index) {
-                final location = results[index];
-
-                return ListTile(
-                  leading: const Icon(Icons.location_on_outlined),
-                  title: Text(location.displayLabel),
-                  subtitle: Text(
-                    '${location.latitude.toStringAsFixed(4)}, '
-                    '${location.longitude.toStringAsFixed(4)}',
-                  ),
-                  onTap: () {
-                    Navigator.pop(selectionContext, location);
-                  },
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(selectionContext);
-              },
-              child: const Text('Abbrechen'),
-            ),
-          ],
-        );
+        return LocationSearchResultDialog(results: results);
       },
     );
   }
