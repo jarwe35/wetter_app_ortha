@@ -19,7 +19,7 @@ class LocationStorageService {
     final locations = prefs.getStringList(_locationsKey);
 
     if (locations == null || locations.isEmpty) {
-      return ['Duisburg'];
+      return [];
     }
 
     return locations;

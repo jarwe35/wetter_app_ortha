@@ -41,7 +41,7 @@ class LocationService {
     final requestUri = geocodingUri.replace(
       queryParameters: {
         'name': cleanedPlace,
-        'count': '1',
+        'count': '10',
         'language': 'de',
         'format': 'json',
       },
@@ -87,29 +87,42 @@ class LocationService {
       );
     }
 
-    final firstResult = results.first;
+    final validResults = results.whereType<Map<String, dynamic>>().where((
+      result,
+    ) {
+      final name = result['name'];
+      final latitude = result['latitude'];
+      final longitude = result['longitude'];
 
-    if (firstResult is! Map<String, dynamic>) {
+      return name is String &&
+          name.trim().isNotEmpty &&
+          latitude is num &&
+          longitude is num;
+    }).toList();
+
+    if (validResults.isEmpty) {
       throw const LocationServiceException(
-        'Ortssuche hat einen ungültigen Treffer geliefert.',
+        'Ortssuche hat keine vollständigen Standortdaten geliefert.',
       );
     }
 
-    final name = firstResult['name'];
-    final latitude = firstResult['latitude'];
-    final longitude = firstResult['longitude'];
+    final normalizedSearch = cleanedPlace.toLowerCase();
 
-    if (name is! String ||
-        name.trim().isEmpty ||
-        latitude is! num ||
-        longitude is! num) {
-      throw const LocationServiceException(
-        'Ortssuche hat unvollständige Standortdaten geliefert.',
-      );
-    }
+    final exactMatches = validResults.where((result) {
+      final name = result['name'] as String;
 
-    final country = firstResult['country'];
-    final timezone = firstResult['timezone'];
+      return name.trim().toLowerCase() == normalizedSearch;
+    }).toList();
+
+    final selectedResult = exactMatches.isNotEmpty
+        ? exactMatches.first
+        : validResults.first;
+
+    final name = selectedResult['name'] as String;
+    final latitude = selectedResult['latitude'] as num;
+    final longitude = selectedResult['longitude'] as num;
+    final country = selectedResult['country'];
+    final timezone = selectedResult['timezone'];
 
     return SavedLocation(
       name: name.trim(),

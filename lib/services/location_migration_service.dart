@@ -85,6 +85,11 @@ class LocationMigrationService {
 
     await storageService.saveSavedLocations(migratedLocations);
 
+    // Erfolgreich migrierte Namen werden aus der alten Ortsliste entfernt.
+    // Nur vorübergehend nicht auflösbare Orte bleiben für einen späteren
+    // erneuten Migrationsversuch erhalten.
+    await storageService.saveLocations(unresolvedLocationNames);
+
     final legacySelectedLocation = await storageService.loadSelectedLocation();
 
     final selectedLocationExists = migratedLocations.any(
