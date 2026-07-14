@@ -72,6 +72,20 @@ void main() {
       expect(result.validFrom, DateTime.utc(2026, 7, 14, 8));
     });
 
+    test('verwendet explizite Fallback-Zeiten', () {
+      final fallbackStart = DateTime.utc(2026, 7, 14, 8);
+      final fallbackEnd = DateTime.utc(2026, 7, 14, 12);
+
+      final result = converter.convert(
+        createWarning(),
+        fallbackValidFrom: fallbackStart,
+        fallbackValidUntil: fallbackEnd,
+      );
+
+      expect(result.validFrom, fallbackStart);
+      expect(result.validUntil, fallbackEnd);
+    });
+
     test('verwendet 24 Stunden Standardgültigkeit wenn expires fehlt', () {
       final start = DateTime.utc(2026, 7, 14, 8);
 

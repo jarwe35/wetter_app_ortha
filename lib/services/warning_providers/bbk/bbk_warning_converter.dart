@@ -6,14 +6,18 @@ class BbkWarningConverter {
 
   const BbkWarningConverter();
 
-  OfficialWeatherWarning convert(BbkWarning warning) {
+  OfficialWeatherWarning convert(
+    BbkWarning warning, {
+    DateTime? fallbackValidFrom,
+    DateTime? fallbackValidUntil,
+  }) {
     if (warning.isCancellation) {
       throw const FormatException(
         'BBK-Entwarnung kann nicht als aktive Warnung konvertiert werden.',
       );
     }
 
-    final validFrom = warning.effective ?? warning.sent;
+    final validFrom = warning.effective ?? warning.sent ?? fallbackValidFrom;
 
     if (validFrom == null) {
       throw const FormatException(
@@ -22,7 +26,9 @@ class BbkWarningConverter {
     }
 
     final validUntil =
-        warning.expires ?? validFrom.add(defaultValidityDuration);
+        warning.expires ??
+        fallbackValidUntil ??
+        validFrom.add(defaultValidityDuration);
 
     if (!validUntil.isAfter(validFrom)) {
       throw const FormatException(
