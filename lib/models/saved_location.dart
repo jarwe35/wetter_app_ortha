@@ -3,6 +3,7 @@ class SavedLocation {
   final double latitude;
   final double longitude;
   final String? country;
+  final String? admin1;
   final String? timezone;
 
   const SavedLocation({
@@ -10,6 +11,7 @@ class SavedLocation {
     required this.latitude,
     required this.longitude,
     this.country,
+    this.admin1,
     this.timezone,
   });
 
@@ -35,6 +37,7 @@ class SavedLocation {
       latitude: latitude.toDouble(),
       longitude: longitude.toDouble(),
       country: json['country'] is String ? json['country'] as String : null,
+      admin1: json['admin1'] is String ? json['admin1'] as String : null,
       timezone: json['timezone'] is String ? json['timezone'] as String : null,
     );
   }
@@ -45,6 +48,7 @@ class SavedLocation {
       'latitude': latitude,
       'longitude': longitude,
       if (country != null) 'country': country,
+      if (admin1 != null) 'admin1': admin1,
       if (timezone != null) 'timezone': timezone,
     };
   }
@@ -54,6 +58,7 @@ class SavedLocation {
     double? latitude,
     double? longitude,
     String? country,
+    String? admin1,
     String? timezone,
   }) {
     return SavedLocation(
@@ -61,12 +66,33 @@ class SavedLocation {
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       country: country ?? this.country,
+      admin1: admin1 ?? this.admin1,
       timezone: timezone ?? this.timezone,
     );
   }
 
   bool hasSameCoordinatesAs(SavedLocation other) {
     return latitude == other.latitude && longitude == other.longitude;
+  }
+
+  String get displayLabel {
+    final parts = <String>[name];
+
+    final normalizedName = name.trim().toLowerCase();
+
+    if (admin1 != null &&
+        admin1!.trim().isNotEmpty &&
+        admin1!.trim().toLowerCase() != normalizedName) {
+      parts.add(admin1!.trim());
+    }
+
+    if (country != null &&
+        country!.trim().isNotEmpty &&
+        country!.trim().toLowerCase() != normalizedName) {
+      parts.add(country!.trim());
+    }
+
+    return parts.join(' · ');
   }
 
   @override
@@ -77,12 +103,13 @@ class SavedLocation {
             latitude == other.latitude &&
             longitude == other.longitude &&
             country == other.country &&
+            admin1 == other.admin1 &&
             timezone == other.timezone;
   }
 
   @override
   int get hashCode {
-    return Object.hash(name, latitude, longitude, country, timezone);
+    return Object.hash(name, latitude, longitude, country, admin1, timezone);
   }
 
   @override
@@ -92,6 +119,7 @@ class SavedLocation {
         'latitude: $latitude, '
         'longitude: $longitude, '
         'country: $country, '
+        'admin1: $admin1, '
         'timezone: $timezone'
         ')';
   }

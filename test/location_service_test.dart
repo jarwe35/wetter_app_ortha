@@ -22,6 +22,7 @@ void main() {
       "latitude": 51.4344,
       "longitude": 6.7623,
       "country": "Deutschland",
+      "admin1": "Nordrhein-Westfalen",
       "timezone": "Europe/Berlin"
     }
   ]
@@ -36,6 +37,7 @@ void main() {
       expect(location.latitude, 51.4344);
       expect(location.longitude, 6.7623);
       expect(location.country, 'Deutschland');
+      expect(location.admin1, 'Nordrhein-Westfalen');
       expect(location.timezone, 'Europe/Berlin');
     });
 
@@ -81,6 +83,7 @@ void main() {
       final location = await service.resolveLocation('Bali');
 
       expect(location.country, isNull);
+      expect(location.admin1, isNull);
       expect(location.timezone, isNull);
     });
 
@@ -146,6 +149,51 @@ void main() {
         () => service.resolveLocation('Duisburg'),
         throwsA(isA<LocationServiceException>()),
       );
+    });
+
+    test('searchLocations liefert mehrere gültige Treffer', () async {
+      final client = MockClient((request) async {
+        expect(request.url.queryParameters['name'], 'Frankfurt');
+        expect(request.url.queryParameters['count'], '10');
+
+        return Response('''
+{
+  "results": [
+    {
+      "name": "Frankfurt am Main",
+      "latitude": 50.1109,
+      "longitude": 8.6821,
+      "country": "Deutschland",
+      "admin1": "Hessen",
+      "timezone": "Europe/Berlin"
+    },
+    {
+      "name": "Frankfurt (Oder)",
+      "latitude": 52.3471,
+      "longitude": 14.5506,
+      "country": "Deutschland",
+      "admin1": "Brandenburg",
+      "timezone": "Europe/Berlin"
+    },
+    {
+      "name": "Ungültiger Treffer"
+    }
+  ]
+}
+''', 200);
+      });
+
+      final service = LocationService(httpClient: client);
+      final locations = await service.searchLocations('Frankfurt');
+
+      expect(locations, hasLength(2));
+      expect(locations[0].name, 'Frankfurt am Main');
+      expect(locations[0].admin1, 'Hessen');
+      expect(locations[0].country, 'Deutschland');
+
+      expect(locations[1].name, 'Frankfurt (Oder)');
+      expect(locations[1].admin1, 'Brandenburg');
+      expect(locations[1].country, 'Deutschland');
     });
 
     test('bevorzugt bei mehreren Treffern den exakten Ortsnamen', () async {

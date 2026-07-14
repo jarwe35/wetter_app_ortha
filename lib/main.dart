@@ -360,6 +360,61 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
     );
   }
 
+  Future<SavedLocation?> _selectLocationSearchResult(
+    BuildContext context,
+    List<SavedLocation> results,
+  ) async {
+    if (results.length == 1) {
+      return results.first;
+    }
+
+    return showDialog<SavedLocation>(
+      context: context,
+      builder: (selectionContext) {
+        return AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.location_searching_outlined),
+              SizedBox(width: 10),
+              Expanded(child: Text('Ort auswählen')),
+            ],
+          ),
+          content: SizedBox(
+            width: 520,
+            child: ListView.separated(
+              shrinkWrap: true,
+              itemCount: results.length,
+              separatorBuilder: (_, index) => const Divider(height: 1),
+              itemBuilder: (context, index) {
+                final location = results[index];
+
+                return ListTile(
+                  leading: const Icon(Icons.location_on_outlined),
+                  title: Text(location.displayLabel),
+                  subtitle: Text(
+                    '${location.latitude.toStringAsFixed(4)}, '
+                    '${location.longitude.toStringAsFixed(4)}',
+                  ),
+                  onTap: () {
+                    Navigator.pop(selectionContext, location);
+                  },
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(selectionContext);
+              },
+              child: const Text('Abbrechen'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> addPlaceFromDialog(
     TextEditingController controller,
     BuildContext dialogContext,
@@ -368,16 +423,27 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
 
     if (value.isEmpty) return;
 
-    SavedLocation resolvedLocation;
+    List<SavedLocation> searchResults;
 
     try {
-      resolvedLocation = await locationService.resolveLocation(value);
+      searchResults = await locationService.searchLocations(value);
     } on LocationServiceException catch (error) {
       if (!dialogContext.mounted) return;
 
       ScaffoldMessenger.of(
         dialogContext,
       ).showSnackBar(SnackBar(content: Text(error.message)));
+      return;
+    }
+
+    if (!dialogContext.mounted) return;
+
+    final resolvedLocation = await _selectLocationSearchResult(
+      dialogContext,
+      searchResults,
+    );
+
+    if (resolvedLocation == null || !dialogContext.mounted) {
       return;
     }
 

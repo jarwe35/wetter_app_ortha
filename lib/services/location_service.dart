@@ -29,7 +29,7 @@ class LocationService {
     this.requestTimeout = const Duration(seconds: 15),
   }) : geocodingUri = geocodingUri ?? defaultGeocodingUri;
 
-  Future<SavedLocation> resolveLocation(String place) async {
+  Future<List<SavedLocation>> searchLocations(String place) async {
     final cleanedPlace = place.trim();
 
     if (cleanedPlace.isEmpty) {
@@ -87,42 +87,50 @@ class LocationService {
       );
     }
 
-    final validResults = results.whereType<Map<String, dynamic>>().where((
-      result,
-    ) {
-      final name = result['name'];
-      final latitude = result['latitude'];
-      final longitude = result['longitude'];
+    final locations = results
+        .whereType<Map<String, dynamic>>()
+        .map(_savedLocationFromResult)
+        .whereType<SavedLocation>()
+        .toList();
 
-      return name is String &&
-          name.trim().isNotEmpty &&
-          latitude is num &&
-          longitude is num;
-    }).toList();
-
-    if (validResults.isEmpty) {
+    if (locations.isEmpty) {
       throw const LocationServiceException(
         'Ortssuche hat keine vollständigen Standortdaten geliefert.',
       );
     }
 
+    return List<SavedLocation>.unmodifiable(locations);
+  }
+
+  Future<SavedLocation> resolveLocation(String place) async {
+    final cleanedPlace = place.trim();
+    final locations = await searchLocations(cleanedPlace);
     final normalizedSearch = cleanedPlace.toLowerCase();
 
-    final exactMatches = validResults.where((result) {
-      final name = result['name'] as String;
+    for (final location in locations) {
+      if (location.name.trim().toLowerCase() == normalizedSearch) {
+        return location;
+      }
+    }
 
-      return name.trim().toLowerCase() == normalizedSearch;
-    }).toList();
+    return locations.first;
+  }
 
-    final selectedResult = exactMatches.isNotEmpty
-        ? exactMatches.first
-        : validResults.first;
+  SavedLocation? _savedLocationFromResult(Map<String, dynamic> result) {
+    final name = result['name'];
+    final latitude = result['latitude'];
+    final longitude = result['longitude'];
 
-    final name = selectedResult['name'] as String;
-    final latitude = selectedResult['latitude'] as num;
-    final longitude = selectedResult['longitude'] as num;
-    final country = selectedResult['country'];
-    final timezone = selectedResult['timezone'];
+    if (name is! String ||
+        name.trim().isEmpty ||
+        latitude is! num ||
+        longitude is! num) {
+      return null;
+    }
+
+    final country = result['country'];
+    final admin1 = result['admin1'];
+    final timezone = result['timezone'];
 
     return SavedLocation(
       name: name.trim(),
@@ -130,6 +138,9 @@ class LocationService {
       longitude: longitude.toDouble(),
       country: country is String && country.trim().isNotEmpty
           ? country.trim()
+          : null,
+      admin1: admin1 is String && admin1.trim().isNotEmpty
+          ? admin1.trim()
           : null,
       timezone: timezone is String && timezone.trim().isNotEmpty
           ? timezone.trim()

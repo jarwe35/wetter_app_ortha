@@ -9,6 +9,7 @@ void main() {
         latitude: 51.4344,
         longitude: 6.7623,
         country: 'Deutschland',
+        admin1: 'Nordrhein-Westfalen',
         timezone: 'Europe/Berlin',
       );
 
@@ -17,6 +18,7 @@ void main() {
         'latitude': 51.4344,
         'longitude': 6.7623,
         'country': 'Deutschland',
+        'admin1': 'Nordrhein-Westfalen',
         'timezone': 'Europe/Berlin',
       });
     });
@@ -27,6 +29,7 @@ void main() {
         'latitude': 43.4623,
         'longitude': -3.8099,
         'country': 'Spanien',
+        'admin1': 'Kantabrien',
         'timezone': 'Europe/Madrid',
       });
 
@@ -34,6 +37,7 @@ void main() {
       expect(location.latitude, 43.4623);
       expect(location.longitude, -3.8099);
       expect(location.country, 'Spanien');
+      expect(location.admin1, 'Kantabrien');
       expect(location.timezone, 'Europe/Madrid');
     });
 
@@ -45,6 +49,7 @@ void main() {
       });
 
       expect(location.country, isNull);
+      expect(location.admin1, isNull);
       expect(location.timezone, isNull);
 
       expect(location.toJson(), {
@@ -70,6 +75,7 @@ void main() {
         latitude: -8.4095,
         longitude: 115.1889,
         country: 'Indonesien',
+        admin1: 'Bali',
       );
 
       final changed = original.copyWith(name: 'Bali Test');
@@ -78,6 +84,41 @@ void main() {
       expect(changed.latitude, original.latitude);
       expect(changed.longitude, original.longitude);
       expect(changed.country, original.country);
+      expect(changed.admin1, original.admin1);
+    });
+
+    test('erstellt eine vollständige Trefferbeschriftung', () {
+      const location = SavedLocation(
+        name: 'Frankfurt am Main',
+        latitude: 50.1109,
+        longitude: 8.6821,
+        admin1: 'Hessen',
+        country: 'Deutschland',
+      );
+
+      expect(location.displayLabel, 'Frankfurt am Main · Hessen · Deutschland');
+    });
+
+    test('vermeidet doppelte Bestandteile in der Trefferbeschriftung', () {
+      const location = SavedLocation(
+        name: 'New York',
+        latitude: 40.7128,
+        longitude: -74.0060,
+        admin1: 'New York',
+        country: 'Vereinigte Staaten',
+      );
+
+      expect(location.displayLabel, 'New York · Vereinigte Staaten');
+    });
+
+    test('funktioniert auch ohne Region und Land', () {
+      const location = SavedLocation(
+        name: 'Oslo',
+        latitude: 59.9139,
+        longitude: 10.7522,
+      );
+
+      expect(location.displayLabel, 'Oslo');
     });
 
     test('erkennt identische Koordinaten', () {
