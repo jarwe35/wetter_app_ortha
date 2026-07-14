@@ -2,6 +2,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:wetter_app_ortha/services/official_weather_warning_service.dart';
 
 void main() {
+  test('EmptyOfficialWeatherWarningService unterstützt keinen Ort', () {
+    const service = EmptyOfficialWeatherWarningService();
+
+    expect(
+      service.supportsLocation(latitude: 51.4344, longitude: 6.7623),
+      isFalse,
+    );
+  });
+
   group('EmptyOfficialWeatherWarningService', () {
     test('liefert eine leere Warnungsliste', () async {
       const service = EmptyOfficialWeatherWarningService();

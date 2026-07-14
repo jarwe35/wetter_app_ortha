@@ -8,6 +8,8 @@ import 'pages/locations_page.dart';
 import 'services/location_migration_service.dart';
 import 'services/location_service.dart';
 import 'services/location_storage_service.dart';
+import 'services/official_weather_warning_service.dart';
+import 'services/provider_based_official_weather_warning_service.dart';
 import 'services/warning_providers/dwd_cap_download_client.dart';
 import 'services/warning_providers/dwd_warning_provider.dart';
 import 'services/weather_service.dart';
@@ -89,6 +91,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
 
   late final http.Client dwdHttpClient;
   late final DwdWarningProvider dwdWarningProvider;
+  late final OfficialWeatherWarningService officialWeatherWarningService;
 
   UnitSettings unitSettings = const UnitSettings();
 
@@ -131,6 +134,10 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
           'COMMUNEUNION_DE.zip',
         ),
       ),
+    );
+
+    officialWeatherWarningService = ProviderBasedOfficialWeatherWarningService(
+      providers: [dwdWarningProvider],
     );
 
     initializeUnitSettings();
@@ -265,7 +272,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
       final locationLatitude = savedLocation?.latitude ?? data.latitude;
       final locationLongitude = savedLocation?.longitude ?? data.longitude;
 
-      final warningsSupported = dwdWarningProvider.supportsLocation(
+      final warningsSupported = officialWeatherWarningService.supportsLocation(
         latitude: locationLatitude,
         longitude: locationLongitude,
       );
@@ -281,7 +288,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
         }
 
         try {
-          warnings = await dwdWarningProvider.fetchWarnings(
+          warnings = await officialWeatherWarningService.fetchWarnings(
             latitude: locationLatitude,
             longitude: locationLongitude,
           );

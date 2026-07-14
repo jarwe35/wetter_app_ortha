@@ -35,6 +35,48 @@ class TestWarningProvider implements OfficialWarningProvider {
 }
 
 void main() {
+  test(
+    'supportsLocation ist true wenn mindestens ein Provider unterstützt',
+    () {
+      final service = ProviderBasedOfficialWeatherWarningService(
+        providers: [
+          TestWarningProvider(
+            id: 'unsupported',
+            supported: false,
+            warnings: const [],
+          ),
+          TestWarningProvider(
+            id: 'supported',
+            supported: true,
+            warnings: const [],
+          ),
+        ],
+      );
+
+      expect(
+        service.supportsLocation(latitude: 51.4344, longitude: 6.7623),
+        isTrue,
+      );
+    },
+  );
+
+  test('supportsLocation ist false wenn kein Provider unterstützt', () {
+    final service = ProviderBasedOfficialWeatherWarningService(
+      providers: [
+        TestWarningProvider(
+          id: 'unsupported',
+          supported: false,
+          warnings: const [],
+        ),
+      ],
+    );
+
+    expect(
+      service.supportsLocation(latitude: 40.7128, longitude: -74.0060),
+      isFalse,
+    );
+  });
+
   OfficialWeatherWarning createWarning({
     required String id,
     required OfficialWarningSeverity severity,

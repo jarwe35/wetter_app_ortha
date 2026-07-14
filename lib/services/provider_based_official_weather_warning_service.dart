@@ -9,6 +9,14 @@ class ProviderBasedOfficialWeatherWarningService
   const ProviderBasedOfficialWeatherWarningService({required this.providers});
 
   @override
+  bool supportsLocation({required double latitude, required double longitude}) {
+    return providers.any(
+      (provider) =>
+          provider.supportsLocation(latitude: latitude, longitude: longitude),
+    );
+  }
+
+  @override
   Future<List<OfficialWeatherWarning>> fetchWarnings({
     required double latitude,
     required double longitude,
