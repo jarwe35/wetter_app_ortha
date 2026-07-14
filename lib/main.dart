@@ -1164,7 +1164,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        '${places.length} gespeicherte Orte',
+                                        '${savedLocations.length} gespeicherte Orte',
                                         style: const TextStyle(
                                           color: orthaSecondaryText,
                                         ),
@@ -1206,7 +1206,8 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                                   ],
                                 ),
                                 const SizedBox(height: 16),
-                                ...places.map((place) {
+                                ...savedLocations.map((location) {
+                                  final place = location.name;
                                   final selected = place == selectedPlace;
 
                                   return Container(
@@ -1271,7 +1272,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                                             _selectSavedLocation(location);
                                           }
                                         },
-                                        trailing: places.length > 1
+                                        trailing: savedLocations.length > 1
                                             ? IconButton(
                                                 tooltip: 'Ort löschen',
                                                 onPressed: () {
