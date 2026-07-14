@@ -4,10 +4,7 @@ class BbkWarningParser {
   const BbkWarningParser();
 
   BbkWarning parse(Map<String, dynamic> json) {
-    final info =
-        _firstMapFromList(json['info']) ??
-        _asMap(json['info']) ??
-        const <String, dynamic>{};
+    final info = _selectPreferredInfo(json['info']);
 
     final area =
         _firstMapFromList(info['area']) ??
@@ -163,14 +160,36 @@ class BbkWarningParser {
       }
     }
 
-    final areaGeocodes = area['geocode'];
+    final rawAreas = info['area'];
 
-    if (areaGeocodes is List<dynamic>) {
-      for (final geocode in areaGeocodes) {
-        addGeocode(geocode);
+    if (rawAreas is List<dynamic>) {
+      for (final rawArea in rawAreas) {
+        final areaMap = _asMap(rawArea);
+
+        if (areaMap == null) {
+          continue;
+        }
+
+        final areaGeocodes = areaMap['geocode'];
+
+        if (areaGeocodes is List<dynamic>) {
+          for (final geocode in areaGeocodes) {
+            addGeocode(geocode);
+          }
+        } else {
+          addGeocode(areaGeocodes);
+        }
       }
     } else {
-      addGeocode(areaGeocodes);
+      final areaGeocodes = area['geocode'];
+
+      if (areaGeocodes is List<dynamic>) {
+        for (final geocode in areaGeocodes) {
+          addGeocode(geocode);
+        }
+      } else {
+        addGeocode(areaGeocodes);
+      }
     }
 
     final infoGeocodes = info['geocode'];
@@ -231,6 +250,43 @@ class BbkWarningParser {
     }
 
     return _uniqueStrings(result);
+  }
+
+  Map<String, dynamic> _selectPreferredInfo(dynamic value) {
+    final directInfo = _asMap(value);
+
+    if (directInfo != null) {
+      return directInfo;
+    }
+
+    if (value is! List<dynamic>) {
+      return const <String, dynamic>{};
+    }
+
+    final infos = value.whereType<Map<String, dynamic>>().toList();
+
+    if (infos.isEmpty) {
+      return const <String, dynamic>{};
+    }
+
+    Map<String, dynamic>? findByLanguage(
+      bool Function(String language) matches,
+    ) {
+      for (final info in infos) {
+        final language = info['language'];
+
+        if (language is String && matches(language.trim().toLowerCase())) {
+          return info;
+        }
+      }
+
+      return null;
+    }
+
+    return findByLanguage((language) => language == 'de') ??
+        findByLanguage((language) => language == 'de-de') ??
+        findByLanguage((language) => language.startsWith('de-')) ??
+        infos.first;
   }
 
   DateTime? _parseDateTime(dynamic value) {

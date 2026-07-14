@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:wetter_app_ortha/services/warning_providers/bbk/bbk_warning_parser.dart';
 
 void main() {
+  preferredLanguageTests();
   const parser = BbkWarningParser();
 
   group('BbkWarningParser', () {
@@ -120,5 +121,114 @@ void main() {
       expect(directWarnings.single.identifier, 'direct-list-1');
       expect(itemWarnings.single.identifier, 'items-list-1');
     });
+  });
+}
+
+void preferredLanguageTests() {
+  const parser = BbkWarningParser();
+
+  test('bevorzugt deutschen info-Block unabhängig von Reihenfolge', () {
+    final warning = parser.parse({
+      'identifier': 'mow.language-order',
+      'sender': 'DE-BBK',
+      'sent': '2026-07-14T12:00:00+02:00',
+      'msgType': 'Alert',
+      'info': [
+        {
+          'language': 'en',
+          'headline': 'English headline',
+          'description': 'English description',
+          'severity': 'Minor',
+        },
+        {
+          'language': 'de',
+          'headline': 'Deutsche Überschrift',
+          'description': 'Deutsche Beschreibung',
+          'severity': 'Severe',
+        },
+      ],
+    });
+
+    expect(warning.headline, 'Deutsche Überschrift');
+    expect(warning.description, 'Deutsche Beschreibung');
+    expect(warning.severity, 'Severe');
+  });
+
+  test('bevorzugt de vor de-DE', () {
+    final warning = parser.parse({
+      'identifier': 'mow.language-priority',
+      'sender': 'DE-BBK',
+      'sent': '2026-07-14T12:00:00+02:00',
+      'msgType': 'Alert',
+      'info': [
+        {'language': 'de-DE', 'headline': 'Deutsch Deutschland'},
+        {'language': 'de', 'headline': 'Deutsch bevorzugt'},
+      ],
+    });
+
+    expect(warning.headline, 'Deutsch bevorzugt');
+  });
+
+  test('verwendet andere deutsche Sprachvariante vor fremder Sprache', () {
+    final warning = parser.parse({
+      'identifier': 'mow.language-variant',
+      'sender': 'DE-BBK',
+      'sent': '2026-07-14T12:00:00+02:00',
+      'msgType': 'Alert',
+      'info': [
+        {'language': 'en', 'headline': 'English headline'},
+        {'language': 'de-LS', 'headline': 'Deutscher Landesblock'},
+      ],
+    });
+
+    expect(warning.headline, 'Deutscher Landesblock');
+  });
+
+  test('verwendet ersten info-Block wenn keine deutsche Sprache existiert', () {
+    final warning = parser.parse({
+      'identifier': 'mow.language-fallback',
+      'sender': 'DE-BBK',
+      'sent': '2026-07-14T12:00:00+02:00',
+      'msgType': 'Alert',
+      'info': [
+        {'language': 'en', 'headline': 'First fallback'},
+        {'language': 'fr', 'headline': 'Second fallback'},
+      ],
+    });
+
+    expect(warning.headline, 'First fallback');
+  });
+
+  test('liest Gebiete und Geocodes aus allen Areas des deutschen Blocks', () {
+    final warning = parser.parse({
+      'identifier': 'mow.multiple-areas',
+      'sender': 'DE-BBK',
+      'sent': '2026-07-14T12:00:00+02:00',
+      'msgType': 'Alert',
+      'info': [
+        {
+          'language': 'de',
+          'headline': 'Warnung',
+          'area': [
+            {
+              'areaDesc': 'Gebiet A',
+              'geocode': [
+                {'valueName': 'ARS', 'value': '051120000000'},
+              ],
+            },
+            {
+              'areaDesc': 'Gebiet B',
+              'geocode': [
+                {'valueName': 'WARNCELLID', 'value': 'DE123456'},
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(warning.areaDescriptions, ['Gebiet A', 'Gebiet B']);
+    expect(warning.geocodes['ARS'], '051120000000');
+    expect(warning.geocodes['WARNCELLID'], 'DE123456');
   });
 }
