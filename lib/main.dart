@@ -10,6 +10,8 @@ import 'services/location_service.dart';
 import 'services/location_storage_service.dart';
 import 'services/official_weather_warning_service.dart';
 import 'services/provider_based_official_weather_warning_service.dart';
+import 'services/warning_providers/bbk/bbk_warning_client.dart';
+import 'services/warning_providers/bbk/bbk_warning_provider.dart';
 import 'services/warning_providers/dwd_cap_download_client.dart';
 import 'services/warning_providers/dwd_warning_provider.dart';
 import 'services/weather_service.dart';
@@ -91,6 +93,11 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
 
   late final http.Client dwdHttpClient;
   late final DwdWarningProvider dwdWarningProvider;
+
+  late final http.Client bbkHttpClient;
+  late final HttpBbkWarningClient bbkWarningClient;
+  late final BbkWarningProvider bbkWarningProvider;
+
   late final OfficialWeatherWarningService officialWeatherWarningService;
 
   UnitSettings unitSettings = const UnitSettings();
@@ -136,8 +143,21 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
       ),
     );
 
+    bbkHttpClient = http.Client();
+
+    bbkWarningClient = HttpBbkWarningClient(
+      httpClient: bbkHttpClient,
+
+      // Vorübergehend noch erforderlicher Legacy-Parameter.
+      // Die reale Provider-Kette verwendet fetchMapData(),
+      // fetchWarningDetail() und fetchWarningGeometry().
+      endpoint: Uri.https('warnung.bund.de', '/api31/mowas/mapData.json'),
+    );
+
+    bbkWarningProvider = BbkWarningProvider(client: bbkWarningClient);
+
     officialWeatherWarningService = ProviderBasedOfficialWeatherWarningService(
-      providers: [dwdWarningProvider],
+      providers: [dwdWarningProvider, bbkWarningProvider],
     );
 
     initializeUnitSettings();
@@ -148,6 +168,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
   void dispose() {
     locationHttpClient.close();
     dwdHttpClient.close();
+    bbkHttpClient.close();
     super.dispose();
   }
 
