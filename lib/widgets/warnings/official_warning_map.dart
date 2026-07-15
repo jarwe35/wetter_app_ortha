@@ -46,6 +46,11 @@ class OfficialWarningMap extends StatelessWidget {
 
     final location = LatLng(latitude, longitude);
 
+    final locationIsInside = geometry.contains(
+      latitude: latitude,
+      longitude: longitude,
+    );
+
     final cameraCoordinates = <LatLng>[
       location,
       ...polygons.expand((polygon) => polygon.points),
@@ -104,6 +109,49 @@ class OfficialWarningMap extends StatelessWidget {
                 ],
               ),
             ],
+          ),
+          Positioned(
+            bottom: 12,
+            left: 12,
+            right: 12,
+            child: IgnorePointer(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF102235).withValues(alpha: 0.94),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF27465D)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      locationIsInside
+                          ? Icons.location_on_outlined
+                          : Icons.location_off_outlined,
+                      size: 19,
+                      color: const Color(0xFFD5A84A),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        locationIsInside
+                            ? 'Der ausgewählte Ort liegt innerhalb des '
+                                  'amtlichen Warngebietes.'
+                            : 'Der ausgewählte Ort liegt außerhalb des '
+                                  'amtlichen Warngebietes.',
+                        style: const TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
           Positioned(
             top: 12,
