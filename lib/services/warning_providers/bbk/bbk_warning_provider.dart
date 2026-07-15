@@ -1,3 +1,4 @@
+import '../../../models/official_warning_geometry.dart';
 import '../../../models/official_weather_warning.dart';
 import '../official_warning_provider.dart';
 import 'bbk_geojson_parser.dart';
@@ -93,6 +94,15 @@ class BbkWarningProvider implements OfficialWarningProvider {
           warning,
           fallbackValidFrom: mapWarning.startDate,
           fallbackValidUntil: now.add(fallbackValidityDuration),
+          geometry: OfficialWarningGeometry(
+            polygons: geometry.polygons
+                .map(
+                  (polygon) => polygon.outerRing
+                      .map((point) => [point.latitude, point.longitude])
+                      .toList(growable: false),
+                )
+                .toList(growable: false),
+          ),
         );
 
         relevantWarnings.add(converted);

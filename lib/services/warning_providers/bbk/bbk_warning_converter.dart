@@ -1,3 +1,4 @@
+import '../../../models/official_warning_geometry.dart';
 import '../../../models/official_weather_warning.dart';
 import '../../../models/warning_bridge/bbk_warning.dart';
 
@@ -10,6 +11,7 @@ class BbkWarningConverter {
     BbkWarning warning, {
     DateTime? fallbackValidFrom,
     DateTime? fallbackValidUntil,
+    OfficialWarningGeometry? geometry,
   }) {
     if (warning.isCancellation) {
       throw const FormatException(
@@ -50,6 +52,7 @@ class BbkWarningConverter {
       areaDescriptions: List<String>.unmodifiable(warning.areaDescriptions),
       geocodes: Map<String, String>.unmodifiable(warning.geocodes),
       polygons: List<String>.unmodifiable(warning.polygons),
+      geometry: geometry,
     );
   }
 

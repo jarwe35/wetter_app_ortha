@@ -223,6 +223,9 @@ void main() {
       expect(warning.title, 'Rauchentwicklung');
       expect(warning.source, 'Stadt Duisburg');
       expect(warning.severity, OfficialWarningSeverity.severe);
+      expect(warning.geometry, isNotNull);
+      expect(warning.geometry!.polygons, isNotEmpty);
+      expect(warning.geometry!.polygons.first, isNotEmpty);
       expect(warning.areaDescriptions, ['Stadt Duisburg']);
       expect(warning.geocodes['ARS'], '051120000000');
 

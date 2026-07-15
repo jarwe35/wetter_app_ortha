@@ -1,3 +1,5 @@
+import 'official_warning_geometry.dart';
+
 enum OfficialWarningSeverity { minor, moderate, severe, extreme, unknown }
 
 class OfficialWeatherWarning {
@@ -13,6 +15,8 @@ class OfficialWeatherWarning {
   final Map<String, String> geocodes;
   final List<String> polygons;
 
+  final OfficialWarningGeometry? geometry;
+
   const OfficialWeatherWarning({
     required this.id,
     required this.title,
@@ -25,6 +29,7 @@ class OfficialWeatherWarning {
     this.areaDescriptions = const [],
     this.geocodes = const {},
     this.polygons = const [],
+    this.geometry,
   });
 
   bool get isActive {

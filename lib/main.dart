@@ -17,6 +17,7 @@ import 'services/warning_providers/dwd_warning_provider.dart';
 import 'services/weather_service.dart';
 import 'widgets/location_search_result_dialog.dart';
 import 'widgets/radar/ortha_radar_map.dart';
+import 'widgets/warnings/official_warning_map.dart';
 import 'settings/unit_settings.dart';
 import 'settings/unit_settings_page.dart';
 import 'settings/unit_settings_service.dart';
@@ -879,6 +880,15 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                               isSupported: officialWarningsSupported,
                               isLoading: officialWarningsLoading,
                               errorMessage: officialWarningsError,
+                              latitude:
+                                  selectedLocation?.latitude ??
+                                  data?.latitude ??
+                                  0.0,
+                              longitude:
+                                  selectedLocation?.longitude ??
+                                  data?.longitude ??
+                                  0.0,
+                              place: selectedPlace,
                             ),
                           const SizedBox(height: 30),
                         ],
@@ -1334,6 +1344,11 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                               isSupported: officialWarningsSupported,
                               isLoading: officialWarningsLoading,
                               errorMessage: officialWarningsError,
+                              latitude:
+                                  selectedLocation?.latitude ?? data.latitude,
+                              longitude:
+                                  selectedLocation?.longitude ?? data.longitude,
+                              place: selectedPlace,
                             ),
                             const SizedBox(height: 18),
                             RiskCard(result: risk),
@@ -1426,6 +1441,9 @@ class OfficialWeatherWarningsCard extends StatelessWidget {
   final bool isSupported;
   final bool isLoading;
   final String? errorMessage;
+  final double latitude;
+  final double longitude;
+  final String place;
 
   const OfficialWeatherWarningsCard({
     super.key,
@@ -1433,6 +1451,9 @@ class OfficialWeatherWarningsCard extends StatelessWidget {
     required this.isSupported,
     required this.isLoading,
     required this.errorMessage,
+    required this.latitude,
+    required this.longitude,
+    required this.place,
   });
 
   Color severityColor(OfficialWarningSeverity severity) {
@@ -1731,6 +1752,16 @@ class OfficialWeatherWarningsCard extends StatelessWidget {
                         ),
                       ],
                     ),
+                    if (warning.geometry != null &&
+                        !warning.geometry!.isEmpty) ...[
+                      const SizedBox(height: 14),
+                      OfficialWarningMap(
+                        warning: warning,
+                        latitude: latitude,
+                        longitude: longitude,
+                        place: place,
+                      ),
+                    ],
                     if (descriptionSummary.isNotEmpty) ...[
                       const SizedBox(height: 14),
                       Container(
