@@ -37,8 +37,33 @@ class ProviderBasedOfficialWeatherWarningService
       warnings.addAll(providerWarnings);
     }
 
-    warnings.sort((a, b) => b.severity.index.compareTo(a.severity.index));
+    warnings.sort((first, second) {
+      final severityComparison = _severityRank(
+        second.severity,
+      ).compareTo(_severityRank(first.severity));
 
-    return warnings;
+      if (severityComparison != 0) {
+        return severityComparison;
+      }
+
+      return second.validFrom.compareTo(first.validFrom);
+    });
+
+    return List<OfficialWeatherWarning>.unmodifiable(warnings);
+  }
+
+  int _severityRank(OfficialWarningSeverity severity) {
+    switch (severity) {
+      case OfficialWarningSeverity.extreme:
+        return 4;
+      case OfficialWarningSeverity.severe:
+        return 3;
+      case OfficialWarningSeverity.moderate:
+        return 2;
+      case OfficialWarningSeverity.minor:
+        return 1;
+      case OfficialWarningSeverity.unknown:
+        return 0;
+    }
   }
 }

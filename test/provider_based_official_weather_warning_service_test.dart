@@ -34,7 +34,27 @@ class TestWarningProvider implements OfficialWarningProvider {
   }
 }
 
+OfficialWeatherWarning createWarning({
+  required String id,
+  required OfficialWarningSeverity severity,
+  DateTime? validFrom,
+}) {
+  final start = validFrom ?? DateTime.now().subtract(const Duration(hours: 1));
+
+  return OfficialWeatherWarning(
+    id: id,
+    title: 'Warnung $id',
+    description: 'Testwarnung',
+    instruction: 'Vorsicht',
+    source: 'Testquelle',
+    severity: severity,
+    validFrom: start,
+    validUntil: start.add(const Duration(hours: 2)),
+  );
+}
+
 void main() {
+  warningSortingTests();
   test(
     'supportsLocation ist true wenn mindestens ein Provider unterstützt',
     () {
@@ -76,24 +96,6 @@ void main() {
       isFalse,
     );
   });
-
-  OfficialWeatherWarning createWarning({
-    required String id,
-    required OfficialWarningSeverity severity,
-  }) {
-    final now = DateTime.now();
-
-    return OfficialWeatherWarning(
-      id: id,
-      title: 'Warnung $id',
-      description: 'Testwarnung',
-      instruction: 'Vorsicht',
-      source: 'Testquelle',
-      severity: severity,
-      validFrom: now.subtract(const Duration(hours: 1)),
-      validUntil: now.add(const Duration(hours: 1)),
-    );
-  }
 
   group('ProviderBasedOfficialWeatherWarningService', () {
     test('fragt nur unterstützte Provider ab', () async {
@@ -176,6 +178,115 @@ void main() {
       );
 
       expect(warnings, isEmpty);
+    });
+  });
+}
+
+void warningSortingTests() {
+  group('Warnsortierung', () {
+    test('sortiert extreme bis unbekannte Warnstufe korrekt', () async {
+      final provider = TestWarningProvider(
+        id: 'sorting-provider',
+        supported: true,
+        warnings: [
+          createWarning(
+            id: 'unknown',
+            severity: OfficialWarningSeverity.unknown,
+          ),
+          createWarning(id: 'minor', severity: OfficialWarningSeverity.minor),
+          createWarning(
+            id: 'extreme',
+            severity: OfficialWarningSeverity.extreme,
+          ),
+          createWarning(
+            id: 'moderate',
+            severity: OfficialWarningSeverity.moderate,
+          ),
+          createWarning(id: 'severe', severity: OfficialWarningSeverity.severe),
+        ],
+      );
+
+      final service = ProviderBasedOfficialWeatherWarningService(
+        providers: [provider],
+      );
+
+      final warnings = await service.fetchWarnings(
+        latitude: 51.4344,
+        longitude: 6.7623,
+      );
+
+      expect(warnings.map((warning) => warning.id).toList(), [
+        'extreme',
+        'severe',
+        'moderate',
+        'minor',
+        'unknown',
+      ]);
+    });
+
+    test('sortiert bei gleicher Stufe jüngere Warnung zuerst', () async {
+      final provider = TestWarningProvider(
+        id: 'time-sorting-provider',
+        supported: true,
+        warnings: [
+          createWarning(
+            id: 'older',
+            severity: OfficialWarningSeverity.severe,
+            validFrom: DateTime.utc(2026, 7, 15, 8),
+          ),
+          createWarning(
+            id: 'newer',
+            severity: OfficialWarningSeverity.severe,
+            validFrom: DateTime.utc(2026, 7, 15, 10),
+          ),
+        ],
+      );
+
+      final service = ProviderBasedOfficialWeatherWarningService(
+        providers: [provider],
+      );
+
+      final warnings = await service.fetchWarnings(
+        latitude: 51.4344,
+        longitude: 6.7623,
+      );
+
+      expect(warnings.map((warning) => warning.id).toList(), [
+        'newer',
+        'older',
+      ]);
+    });
+
+    test('liefert eine unveränderbare Warnliste', () async {
+      final provider = TestWarningProvider(
+        id: 'immutable-provider',
+        supported: true,
+        warnings: [
+          createWarning(
+            id: 'warning-1',
+            severity: OfficialWarningSeverity.minor,
+          ),
+        ],
+      );
+
+      final service = ProviderBasedOfficialWeatherWarningService(
+        providers: [provider],
+      );
+
+      final warnings = await service.fetchWarnings(
+        latitude: 51.4344,
+        longitude: 6.7623,
+      );
+
+      expect(
+        () => warnings.add(
+          createWarning(
+            id: 'warning-2',
+            severity: OfficialWarningSeverity.severe,
+          ),
+        ),
+        throwsUnsupportedError,
+      );
     });
   });
 }
