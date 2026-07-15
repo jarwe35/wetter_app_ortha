@@ -5,6 +5,7 @@ import 'bbk_geojson_parser.dart';
 import 'bbk_map_data_parser.dart';
 import 'bbk_warning_client.dart';
 import 'bbk_warning_converter.dart';
+import 'bbk_warning_lifecycle.dart';
 import 'bbk_warning_parser.dart';
 
 class BbkWarningProvider implements OfficialWarningProvider {
@@ -13,6 +14,7 @@ class BbkWarningProvider implements OfficialWarningProvider {
   final BbkWarningParser warningParser;
   final BbkGeoJsonParser geoJsonParser;
   final BbkWarningConverter converter;
+  final BbkWarningLifecycle lifecycle;
   final DateTime Function() nowProvider;
 
   /// Technisches Gültigkeitsfenster bis zum nächsten BBK-Abruf.
@@ -27,6 +29,7 @@ class BbkWarningProvider implements OfficialWarningProvider {
     this.warningParser = const BbkWarningParser(),
     this.geoJsonParser = const BbkGeoJsonParser(),
     this.converter = const BbkWarningConverter(),
+    this.lifecycle = const BbkWarningLifecycle(),
     DateTime Function()? nowProvider,
     this.fallbackValidityDuration = const Duration(minutes: 30),
   }) : nowProvider = nowProvider ?? DateTime.now;
@@ -55,16 +58,14 @@ class BbkWarningProvider implements OfficialWarningProvider {
     }
 
     final rawMapData = await client.fetchMapData();
-    final mapWarnings = mapDataParser.parse(rawMapData);
+    final mapWarnings = lifecycle.selectCurrentMapWarnings(
+      mapDataParser.parse(rawMapData),
+    );
     final now = nowProvider();
 
     final relevantWarnings = <OfficialWeatherWarning>[];
 
     for (final mapWarning in mapWarnings) {
-      if (!mapWarning.isAlertOrUpdate || mapWarning.isCancellation) {
-        continue;
-      }
-
       try {
         final rawGeometry = await client.fetchWarningGeometry(mapWarning.id);
 
@@ -86,7 +87,8 @@ class BbkWarningProvider implements OfficialWarningProvider {
 
         final warning = warningParser.parse(rawDetail);
 
-        if (warning.identifier != mapWarning.id || warning.isCancellation) {
+        if (warning.identifier != mapWarning.id ||
+            !lifecycle.isDetailActive(warning, moment: now)) {
           continue;
         }
 
