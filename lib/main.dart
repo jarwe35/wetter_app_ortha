@@ -20,6 +20,7 @@ import 'widgets/radar/ortha_radar_map.dart';
 import 'settings/unit_settings.dart';
 import 'settings/unit_settings_page.dart';
 import 'settings/unit_settings_service.dart';
+import 'utils/official_warning_text_formatter.dart';
 
 const Color orthaBackground = Color(0xFF08131F);
 const Color orthaSurface = Color(0xFF102235);
@@ -1464,6 +1465,32 @@ class OfficialWeatherWarningsCard extends StatelessWidget {
     }
   }
 
+  String sourceLabel(OfficialWeatherWarning warning) {
+    final normalizedId = warning.id.trim().toLowerCase();
+    final normalizedSource = warning.source.trim().toLowerCase();
+
+    if (normalizedId.startsWith('mow.') ||
+        normalizedSource.contains('bbk') ||
+        normalizedSource.contains('warnung.bund')) {
+      return 'BBK / MoWaS';
+    }
+
+    if (normalizedSource.contains('dwd') ||
+        normalizedSource.contains('deutscher wetterdienst')) {
+      return 'DWD';
+    }
+
+    return warning.source.trim().isEmpty
+        ? 'Amtliche Warnquelle'
+        : warning.source.trim();
+  }
+
+  IconData sourceIcon(OfficialWeatherWarning warning) {
+    return sourceLabel(warning) == 'DWD'
+        ? Icons.cloud_outlined
+        : Icons.shield_outlined;
+  }
+
   String formatWarningTime(DateTime value) {
     final local = value.toLocal();
     final day = local.day.toString().padLeft(2, '0');
@@ -1545,11 +1572,27 @@ class OfficialWeatherWarningsCard extends StatelessWidget {
               icon: Icons.verified_outlined,
               color: Color(0xFF4F8A70),
               text:
-                  'Aktuell liegen für diesen Ort keine amtlichen DWD-Warnungen vor.',
+                  'Aktuell liegen für diesen Ort keine amtlichen Warnungen vor.',
             )
           else
             ...warnings.map((warning) {
               final color = severityColor(warning.severity);
+
+              final cleanedDescription = OfficialWarningTextFormatter.sanitize(
+                warning.description,
+              );
+
+              final descriptionSummary = OfficialWarningTextFormatter.summary(
+                warning.description,
+              );
+
+              final cleanedInstruction = OfficialWarningTextFormatter.sanitize(
+                warning.instruction,
+              );
+
+              final hasExtendedDescription =
+                  cleanedDescription.isNotEmpty &&
+                  cleanedDescription != descriptionSummary;
 
               return Container(
                 width: double.infinity,
@@ -1591,14 +1634,53 @@ class OfficialWeatherWarningsCard extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                severityText(warning.severity),
-                                style: TextStyle(
-                                  color: color,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 6,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 9,
+                                      vertical: 5,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: orthaSurfaceElevated,
+                                      borderRadius: BorderRadius.circular(999),
+                                      border: Border.all(
+                                        color: color.withValues(alpha: 0.55),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          sourceIcon(warning),
+                                          size: 15,
+                                          color: color,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          sourceLabel(warning),
+                                          style: TextStyle(
+                                            color: color,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Text(
+                                    severityText(warning.severity),
+                                    style: TextStyle(
+                                      color: color,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 6),
                               Text(
                                 warning.title,
                                 style: const TextStyle(
@@ -1649,17 +1731,93 @@ class OfficialWeatherWarningsCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    if (warning.description.isNotEmpty) ...[
+                    if (descriptionSummary.isNotEmpty) ...[
                       const SizedBox(height: 14),
-                      Text(
-                        warning.description,
-                        style: const TextStyle(
-                          color: orthaPrimaryText,
-                          height: 1.35,
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: orthaSurfaceElevated,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: orthaBorder.withValues(alpha: 0.72),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Row(
+                              children: [
+                                Icon(
+                                  Icons.summarize_outlined,
+                                  size: 18,
+                                  color: orthaAccent,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Kurzinfo',
+                                  style: TextStyle(
+                                    color: orthaAccent,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              descriptionSummary,
+                              style: const TextStyle(
+                                color: orthaPrimaryText,
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
-                    if (warning.instruction.isNotEmpty) ...[
+                    if (hasExtendedDescription) ...[
+                      const SizedBox(height: 10),
+                      Theme(
+                        data: Theme.of(
+                          context,
+                        ).copyWith(dividerColor: Colors.transparent),
+                        child: ExpansionTile(
+                          tilePadding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                          ),
+                          childrenPadding: const EdgeInsets.fromLTRB(
+                            4,
+                            0,
+                            4,
+                            12,
+                          ),
+                          leading: const Icon(
+                            Icons.article_outlined,
+                            color: orthaSecondaryText,
+                          ),
+                          title: const Text(
+                            'Amtlichen Originaltext anzeigen',
+                            style: TextStyle(
+                              color: orthaPrimaryText,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          children: [
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: SelectableText(
+                                cleanedDescription,
+                                style: const TextStyle(
+                                  color: orthaSecondaryText,
+                                  height: 1.45,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    if (cleanedInstruction.isNotEmpty) ...[
                       const SizedBox(height: 12),
                       Container(
                         width: double.infinity,
@@ -1672,7 +1830,7 @@ class OfficialWeatherWarningsCard extends StatelessWidget {
                           ),
                         ),
                         child: Text(
-                          'Hinweis: ${warning.instruction}',
+                          'Amtliche Handlungsempfehlung:\n$cleanedInstruction',
                           style: const TextStyle(
                             color: orthaPrimaryText,
                             fontWeight: FontWeight.w600,
@@ -1682,7 +1840,7 @@ class OfficialWeatherWarningsCard extends StatelessWidget {
                     ],
                     const SizedBox(height: 10),
                     Text(
-                      'Quelle: ${warning.source}',
+                      'Herausgeber: ${warning.source}',
                       style: const TextStyle(
                         fontSize: 12,
                         color: orthaSecondaryText,
