@@ -44,8 +44,12 @@ class OfficialWarningMap extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final mapController = MapController();
     final location = LatLng(latitude, longitude);
+
+    final cameraCoordinates = <LatLng>[
+      location,
+      ...polygons.expand((polygon) => polygon.points),
+    ];
 
     return Container(
       width: double.infinity,
@@ -60,10 +64,14 @@ class OfficialWarningMap extends StatelessWidget {
       child: Stack(
         children: [
           FlutterMap(
-            mapController: mapController,
+            key: ValueKey('warning-map-${warning.id}-$latitude-$longitude'),
             options: MapOptions(
-              initialCenter: location,
-              initialZoom: 11,
+              initialCameraFit: CameraFit.coordinates(
+                coordinates: cameraCoordinates,
+                padding: const EdgeInsets.fromLTRB(28, 76, 28, 28),
+                minZoom: 5,
+                maxZoom: 13,
+              ),
               minZoom: 4,
               maxZoom: 18,
             ),
