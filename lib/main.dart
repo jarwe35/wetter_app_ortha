@@ -16,6 +16,7 @@ import 'services/warning_providers/dwd_cap_download_client.dart';
 import 'services/warning_providers/dwd_warning_provider.dart';
 import 'services/weather_service.dart';
 import 'widgets/location_search_result_dialog.dart';
+import 'widgets/weather/ortha_weather_icon.dart';
 import 'widgets/radar/ortha_radar_map.dart';
 import 'widgets/warnings/official_warning_map.dart';
 import 'settings/unit_settings.dart';

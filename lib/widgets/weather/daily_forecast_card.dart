@@ -49,21 +49,10 @@ class DailyForecastCard extends StatelessWidget {
 
                   final weatherInfo = Row(
                     children: [
-                      Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: orthaAccent.withValues(alpha: 0.10),
-                          borderRadius: BorderRadius.circular(13),
-                          border: Border.all(
-                            color: orthaAccent.withValues(alpha: 0.30),
-                          ),
-                        ),
-                        child: Icon(
-                          weatherIcon(day.weatherCode),
-                          color: orthaAccent,
-                          size: 22,
-                        ),
+                      OrthaWeatherIcon(
+                        weatherCode: day.weatherCode,
+                        size: 46,
+                        semanticLabel: weatherText(day.weatherCode),
                       ),
                       const SizedBox(width: 12),
                       Expanded(

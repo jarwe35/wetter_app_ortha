@@ -55,3 +55,8 @@ Jeder Entwicklungsschritt wird einzeln geprüft, versioniert und zu GitHub über
 - WMO-Wettercodes werden zentral in normalisierte Wetterzustände übersetzt.
 - Die neue Icon-Komponente unterstützt Skalierung, Tag/Nacht und eine erste Semi-3D-Grunddarstellung.
 - Bestehende Ansichten verwenden die neue Komponente noch nicht.
+
+- Schritt 0.12.9: Die Stunden- und Tagesprognose verwenden nun `OrthaWeatherIcon`.
+- Die bisherigen flachen Material-Wettersymbole wurden dort durch die skalierbare Semi-3D-Darstellung ersetzt.
+- Wettercode und zugängliche Zustandsbeschreibung werden weiterhin vollständig übergeben.
+- Die zentrale aktuelle Wetterkarte wird in einem getrennten Schritt umgestellt.

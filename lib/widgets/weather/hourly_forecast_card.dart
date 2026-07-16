@@ -50,7 +50,11 @@ class HourlyForecastCard extends StatelessWidget {
                           fontSize: 12,
                         ),
                       ),
-                      Icon(weatherIcon(item.weatherCode), color: orthaAccent),
+                      OrthaWeatherIcon(
+                        weatherCode: item.weatherCode,
+                        size: 36,
+                        semanticLabel: weatherText(item.weatherCode),
+                      ),
                       Text(
                         formatTemperature(
                           item.temperature,
