@@ -1,6 +1,6 @@
 part of '../../main.dart';
 
-class DailyForecastCard extends StatelessWidget {
+class DailyForecastCard extends StatefulWidget {
   final List<DailyForecast> forecast;
   final UnitSettings unitSettings;
 
@@ -11,7 +11,16 @@ class DailyForecastCard extends StatelessWidget {
   });
 
   @override
+  State<DailyForecastCard> createState() => _DailyForecastCardState();
+}
+
+class _DailyForecastCardState extends State<DailyForecastCard> {
+  ForecastRange _selectedRange = ForecastRange.sevenDays;
+
+  @override
   Widget build(BuildContext context) {
+    final visibleForecast = _selectedRange.applyTo(widget.forecast);
+
     return CardBox(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -22,7 +31,7 @@ class DailyForecastCard extends StatelessWidget {
               SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  '7-Tage-Vorhersage',
+                  'Tagesvorhersage',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -33,8 +42,29 @@ class DailyForecastCard extends StatelessWidget {
             'Temperaturspanne und Niederschlagswahrscheinlichkeit',
             style: TextStyle(color: orthaSecondaryText, fontSize: 13),
           ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: SegmentedButton<ForecastRange>(
+              segments: ForecastRange.values
+                  .map(
+                    (range) => ButtonSegment<ForecastRange>(
+                      value: range,
+                      label: Text(range.label),
+                    ),
+                  )
+                  .toList(growable: false),
+              selected: <ForecastRange>{_selectedRange},
+              showSelectedIcon: false,
+              onSelectionChanged: (selection) {
+                setState(() {
+                  _selectedRange = selection.first;
+                });
+              },
+            ),
+          ),
           const SizedBox(height: 16),
-          ...forecast.map(
+          ...visibleForecast.map(
             (day) => Container(
               margin: const EdgeInsets.only(bottom: 10),
               padding: const EdgeInsets.all(14),
@@ -92,7 +122,7 @@ class DailyForecastCard extends StatelessWidget {
                           label: 'Min',
                           value: formatTemperature(
                             day.temperatureMin,
-                            unitSettings,
+                            widget.unitSettings,
                             decimals: 0,
                           ),
                         ),
@@ -105,7 +135,7 @@ class DailyForecastCard extends StatelessWidget {
                           label: 'Max',
                           value: formatTemperature(
                             day.temperatureMax,
-                            unitSettings,
+                            widget.unitSettings,
                             decimals: 0,
                           ),
                         ),

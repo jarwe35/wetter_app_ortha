@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import 'engine/risk_engine.dart';
+import 'models/forecast_range.dart';
 import 'models/official_weather_warning.dart';
 import 'models/saved_location.dart';
 import 'pages/locations_page.dart';

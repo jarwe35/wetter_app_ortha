@@ -73,3 +73,7 @@ Jeder Entwicklungsschritt wird einzeln geprüft, versioniert und zu GitHub über
 
 - Schritt 0.12.13: Wettermetadaten reagieren adaptiv auf die verfügbare Breite.
 - Auf schmalen Displays werden gefühlte Temperatur, Luftfeuchtigkeit und Wind übersichtlich untereinander dargestellt.
+
+- Schritt 0.12.14: Die Tagesvorhersage besitzt eine sichtbare Umschaltung zwischen 7 und 14 Tagen.
+- Standardmäßig bleibt die 7-Tage-Ansicht ausgewählt.
+- Der Datenabruf bleibt bei 14 Tagen; die Auswahl steuert ausschließlich die Darstellung.
