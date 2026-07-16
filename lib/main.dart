@@ -396,6 +396,11 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
         officialWarningsError = warningsError;
         officialWarningsLoading = false;
       });
+
+      await _processNovaAlert(
+        risk: risk,
+        locationName: savedLocation?.name ?? data.place,
+      );
     } catch (error) {
       if (!mounted) return;
 
