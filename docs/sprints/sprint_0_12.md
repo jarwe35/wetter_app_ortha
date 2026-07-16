@@ -70,3 +70,6 @@ Jeder Entwicklungsschritt wird einzeln geprüft, versioniert und zu GitHub über
 - Schritt 0.12.12: Die aktuelle Wetterkarte reagiert adaptiv auf schmale und breite Displaygrößen.
 - Auf sehr schmalen Ansichten werden Wettersymbol und Temperatur untereinander dargestellt.
 - Das Samsung Galaxy S26 Ultra bleibt Referenzgerät, die Layoutlogik ist jedoch nicht gerätespezifisch.
+
+- Schritt 0.12.13: Wettermetadaten reagieren adaptiv auf die verfügbare Breite.
+- Auf schmalen Displays werden gefühlte Temperatur, Luftfeuchtigkeit und Wind übersichtlich untereinander dargestellt.

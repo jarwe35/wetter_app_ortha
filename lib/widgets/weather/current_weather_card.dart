@@ -114,25 +114,42 @@ class WeatherCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: orthaBorder.withValues(alpha: 0.72)),
             ),
-            child: Wrap(
-              spacing: 18,
-              runSpacing: 10,
-              children: [
-                _WeatherMetaItem(
-                  icon: Icons.device_thermostat_outlined,
-                  label:
-                      'Gefühlt ${formatTemperature(data.apparentTemperature, unitSettings, decimals: 1)}',
-                ),
-                _WeatherMetaItem(
-                  icon: Icons.water_drop_outlined,
-                  label: 'Luftfeuchtigkeit ${data.humidity} %',
-                ),
-                _WeatherMetaItem(
-                  icon: Icons.air,
-                  label:
-                      'Wind ${formatWindSpeed(data.windSpeed, unitSettings)}',
-                ),
-              ],
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final compact = constraints.maxWidth < 360;
+
+                final items = [
+                  _WeatherMetaItem(
+                    icon: Icons.device_thermostat_outlined,
+                    label:
+                        'Gefühlt ${formatTemperature(data.apparentTemperature, unitSettings, decimals: 1)}',
+                  ),
+                  _WeatherMetaItem(
+                    icon: Icons.water_drop_outlined,
+                    label: 'Luftfeuchtigkeit ${data.humidity} %',
+                  ),
+                  _WeatherMetaItem(
+                    icon: Icons.air,
+                    label:
+                        'Wind ${formatWindSpeed(data.windSpeed, unitSettings)}',
+                  ),
+                ];
+
+                if (compact) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (var index = 0; index < items.length; index++) ...[
+                        items[index],
+                        if (index < items.length - 1)
+                          const SizedBox(height: 12),
+                      ],
+                    ],
+                  );
+                }
+
+                return Wrap(spacing: 18, runSpacing: 12, children: items);
+              },
             ),
           ),
         ],
