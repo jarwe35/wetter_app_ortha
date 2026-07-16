@@ -1,0 +1,201 @@
+part of '../../main.dart';
+
+class DailyForecastCard extends StatelessWidget {
+  final List<DailyForecast> forecast;
+  final UnitSettings unitSettings;
+
+  const DailyForecastCard({
+    super.key,
+    required this.forecast,
+    required this.unitSettings,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CardBox(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.calendar_month_outlined, color: orthaAccent),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  '7-Tage-Vorhersage',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Temperaturspanne und Niederschlagswahrscheinlichkeit',
+            style: TextStyle(color: orthaSecondaryText, fontSize: 13),
+          ),
+          const SizedBox(height: 16),
+          ...forecast.map(
+            (day) => Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: orthaSurfaceElevated,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: orthaBorder.withValues(alpha: 0.85)),
+              ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final compact = constraints.maxWidth < 520;
+
+                  final weatherInfo = Row(
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: orthaAccent.withValues(alpha: 0.10),
+                          borderRadius: BorderRadius.circular(13),
+                          border: Border.all(
+                            color: orthaAccent.withValues(alpha: 0.30),
+                          ),
+                        ),
+                        child: Icon(
+                          weatherIcon(day.weatherCode),
+                          color: orthaAccent,
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              shortDate(day.date),
+                              style: const TextStyle(
+                                color: orthaPrimaryText,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              weatherText(day.weatherCode),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: orthaSecondaryText,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+
+                  final values = Row(
+                    mainAxisSize: compact ? MainAxisSize.max : MainAxisSize.min,
+                    children: [
+                      Expanded(
+                        flex: compact ? 1 : 0,
+                        child: _ForecastValue(
+                          icon: Icons.arrow_downward,
+                          label: 'Min',
+                          value: formatTemperature(
+                            day.temperatureMin,
+                            unitSettings,
+                            decimals: 0,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        flex: compact ? 1 : 0,
+                        child: _ForecastValue(
+                          icon: Icons.arrow_upward,
+                          label: 'Max',
+                          value: formatTemperature(
+                            day.temperatureMax,
+                            unitSettings,
+                            decimals: 0,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        flex: compact ? 1 : 0,
+                        child: _ForecastValue(
+                          icon: Icons.water_drop_outlined,
+                          label: 'Regen',
+                          value: '${day.precipitationProbability} %',
+                        ),
+                      ),
+                    ],
+                  );
+
+                  if (compact) {
+                    return Column(
+                      children: [
+                        weatherInfo,
+                        const SizedBox(height: 14),
+                        values,
+                      ],
+                    );
+                  }
+
+                  return Row(
+                    children: [
+                      Expanded(child: weatherInfo),
+                      const SizedBox(width: 18),
+                      SizedBox(width: 300, child: values),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ForecastValue extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _ForecastValue({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 15, color: orthaSecondaryText),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: const TextStyle(color: orthaSecondaryText, fontSize: 11),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(
+            color: orthaPrimaryText,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+}

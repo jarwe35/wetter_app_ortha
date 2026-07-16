@@ -42,3 +42,7 @@ Jeder Entwicklungsschritt wird einzeln geprüft, versioniert und zu GitHub über
 - Schritt 0.12.5: Eigenständiges Modell für die Auswahl zwischen 7- und 14-Tage-Vorhersage eingeführt.
 - Die Begrenzung der Prognosedaten ist generisch, unveränderbar und durch Tests abgesichert.
 - Die sichtbare Umschaltung in der Tagesvorhersage folgt im nächsten UI-Schritt.
+
+- Schritt 0.12.6: `DailyForecastCard` und `_ForecastValue` aus `main.dart` nach `lib/widgets/weather/daily_forecast_card.dart` ausgelagert.
+- Die Auslagerung ist ein reines Struktur-Refactoring ohne beabsichtigte sichtbare oder funktionale Änderung.
+- Die bestehende Tagesvorhersage bleibt vollständig erhalten.
