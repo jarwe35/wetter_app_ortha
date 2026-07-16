@@ -81,3 +81,6 @@ Jeder Entwicklungsschritt wird einzeln geprüft, versioniert und zu GitHub über
 - Schritt 0.12.15: Die Tageskarten wurden für sehr schmale, normale und breite Ansichten weiter optimiert.
 - Symbolgrößen und Abstände passen sich der verfügbaren Kartenbreite an.
 - Die Darstellung bleibt geräteunabhängig und verhindert unnötige Platzprobleme auf kleinen Smartphones.
+
+- Schritt 0.12.16: Die Karten der 24-Stunden-Prognose reagieren adaptiv auf schmale und normale Displaybreiten.
+- Kartenbreite, Innenabstand, Symbolgröße und Gesamthöhe werden auf sehr kleinen Smartphones reduziert.
