@@ -122,4 +122,56 @@ void main() {
       containsAll(<String>['Hitze', 'UV']),
     );
   });
+
+  test('Wind und Gewitter erzeugen kombinierte Empfehlung', () {
+    final recommendations = engine.evaluate(
+      resultWith([
+        category(
+          name: 'Wind/Sturm',
+          level: RiskLevel.orange,
+          score: 60,
+          message: 'Starke Sturmgefahr',
+        ),
+        category(
+          name: 'Gewitter',
+          level: RiskLevel.yellow,
+          score: 35,
+          message: 'Erhöhtes Gewitterrisiko',
+        ),
+      ]),
+    );
+
+    expect(recommendations, hasLength(1));
+    expect(
+      recommendations.first.title,
+      'Kombinierte Sturm- und Gewittergefahr',
+    );
+    expect(recommendations.first.priority, RecommendationPriority.high);
+    expect(
+      recommendations.first.contributingCategories,
+      containsAll(<String>['Wind/Sturm', 'Gewitter']),
+    );
+  });
+
+  test('rote Wind- oder Gewitterlage hebt Kombination auf kritisch', () {
+    final recommendations = engine.evaluate(
+      resultWith([
+        category(
+          name: 'Wind/Sturm',
+          level: RiskLevel.red,
+          score: 85,
+          message: 'Schwere Sturmgefahr',
+        ),
+        category(
+          name: 'Gewitter',
+          level: RiskLevel.orange,
+          score: 70,
+          message: 'Gewitter möglich',
+        ),
+      ]),
+    );
+
+    expect(recommendations, hasLength(1));
+    expect(recommendations.first.priority, RecommendationPriority.critical);
+  });
 }
