@@ -60,3 +60,6 @@ Jeder Entwicklungsschritt wird einzeln geprüft, versioniert und zu GitHub über
 - Die bisherigen flachen Material-Wettersymbole wurden dort durch die skalierbare Semi-3D-Darstellung ersetzt.
 - Wettercode und zugängliche Zustandsbeschreibung werden weiterhin vollständig übergeben.
 - Die zentrale aktuelle Wetterkarte wird in einem getrennten Schritt umgestellt.
+
+- Schritt 0.12.10: `WeatherCard` und `_WeatherMetaItem` nach `lib/widgets/weather/current_weather_card.dart` ausgelagert.
+- Reines Struktur-Refactoring ohne beabsichtigte sichtbare oder funktionale Änderung.
