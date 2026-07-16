@@ -297,6 +297,34 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
     return null;
   }
 
+  Future<void> _processNovaAlert({
+    required RiskResult risk,
+    required String locationName,
+  }) async {
+    final recommendations = recommendationEngine.evaluate(risk);
+
+    final request = novaAlertEngine.evaluate(
+      risk: risk,
+      recommendation: recommendations.isEmpty ? null : recommendations.first,
+      locationName: locationName,
+    );
+
+    if (request == null) {
+      return;
+    }
+
+    final shouldDispatch = await novaDuplicateAlertGuard.shouldDispatch(
+      request: request,
+      locationName: locationName,
+    );
+
+    if (!shouldDispatch) {
+      return;
+    }
+
+    await novaAlertDispatcher.dispatch(request);
+  }
+
   Future<void> loadWeather(String place) async {
     setState(() {
       isLoading = true;
