@@ -66,3 +66,7 @@ Jeder Entwicklungsschritt wird einzeln geprüft, versioniert und zu GitHub über
 
 - Schritt 0.12.11: Die aktuelle Wetterkarte verwendet nun ebenfalls `OrthaWeatherIcon`.
 - Das bisherige flache Material-Wettersymbol wurde durch die skalierbare Semi-3D-Darstellung ersetzt.
+
+- Schritt 0.12.12: Die aktuelle Wetterkarte reagiert adaptiv auf schmale und breite Displaygrößen.
+- Auf sehr schmalen Ansichten werden Wettersymbol und Temperatur untereinander dargestellt.
+- Das Samsung Galaxy S26 Ultra bleibt Referenzgerät, die Layoutlogik ist jedoch nicht gerätespezifisch.

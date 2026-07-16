@@ -41,44 +41,69 @@ class WeatherCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 18),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              OrthaWeatherIcon(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 340;
+              final iconSize = compact ? 78.0 : 92.0;
+              final temperatureSize = compact ? 46.0 : 54.0;
+
+              final weatherIconWidget = OrthaWeatherIcon(
                 weatherCode: data.weatherCode,
-                size: 92,
+                size: iconSize,
                 semanticLabel: weatherText(data.weatherCode),
-              ),
-              const SizedBox(width: 18),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      formatTemperature(
-                        data.temperature,
-                        unitSettings,
-                        decimals: 1,
-                      ),
-                      style: const TextStyle(
-                        color: orthaPrimaryText,
-                        fontSize: 54,
-                        height: 1,
-                        fontWeight: FontWeight.bold,
-                      ),
+              );
+
+              final temperatureWidget = Column(
+                crossAxisAlignment: compact
+                    ? CrossAxisAlignment.center
+                    : CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    formatTemperature(
+                      data.temperature,
+                      unitSettings,
+                      decimals: 1,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      weatherText(data.weatherCode),
-                      style: const TextStyle(
-                        color: orthaSecondaryText,
-                        fontSize: 16,
-                      ),
+                    style: TextStyle(
+                      color: orthaPrimaryText,
+                      fontSize: temperatureSize,
+                      height: 1,
+                      fontWeight: FontWeight.bold,
                     ),
-                  ],
-                ),
-              ),
-            ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    weatherText(data.weatherCode),
+                    textAlign: compact ? TextAlign.center : TextAlign.start,
+                    style: const TextStyle(
+                      color: orthaSecondaryText,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              );
+
+              if (compact) {
+                return Center(
+                  child: Column(
+                    children: [
+                      weatherIconWidget,
+                      const SizedBox(height: 16),
+                      temperatureWidget,
+                    ],
+                  ),
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  weatherIconWidget,
+                  const SizedBox(width: 18),
+                  Expanded(child: temperatureWidget),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 18),
           Container(
