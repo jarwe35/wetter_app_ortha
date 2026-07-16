@@ -163,7 +163,7 @@ class WeatherService {
       'daily':
           'weather_code,temperature_2m_max,temperature_2m_min,'
           'precipitation_probability_max,uv_index_max',
-      'forecast_days': '7',
+      'forecast_days': '14',
       'timezone': 'auto',
     });
 

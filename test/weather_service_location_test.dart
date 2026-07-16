@@ -16,6 +16,7 @@ void main() {
 
           expect(request.url.host, 'api.open-meteo.com');
           expect(request.url.path, '/v1/forecast');
+          expect(request.url.queryParameters['forecast_days'], '14');
           expect(request.url.queryParameters['latitude'], '51.4344');
           expect(request.url.queryParameters['longitude'], '6.7623');
 

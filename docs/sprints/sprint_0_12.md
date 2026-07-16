@@ -32,3 +32,9 @@
 ## Arbeitsprinzip
 
 Jeder Entwicklungsschritt wird einzeln geprüft, versioniert und zu GitHub übertragen.
+
+## Umgesetzte Schritte
+
+- Schritt 0.12.4: Open-Meteo-Datenabruf auf 14 Tage erweitert.
+- Der API-Parameter `forecast_days` wird durch einen Test abgesichert.
+- Die sichtbare Umschaltung zwischen 7 und 14 Tagen folgt separat.
