@@ -50,3 +50,8 @@ Jeder Entwicklungsschritt wird einzeln geprüft, versioniert und zu GitHub über
 - Schritt 0.12.7: `HourlyForecastCard` aus `main.dart` nach `lib/widgets/weather/hourly_forecast_card.dart` ausgelagert.
 - Die Auslagerung ist ein reines Struktur-Refactoring ohne beabsichtigte sichtbare oder funktionale Änderung.
 - Die bestehende Stundenprognose bleibt vollständig erhalten.
+
+- Schritt 0.12.8: Grundgerüst der `OrthaWeatherIcon`-Engine eingeführt.
+- WMO-Wettercodes werden zentral in normalisierte Wetterzustände übersetzt.
+- Die neue Icon-Komponente unterstützt Skalierung, Tag/Nacht und eine erste Semi-3D-Grunddarstellung.
+- Bestehende Ansichten verwenden die neue Komponente noch nicht.
