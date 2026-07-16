@@ -38,3 +38,7 @@ Jeder Entwicklungsschritt wird einzeln geprüft, versioniert und zu GitHub über
 - Schritt 0.12.4: Open-Meteo-Datenabruf auf 14 Tage erweitert.
 - Der API-Parameter `forecast_days` wird durch einen Test abgesichert.
 - Die sichtbare Umschaltung zwischen 7 und 14 Tagen folgt separat.
+
+- Schritt 0.12.5: Eigenständiges Modell für die Auswahl zwischen 7- und 14-Tage-Vorhersage eingeführt.
+- Die Begrenzung der Prognosedaten ist generisch, unveränderbar und durch Tests abgesichert.
+- Die sichtbare Umschaltung in der Tagesvorhersage folgt im nächsten UI-Schritt.
