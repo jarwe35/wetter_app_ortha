@@ -75,16 +75,19 @@ class _DailyForecastCardState extends State<DailyForecastCard> {
               ),
               child: LayoutBuilder(
                 builder: (context, constraints) {
+                  final veryCompact = constraints.maxWidth < 330;
                   final compact = constraints.maxWidth < 520;
+                  final iconSize = veryCompact ? 40.0 : 46.0;
+                  final horizontalGap = veryCompact ? 9.0 : 12.0;
 
                   final weatherInfo = Row(
                     children: [
                       OrthaWeatherIcon(
                         weatherCode: day.weatherCode,
-                        size: 46,
+                        size: iconSize,
                         semanticLabel: weatherText(day.weatherCode),
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: horizontalGap),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -127,7 +130,7 @@ class _DailyForecastCardState extends State<DailyForecastCard> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 14),
+                      SizedBox(width: veryCompact ? 8 : 14),
                       Expanded(
                         flex: compact ? 1 : 0,
                         child: _ForecastValue(
@@ -140,7 +143,7 @@ class _DailyForecastCardState extends State<DailyForecastCard> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 14),
+                      SizedBox(width: veryCompact ? 8 : 14),
                       Expanded(
                         flex: compact ? 1 : 0,
                         child: _ForecastValue(
@@ -156,7 +159,7 @@ class _DailyForecastCardState extends State<DailyForecastCard> {
                     return Column(
                       children: [
                         weatherInfo,
-                        const SizedBox(height: 14),
+                        SizedBox(height: veryCompact ? 11 : 14),
                         values,
                       ],
                     );

@@ -77,3 +77,7 @@ Jeder Entwicklungsschritt wird einzeln geprüft, versioniert und zu GitHub über
 - Schritt 0.12.14: Die Tagesvorhersage besitzt eine sichtbare Umschaltung zwischen 7 und 14 Tagen.
 - Standardmäßig bleibt die 7-Tage-Ansicht ausgewählt.
 - Der Datenabruf bleibt bei 14 Tagen; die Auswahl steuert ausschließlich die Darstellung.
+
+- Schritt 0.12.15: Die Tageskarten wurden für sehr schmale, normale und breite Ansichten weiter optimiert.
+- Symbolgrößen und Abstände passen sich der verfügbaren Kartenbreite an.
+- Die Darstellung bleibt geräteunabhängig und verhindert unnötige Platzprobleme auf kleinen Smartphones.
