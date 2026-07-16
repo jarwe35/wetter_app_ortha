@@ -16,36 +16,67 @@ class Recommendation {
   });
 }
 
+abstract class RecommendationRule {
+  const RecommendationRule();
+
+  Recommendation? evaluate(Map<String, RiskCategoryResult> categories);
+}
+
+class WindThunderstormRule extends RecommendationRule {
+  const WindThunderstormRule();
+
+  @override
+  Recommendation? evaluate(Map<String, RiskCategoryResult> categories) {
+    final wind = categories['Wind/Sturm'];
+    final thunderstorm = categories['Gewitter'];
+
+    if (wind == null || thunderstorm == null) {
+      return null;
+    }
+
+    final windRelevant = wind.level.index >= RiskLevel.orange.index;
+    final thunderstormRelevant =
+        thunderstorm.level.index >= RiskLevel.yellow.index;
+
+    if (!windRelevant || !thunderstormRelevant) {
+      return null;
+    }
+
+    final priority =
+        wind.level == RiskLevel.red || thunderstorm.level == RiskLevel.red
+        ? RecommendationPriority.critical
+        : RecommendationPriority.high;
+
+    return Recommendation(
+      priority: priority,
+      title: 'Kombinierte Sturm- und Gewittergefahr',
+      description:
+          'Starke Windbelastung und Gewitter treten gleichzeitig auf. '
+          'Exponierte Bereiche, Wälder und Außenaktivitäten sollten '
+          'gemieden werden. Lose Gegenstände sind zu sichern.',
+      contributingCategories: const ['Wind/Sturm', 'Gewitter'],
+    );
+  }
+}
+
 class RecommendationEngine {
-  const RecommendationEngine();
+  final List<RecommendationRule> rules;
+
+  const RecommendationEngine({this.rules = const [WindThunderstormRule()]});
 
   List<Recommendation> evaluate(RiskResult risk) {
     final recommendations = <Recommendation>[];
+
     final categories = {
       for (final category in risk.categories) category.name: category,
     };
 
-    final wind = categories['Wind/Sturm'];
-    final thunderstorm = categories['Gewitter'];
+    for (final rule in rules) {
+      final recommendation = rule.evaluate(categories);
 
-    if (wind != null &&
-        thunderstorm != null &&
-        wind.level.index >= RiskLevel.orange.index &&
-        thunderstorm.level.index >= RiskLevel.yellow.index) {
-      recommendations.add(
-        Recommendation(
-          priority:
-              wind.level == RiskLevel.red || thunderstorm.level == RiskLevel.red
-              ? RecommendationPriority.critical
-              : RecommendationPriority.high,
-          title: 'Kombinierte Sturm- und Gewittergefahr',
-          description:
-              'Starke Windbelastung und Gewitter treten gleichzeitig auf. '
-              'Exponierte Bereiche, Wälder und Außenaktivitäten sollten '
-              'gemieden werden. Lose Gegenstände sind zu sichern.',
-          contributingCategories: const ['Wind/Sturm', 'Gewitter'],
-        ),
-      );
+      if (recommendation != null) {
+        recommendations.add(recommendation);
+      }
     }
 
     for (final category in risk.categories) {
@@ -53,33 +84,10 @@ class RecommendationEngine {
         continue;
       }
 
-      if (category.level == RiskLevel.red) {
-        recommendations.add(
-          Recommendation(
-            priority: RecommendationPriority.critical,
-            title: category.name,
-            description: category.message,
-            contributingCategories: [category.name],
-          ),
-        );
-      } else if (category.level == RiskLevel.orange) {
-        recommendations.add(
-          Recommendation(
-            priority: RecommendationPriority.high,
-            title: category.name,
-            description: category.message,
-            contributingCategories: [category.name],
-          ),
-        );
-      } else if (category.level == RiskLevel.yellow) {
-        recommendations.add(
-          Recommendation(
-            priority: RecommendationPriority.medium,
-            title: category.name,
-            description: category.message,
-            contributingCategories: [category.name],
-          ),
-        );
+      final recommendation = _recommendationForCategory(category);
+
+      if (recommendation != null) {
+        recommendations.add(recommendation);
       }
     }
 
@@ -88,6 +96,37 @@ class RecommendationEngine {
     );
 
     return recommendations;
+  }
+
+  Recommendation? _recommendationForCategory(RiskCategoryResult category) {
+    switch (category.level) {
+      case RiskLevel.red:
+        return Recommendation(
+          priority: RecommendationPriority.critical,
+          title: category.name,
+          description: category.message,
+          contributingCategories: [category.name],
+        );
+
+      case RiskLevel.orange:
+        return Recommendation(
+          priority: RecommendationPriority.high,
+          title: category.name,
+          description: category.message,
+          contributingCategories: [category.name],
+        );
+
+      case RiskLevel.yellow:
+        return Recommendation(
+          priority: RecommendationPriority.medium,
+          title: category.name,
+          description: category.message,
+          contributingCategories: [category.name],
+        );
+
+      case RiskLevel.green:
+        return null;
+    }
   }
 
   bool _isCoveredByCombinedRecommendation(
