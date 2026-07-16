@@ -63,3 +63,6 @@ Jeder Entwicklungsschritt wird einzeln geprüft, versioniert und zu GitHub über
 
 - Schritt 0.12.10: `WeatherCard` und `_WeatherMetaItem` nach `lib/widgets/weather/current_weather_card.dart` ausgelagert.
 - Reines Struktur-Refactoring ohne beabsichtigte sichtbare oder funktionale Änderung.
+
+- Schritt 0.12.11: Die aktuelle Wetterkarte verwendet nun ebenfalls `OrthaWeatherIcon`.
+- Das bisherige flache Material-Wettersymbol wurde durch die skalierbare Semi-3D-Darstellung ersetzt.

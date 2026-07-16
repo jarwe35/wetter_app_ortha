@@ -44,21 +44,10 @@ class WeatherCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Container(
-                width: 92,
-                height: 92,
-                decoration: BoxDecoration(
-                  color: orthaSurfaceElevated,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: orthaBorder.withValues(alpha: 0.85),
-                  ),
-                ),
-                child: Icon(
-                  weatherIcon(data.weatherCode),
-                  size: 52,
-                  color: orthaAccent,
-                ),
+              OrthaWeatherIcon(
+                weatherCode: data.weatherCode,
+                size: 92,
+                semanticLabel: weatherText(data.weatherCode),
               ),
               const SizedBox(width: 18),
               Expanded(
