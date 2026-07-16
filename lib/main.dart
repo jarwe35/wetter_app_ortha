@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import 'engine/risk_engine.dart';
+import 'engine/recommendation_engine.dart';
+import 'notifications/nova_alert_dispatcher.dart';
+import 'notifications/nova_alert_engine.dart';
+import 'notifications/nova_duplicate_alert_guard.dart';
+import 'notifications/nova_notification_gateway.dart';
+import 'notifications/shared_preferences_alert_history_store.dart';
 import 'models/forecast_range.dart';
 import 'models/official_weather_warning.dart';
 import 'models/saved_location.dart';
@@ -93,7 +99,15 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
   final LocationStorageService locationStorageService =
       LocationStorageService();
   final RiskEngine riskEngine = const RiskEngine();
+  final RecommendationEngine recommendationEngine =
+      const RecommendationEngine();
+  final NovaAlertEngine novaAlertEngine = const NovaAlertEngine();
   final UnitSettingsService unitSettingsService = UnitSettingsService();
+
+  late final LocalNovaNotificationGateway novaNotificationGateway;
+  late final NovaAlertDispatcher novaAlertDispatcher;
+  late final SharedPreferencesAlertHistoryStore novaAlertHistoryStore;
+  late final NovaDuplicateAlertGuard novaDuplicateAlertGuard;
 
   late final http.Client locationHttpClient;
   late final LocationService locationService;
@@ -130,6 +144,15 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
   @override
   void initState() {
     super.initState();
+
+    novaNotificationGateway = LocalNovaNotificationGateway();
+    novaAlertDispatcher = NovaAlertDispatcher(
+      notificationGateway: novaNotificationGateway,
+    );
+    novaAlertHistoryStore = const SharedPreferencesAlertHistoryStore();
+    novaDuplicateAlertGuard = NovaDuplicateAlertGuard(
+      historyStore: novaAlertHistoryStore,
+    );
 
     locationHttpClient = http.Client();
     locationService = LocationService(httpClient: locationHttpClient);
