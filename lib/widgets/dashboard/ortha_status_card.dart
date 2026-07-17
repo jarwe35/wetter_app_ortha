@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../models/ortha_status_model.dart';
+import '../ortha_ui/ortha_card.dart';
 
 class OrthaStatusCard extends StatelessWidget {
   final OrthaStatusModel status;
@@ -25,21 +26,7 @@ class OrthaStatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFFFFF),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFD3E2EC)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.12),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
-          ),
-        ],
-      ),
+    return OrthaCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -54,11 +41,13 @@ class OrthaStatusCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              Text(
-                status.title,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
+              Expanded(
+                child: Text(
+                  status.title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ],
@@ -72,6 +61,8 @@ class OrthaStatusCard extends StatelessWidget {
           _InfoRow(label: 'Risiko', value: status.riskText),
           const SizedBox(height: 8),
           _InfoRow(label: 'Warnungen', value: status.warningText),
+          const SizedBox(height: 8),
+          _InfoRow(label: 'Ort', value: status.location),
         ],
       ),
     );
