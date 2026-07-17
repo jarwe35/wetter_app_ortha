@@ -32,6 +32,7 @@ import 'services/weather_service.dart';
 import 'widgets/dashboard/ortha_status_card.dart';
 import 'widgets/ortha_ui/ortha_section_header.dart';
 import 'widgets/location_search_result_dialog.dart';
+import 'widgets/ortha_ui/ortha_card.dart';
 import 'widgets/weather/ortha_weather_icon.dart';
 import 'widgets/radar/ortha_radar_map.dart';
 import 'widgets/navigation/ortha_navigation_drawer.dart';
@@ -2354,21 +2355,9 @@ class CardBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: orthaSurface,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: orthaBorder.withValues(alpha: 0.85)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.28),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
-          ),
-        ],
-      ),
+    return OrthaCard(
+      backgroundColor: orthaSurface,
+      borderRadius: 24,
       child: child,
     );
   }
