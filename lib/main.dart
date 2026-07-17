@@ -40,13 +40,13 @@ part 'widgets/weather/daily_forecast_card.dart';
 part 'widgets/weather/hourly_forecast_card.dart';
 part 'widgets/weather/current_weather_card.dart';
 
-const Color orthaBackground = Color(0xFF08131F);
-const Color orthaSurface = Color(0xFF102235);
-const Color orthaSurfaceElevated = Color(0xFF153149);
-const Color orthaPrimaryText = Color(0xFFF2F7FA);
-const Color orthaSecondaryText = Color(0xFF9FB3C2);
+const Color orthaBackground = Color(0xFFEAF4FB);
+const Color orthaSurface = Color(0xFFFFFFFF);
+const Color orthaSurfaceElevated = Color(0xFFF5FAFE);
+const Color orthaPrimaryText = Color(0xFF163247);
+const Color orthaSecondaryText = Color(0xFF587080);
 const Color orthaAccent = Color(0xFFD5A84A);
-const Color orthaBorder = Color(0xFF27465D);
+const Color orthaBorder = Color(0xFFD3E2EC);
 
 void main() {
   runApp(const OrthaWeatherApp());
@@ -761,8 +761,8 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                     Row(
                       children: [
                         Container(
-                          width: 42,
-                          height: 42,
+                          width: 54,
+                          height: 54,
                           decoration: BoxDecoration(
                             color: orthaAccent.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(14),
@@ -1662,9 +1662,9 @@ class OfficialWeatherWarningsCard extends StatelessWidget {
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.10),
+                  color: color.withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: color.withValues(alpha: 0.50)),
+                  border: Border.all(color: color.withValues(alpha: 0.75)),
                   boxShadow: [
                     BoxShadow(
                       color: color.withValues(alpha: 0.10),
@@ -1690,6 +1690,7 @@ class OfficialWeatherWarningsCard extends StatelessWidget {
                           child: Icon(
                             Icons.warning_amber_rounded,
                             color: color,
+                            size: 30,
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -1727,7 +1728,7 @@ class OfficialWeatherWarningsCard extends StatelessWidget {
                                           sourceLabel(warning),
                                           style: TextStyle(
                                             color: color,
-                                            fontSize: 12,
+                                            fontSize: 13,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
