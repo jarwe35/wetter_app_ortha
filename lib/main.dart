@@ -14,6 +14,7 @@ import 'notifications/nova_signal_settings_store.dart';
 import 'notifications/shared_preferences_alert_history_store.dart';
 import 'models/forecast_range.dart';
 import 'models/official_weather_warning.dart';
+
 import 'models/saved_location.dart';
 import 'pages/locations_page.dart';
 import 'services/location_migration_service.dart';
@@ -27,6 +28,8 @@ import 'services/warning_providers/dwd_cap_download_client.dart';
 import 'services/warning_providers/dwd_warning_provider.dart';
 import 'services/warning_providers/debug/debug_test_warning_provider.dart';
 import 'services/weather_service.dart';
+
+import 'widgets/dashboard/ortha_status_card.dart';
 import 'widgets/location_search_result_dialog.dart';
 import 'widgets/weather/ortha_weather_icon.dart';
 import 'widgets/radar/ortha_radar_map.dart';
@@ -37,6 +40,7 @@ import 'settings/unit_settings.dart';
 import 'settings/unit_settings_page.dart';
 import 'settings/unit_settings_service.dart';
 import 'utils/official_warning_text_formatter.dart';
+import 'utils/ortha_status_builder.dart';
 
 part 'widgets/weather/daily_forecast_card.dart';
 part 'widgets/weather/hourly_forecast_card.dart';
@@ -776,6 +780,13 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
     final data = weatherData;
     final risk = riskResult;
 
+    final status = risk == null
+        ? null
+        : const OrthaStatusBuilder().build(
+            risk: risk,
+            warnings: officialWarnings,
+          );
+
     return Scaffold(
       drawer: OrthaNavigationDrawer(
         onSelect: (index) {
@@ -1424,6 +1435,8 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                           else if (errorMessage != null)
                             CardBox(child: Text(errorMessage!))
                           else if (data != null && risk != null) ...[
+                            if (status != null) OrthaStatusCard(status: status),
+                            const SizedBox(height: 18),
                             WeatherCard(data: data, unitSettings: unitSettings),
                             const SizedBox(height: 18),
                             WarningLevelBar(result: risk),
