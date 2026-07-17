@@ -1348,7 +1348,13 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                             ),
                             const SizedBox(height: 14),
                             WeatherCard(data: data, unitSettings: unitSettings),
-                            const SizedBox(height: 18),
+                            const SizedBox(height: 24),
+                            OrthaSectionHeader(
+                              icon: Icons.shield_outlined,
+                              title: 'ORTHA Risikoanalyse',
+                              subtitle: 'Bewertung der aktuellen Wetterlage',
+                            ),
+                            const SizedBox(height: 14),
                             WarningLevelBar(result: risk),
                             const SizedBox(height: 18),
                             HourlyForecastCard(
