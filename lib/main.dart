@@ -7,6 +7,9 @@ import 'notifications/nova_alert_dispatcher.dart';
 import 'notifications/nova_alert_engine.dart';
 import 'notifications/nova_duplicate_alert_guard.dart';
 import 'notifications/nova_notification_gateway.dart';
+import 'notifications/nova_signal_coordinator.dart';
+import 'notifications/nova_signal_settings_provider.dart';
+import 'notifications/nova_signal_settings_store.dart';
 import 'notifications/shared_preferences_alert_history_store.dart';
 import 'models/forecast_range.dart';
 import 'models/official_weather_warning.dart';
@@ -21,10 +24,12 @@ import 'services/warning_providers/bbk/bbk_warning_client.dart';
 import 'services/warning_providers/bbk/bbk_warning_provider.dart';
 import 'services/warning_providers/dwd_cap_download_client.dart';
 import 'services/warning_providers/dwd_warning_provider.dart';
+import 'services/warning_providers/debug/debug_test_warning_provider.dart';
 import 'services/weather_service.dart';
 import 'widgets/location_search_result_dialog.dart';
 import 'widgets/weather/ortha_weather_icon.dart';
 import 'widgets/radar/ortha_radar_map.dart';
+import 'widgets/navigation/ortha_navigation_drawer.dart';
 import 'widgets/warnings/official_warning_map.dart';
 import 'settings/unit_settings.dart';
 import 'settings/unit_settings_page.dart';
@@ -106,6 +111,9 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
 
   late final LocalNovaNotificationGateway novaNotificationGateway;
   late final NovaAlertDispatcher novaAlertDispatcher;
+  late final NovaSignalSettingsStore novaSignalSettingsStore;
+  late final NovaSignalSettingsProvider novaSignalSettingsProvider;
+  late final NovaSignalCoordinator novaSignalCoordinator;
   late final SharedPreferencesAlertHistoryStore novaAlertHistoryStore;
   late final NovaDuplicateAlertGuard novaDuplicateAlertGuard;
 
@@ -119,6 +127,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
   late final http.Client bbkHttpClient;
   late final HttpBbkWarningClient bbkWarningClient;
   late final BbkWarningProvider bbkWarningProvider;
+  late final DebugTestWarningProvider debugTestWarningProvider;
 
   late final OfficialWeatherWarningService officialWeatherWarningService;
 
@@ -146,6 +155,15 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
     super.initState();
 
     novaNotificationGateway = LocalNovaNotificationGateway();
+
+    novaSignalSettingsStore = const NovaSignalSettingsStore();
+    novaSignalSettingsProvider = NovaSignalSettingsProvider(
+      novaSignalSettingsStore,
+    );
+    novaSignalCoordinator = NovaSignalCoordinator(
+      settingsProvider: novaSignalSettingsProvider,
+    );
+
     novaAlertDispatcher = NovaAlertDispatcher(
       notificationGateway: novaNotificationGateway,
     );
@@ -187,8 +205,14 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
 
     bbkWarningProvider = BbkWarningProvider(client: bbkWarningClient);
 
+    debugTestWarningProvider = const DebugTestWarningProvider();
+
     officialWeatherWarningService = ProviderBasedOfficialWeatherWarningService(
-      providers: [dwdWarningProvider, bbkWarningProvider],
+      providers: [
+        dwdWarningProvider,
+        bbkWarningProvider,
+        debugTestWarningProvider,
+      ],
     );
 
     initializeUnitSettings();
@@ -636,7 +660,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
     }
   }
 
-  Future<void> _reorderSavedLocations(List<SavedLocation> newLocations) async {
+  Future<void> _reorderSavedLocationss(List<SavedLocation> newLocations) async {
     if (!mounted) return;
 
     setState(() {
@@ -657,7 +681,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
           selectedLocation: selectedLocation,
           onSelect: _selectSavedLocation,
           onDelete: deleteSavedLocation,
-          onReorder: _reorderSavedLocations,
+          onReorder: _reorderSavedLocationss,
           onRename: _renameSavedLocation,
         ),
       ),
@@ -701,58 +725,12 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
     final risk = riskResult;
 
     return Scaffold(
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: orthaSurface,
-          border: Border(
-            top: BorderSide(color: orthaBorder.withValues(alpha: 0.85)),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.28),
-              blurRadius: 20,
-              offset: const Offset(0, -6),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          top: false,
-          child: NavigationBar(
-            height: 72,
-            selectedIndex: selectedNavigationIndex,
-            onDestinationSelected: handleNavigationSelection,
-            backgroundColor: orthaSurface,
-            indicatorColor: orthaAccent.withValues(alpha: 0.18),
-            labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-            destinations: const [
-              NavigationDestination(
-                icon: Icon(Icons.home_outlined),
-                selectedIcon: Icon(Icons.home, color: orthaAccent),
-                label: 'Heute',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.warning_amber_outlined),
-                selectedIcon: Icon(Icons.warning_amber, color: orthaAccent),
-                label: 'Warnungen',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.shield_outlined),
-                selectedIcon: Icon(Icons.shield, color: orthaAccent),
-                label: 'Risiken',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.radar_outlined),
-                selectedIcon: Icon(Icons.radar, color: orthaAccent),
-                label: 'Radar',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.location_on_outlined),
-                selectedIcon: Icon(Icons.location_on, color: orthaAccent),
-                label: 'Orte',
-              ),
-            ],
-          ),
-        ),
+      drawer: OrthaNavigationDrawer(
+        onSelect: (index) {
+          setState(() {
+            selectedNavigationIndex = index;
+          });
+        },
       ),
       body: SafeArea(
         child: Padding(
@@ -777,56 +755,58 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                     ),
                   ],
                 ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        color: orthaAccent.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: orthaAccent.withValues(alpha: 0.35),
+                    Row(
+                      children: [
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: orthaAccent.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: orthaAccent.withValues(alpha: 0.35),
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.cloud_outlined,
+                            color: orthaAccent,
+                            size: 24,
+                          ),
                         ),
-                      ),
-                      child: const Icon(
-                        Icons.cloud_outlined,
-                        color: orthaAccent,
-                        size: 30,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'ORTHA METEO Ω',
-                            style: TextStyle(
-                              fontSize: 27,
-                              fontWeight: FontWeight.bold,
-                              color: orthaPrimaryText,
-                              letterSpacing: 0.4,
-                            ),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'ORTHA METEO Ω',
+                                style: TextStyle(
+                                  fontSize: 21,
+                                  fontWeight: FontWeight.bold,
+                                  color: orthaPrimaryText,
+                                ),
+                              ),
+                              Text(
+                                'Wetter · Warnungen · Risiko',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: orthaSecondaryText,
+                                ),
+                              ),
+                            ],
                           ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Wetter · Warnungen · Risikoanalyse',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: orthaSecondaryText,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                        IconButton(
+                          tooltip: 'Einheiten',
+                          onPressed: openUnitSettings,
+                          icon: const Icon(Icons.straighten_outlined),
+                        ),
+                      ],
                     ),
-                    IconButton(
-                      tooltip: 'Einheiten',
-                      onPressed: openUnitSettings,
-                      icon: const Icon(Icons.straighten_outlined),
-                    ),
-                    const SizedBox(width: 4),
+                    const SizedBox(height: 12),
                     OutlinedButton.icon(
                       onPressed: () async {
                         await Navigator.push<void>(
@@ -837,7 +817,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                               selectedLocation: selectedLocation,
                               onSelect: _selectSavedLocation,
                               onDelete: deleteSavedLocation,
-                              onReorder: _reorderSavedLocations,
+                              onReorder: _reorderSavedLocationss,
                               onRename: _renameSavedLocation,
                             ),
                           ),
@@ -861,7 +841,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                 onDelete: deleteSavedLocation,
               ),
               const SizedBox(height: 18),
-              Expanded(
+              Flexible(
                 child: selectedNavigationIndex == 1
                     ? ListView(
                         children: [
@@ -1438,8 +1418,8 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                                 label: const Text('Ort hinzufügen'),
                               ),
                             ),
+                            const SizedBox(height: 30),
                           ],
-                          const SizedBox(height: 30),
                         ],
                       ),
               ),

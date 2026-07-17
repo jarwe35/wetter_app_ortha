@@ -411,14 +411,21 @@ class _OrthaRadarMapState extends State<OrthaRadarMap> {
               children: [
                 const Icon(Icons.schedule_outlined, size: 20),
                 const SizedBox(width: 10),
-                const Text(
-                  'Aktueller Radarstand:',
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                const Expanded(
+                  child: Text(
+                    'Aktueller Radarstand:',
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
                 ),
-                const Spacer(),
-                Text(
-                  _formatFrameTime(metadata.frames[_selectedFrameIndex].time),
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    _formatFrameTime(metadata.frames[_selectedFrameIndex].time),
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ],
             ),
