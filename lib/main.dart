@@ -30,6 +30,7 @@ import 'widgets/location_search_result_dialog.dart';
 import 'widgets/weather/ortha_weather_icon.dart';
 import 'widgets/radar/ortha_radar_map.dart';
 import 'widgets/navigation/ortha_navigation_drawer.dart';
+import 'pages/warning_center_page.dart';
 import 'widgets/warnings/official_warning_map.dart';
 import 'settings/unit_settings.dart';
 import 'settings/unit_settings_page.dart';
@@ -693,6 +694,21 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
   }
 
   void handleNavigationSelection(int index) {
+    if (index == 11) {
+      Navigator.push<void>(
+        context,
+        MaterialPageRoute(
+          builder: (context) => WarningCenterPage(
+            warnings: officialWarnings,
+            isLoading: officialWarningsLoading,
+            errorMessage: officialWarningsError,
+            place: selectedPlace,
+          ),
+        ),
+      );
+      return;
+    }
+
     if (index == 4) {
       setState(() {
         selectedNavigationIndex = index;

@@ -26,6 +26,7 @@ class OrthaNavigationDrawer extends StatelessWidget {
             const SizedBox(height: 24),
 
             _entry(context, Icons.home_outlined, 'Heute', 0),
+            _entry(context, Icons.campaign_outlined, 'Warnzentrale', 11),
             _entry(context, Icons.warning_amber_outlined, 'Warnungen', 1),
             _entry(context, Icons.shield_outlined, 'Risikoanalyse', 2),
             _entry(context, Icons.radar_outlined, 'Radar', 3),
