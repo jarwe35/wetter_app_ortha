@@ -2,6 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../models/official_weather_warning.dart';
 
+const Color orthaBackground = Color(0xFFF4F8FB);
+const Color orthaSurface = Color(0xFFFFFFFF);
+const Color orthaPrimaryText = Color(0xFF17324D);
+const Color orthaSecondaryText = Color(0xFF607D8B);
+const Color orthaAccent = Color(0xFFD5A84A);
+const Color orthaBorder = Color(0xFFD6E2EA);
+
 class WarningCenterPage extends StatelessWidget {
   final List<OfficialWeatherWarning> warnings;
   final bool isLoading;
@@ -34,27 +41,43 @@ class WarningCenterPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Warnzentrale')),
+      backgroundColor: orthaBackground,
+      appBar: AppBar(
+        backgroundColor: orthaSurface,
+        foregroundColor: orthaPrimaryText,
+        elevation: 0,
+        title: const Text(
+          'ORTHA METEO Ω',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+      ),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const Text(
+              '⚠ Warnzentrale',
+              style: TextStyle(
+                color: orthaPrimaryText,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 6),
             Text(
               'Amtliche Warnungen für $place',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: const TextStyle(color: orthaSecondaryText, fontSize: 14),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
             if (isLoading)
-              const Center(child: CircularProgressIndicator())
+              const Center(child: CircularProgressIndicator(color: orthaAccent))
             else if (errorMessage != null)
               Text(errorMessage!)
             else if (warnings.isEmpty)
-              const Card(
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Text('Aktuell liegen keine amtlichen Warnungen vor.'),
-                ),
+              _statusCard(
+                Icons.verified_outlined,
+                'Aktuell liegen keine amtlichen Warnungen vor.',
               )
             else
               Expanded(
@@ -64,23 +87,56 @@ class WarningCenterPage extends StatelessWidget {
                     final warning = warnings[index];
                     final color = _severityColor(warning.severity);
 
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      child: ListTile(
-                        leading: Icon(
-                          Icons.warning_amber_rounded,
-                          color: color,
-                          size: 34,
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 14),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: orthaSurface,
+                        borderRadius: BorderRadius.circular(22),
+                        border: Border.all(
+                          color: color.withValues(alpha: 0.65),
                         ),
-                        title: Text(
-                          warning.title,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        subtitle: Text(
-                          warning.description,
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: color.withValues(alpha: 0.15),
+                            blurRadius: 18,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.warning_amber_rounded,
+                            size: 42,
+                            color: color,
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  warning.title,
+                                  style: const TextStyle(
+                                    color: orthaPrimaryText,
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  warning.description,
+                                  style: const TextStyle(
+                                    color: orthaSecondaryText,
+                                    height: 1.35,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     );
                   },
@@ -88,6 +144,27 @@ class WarningCenterPage extends StatelessWidget {
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _statusCard(IconData icon, String text) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: orthaSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: orthaBorder),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: orthaAccent),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(text, style: const TextStyle(color: orthaPrimaryText)),
+          ),
+        ],
       ),
     );
   }
