@@ -1340,7 +1340,13 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                             CardBox(child: Text(errorMessage!))
                           else if (data != null && risk != null) ...[
                             if (status != null) OrthaStatusCard(status: status),
-                            const SizedBox(height: 18),
+                            const SizedBox(height: 24),
+                            OrthaSectionHeader(
+                              icon: Icons.cloud_outlined,
+                              title: 'Aktuelles Wetter',
+                              subtitle: 'Live Wetterlage für $selectedPlace',
+                            ),
+                            const SizedBox(height: 14),
                             WeatherCard(data: data, unitSettings: unitSettings),
                             const SizedBox(height: 18),
                             WarningLevelBar(result: risk),
