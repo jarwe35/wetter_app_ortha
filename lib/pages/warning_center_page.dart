@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/official_weather_warning.dart';
+import '../widgets/warnings/official_warning_map.dart';
 
 const Color orthaBackground = Color(0xFFF4F8FB);
 const Color orthaSurface = Color(0xFFFFFFFF);
@@ -14,6 +15,8 @@ class WarningCenterPage extends StatelessWidget {
   final bool isLoading;
   final String? errorMessage;
   final String place;
+  final double latitude;
+  final double longitude;
 
   const WarningCenterPage({
     super.key,
@@ -21,6 +24,8 @@ class WarningCenterPage extends StatelessWidget {
     required this.isLoading,
     required this.errorMessage,
     required this.place,
+    required this.latitude,
+    required this.longitude,
   });
 
   Color _severityColor(OfficialWarningSeverity severity) {
@@ -133,6 +138,16 @@ class WarningCenterPage extends StatelessWidget {
                                     height: 1.35,
                                   ),
                                 ),
+                                if (warning.geometry != null &&
+                                    !warning.geometry!.isEmpty) ...[
+                                  const SizedBox(height: 14),
+                                  OfficialWarningMap(
+                                    warning: warning,
+                                    latitude: latitude,
+                                    longitude: longitude,
+                                    place: place,
+                                  ),
+                                ],
                               ],
                             ),
                           ),

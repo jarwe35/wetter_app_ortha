@@ -703,6 +703,9 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
             isLoading: officialWarningsLoading,
             errorMessage: officialWarningsError,
             place: selectedPlace,
+            latitude: selectedLocation?.latitude ?? weatherData?.latitude ?? 0,
+            longitude:
+                selectedLocation?.longitude ?? weatherData?.longitude ?? 0,
           ),
         ),
       );
