@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import 'engine/risk_engine.dart';
+import 'engine/official_warning_pipeline.dart';
 import 'engine/recommendation_engine.dart';
 import 'notifications/nova_alert_dispatcher.dart';
 import 'notifications/nova_alert_engine.dart';
@@ -105,6 +106,8 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
   final LocationStorageService locationStorageService =
       LocationStorageService();
   final RiskEngine riskEngine = const RiskEngine();
+  final OfficialWarningPipeline officialWarningPipeline =
+      const OfficialWarningPipeline();
   final RecommendationEngine recommendationEngine =
       const RecommendationEngine();
   final NovaAlertEngine novaAlertEngine = const NovaAlertEngine();
@@ -350,6 +353,31 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
     await novaAlertDispatcher.dispatch(request);
   }
 
+  Future<void> _processOfficialWarningAlert({
+    required List<OfficialWeatherWarning> warnings,
+    required String locationName,
+  }) async {
+    final request = officialWarningPipeline.evaluate(
+      warnings: warnings,
+      locationName: locationName,
+    );
+
+    if (request == null) {
+      return;
+    }
+
+    final shouldDispatch = await novaDuplicateAlertGuard.shouldDispatch(
+      request: request,
+      locationName: locationName,
+    );
+
+    if (!shouldDispatch) {
+      return;
+    }
+
+    await novaAlertDispatcher.dispatch(request);
+  }
+
   Future<void> loadWeather(String place) async {
     setState(() {
       isLoading = true;
@@ -421,6 +449,11 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
         officialWarningsError = warningsError;
         officialWarningsLoading = false;
       });
+
+      await _processOfficialWarningAlert(
+        warnings: warnings,
+        locationName: savedLocation?.name ?? data.place,
+      );
 
       await _processNovaAlert(
         risk: risk,
