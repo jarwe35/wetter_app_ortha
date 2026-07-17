@@ -1356,7 +1356,14 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                             ),
                             const SizedBox(height: 14),
                             WarningLevelBar(result: risk),
-                            const SizedBox(height: 18),
+                            const SizedBox(height: 24),
+                            OrthaSectionHeader(
+                              icon: Icons.trending_up_outlined,
+                              title: 'Prognose & Entwicklung',
+                              subtitle:
+                                  'Wettertrend der nächsten Stunden und Tage',
+                            ),
+                            const SizedBox(height: 14),
                             HourlyForecastCard(
                               forecast: data.hourlyForecast,
                               unitSettings: unitSettings,
