@@ -785,6 +785,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
         : const OrthaStatusBuilder().build(
             risk: risk,
             warnings: officialWarnings,
+            location: selectedPlace,
           );
 
     return Scaffold(

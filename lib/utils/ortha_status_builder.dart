@@ -8,8 +8,13 @@ class OrthaStatusBuilder {
   OrthaStatusModel build({
     required RiskResult risk,
     required List<OfficialWeatherWarning> warnings,
+    required String location,
   }) {
     final warningActive = warnings.any((warning) => warning.isActive);
+
+    final warningText = warningActive
+        ? 'Amtliche Warnung aktiv'
+        : 'Keine amtliche Warnung';
 
     switch (risk.level) {
       case RiskLevel.red:
@@ -18,9 +23,11 @@ class OrthaStatusBuilder {
           title: 'Akute Wettergefahr',
           statusText: 'Handlung empfohlen',
           riskText: risk.message,
-          warningText: warningActive
-              ? 'Amtliche Warnung aktiv'
-              : 'Keine amtliche Warnung',
+          warningText: warningText,
+          location: location,
+          recommendation:
+              'Sicherheitsmaßnahmen prüfen und Warnhinweise beachten.',
+          timestamp: DateTime.now(),
         );
 
       case RiskLevel.orange:
@@ -29,9 +36,11 @@ class OrthaStatusBuilder {
           title: 'Erhöhte Wetterlage',
           statusText: 'Aufmerksamkeit empfohlen',
           riskText: risk.message,
-          warningText: warningActive
-              ? 'Amtliche Warnung aktiv'
-              : 'Keine amtliche Warnung',
+          warningText: warningText,
+          location: location,
+          recommendation:
+              'Aktuelle Entwicklung beobachten und Aktivitäten anpassen.',
+          timestamp: DateTime.now(),
         );
 
       case RiskLevel.yellow:
@@ -40,9 +49,11 @@ class OrthaStatusBuilder {
           title: 'Veränderte Wetterlage',
           statusText: 'Beobachtung empfohlen',
           riskText: risk.message,
-          warningText: warningActive
-              ? 'Amtliche Warnung aktiv'
-              : 'Keine amtliche Warnung',
+          warningText: warningText,
+          location: location,
+          recommendation:
+              'Wetterentwicklung verfolgen und vorbereitet bleiben.',
+          timestamp: DateTime.now(),
         );
 
       case RiskLevel.green:
@@ -51,9 +62,10 @@ class OrthaStatusBuilder {
           title: 'Lage stabil',
           statusText: 'Keine besonderen Maßnahmen nötig',
           riskText: risk.message,
-          warningText: warningActive
-              ? 'Amtliche Warnung aktiv'
-              : 'Keine amtliche Warnung',
+          warningText: warningText,
+          location: location,
+          recommendation: 'Keine besonderen Maßnahmen erforderlich.',
+          timestamp: DateTime.now(),
         );
     }
   }
