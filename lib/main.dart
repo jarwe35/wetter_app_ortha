@@ -954,66 +954,17 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                     : selectedNavigationIndex == 2
                     ? ListView(
                         children: [
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: orthaSurface,
-                              borderRadius: BorderRadius.circular(24),
-                              border: Border.all(
-                                color: orthaBorder.withValues(alpha: 0.85),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 48,
-                                  height: 48,
-                                  decoration: BoxDecoration(
-                                    color: orthaAccent.withValues(alpha: 0.12),
-                                    borderRadius: BorderRadius.circular(15),
-                                    border: Border.all(
-                                      color: orthaAccent.withValues(
-                                        alpha: 0.35,
-                                      ),
-                                    ),
-                                  ),
-                                  child: const Icon(
-                                    Icons.shield_outlined,
-                                    color: orthaAccent,
-                                    size: 27,
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        'ORTHA Risiken',
-                                        style: TextStyle(
-                                          fontSize: 22,
-                                          fontWeight: FontWeight.bold,
-                                          color: orthaPrimaryText,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Risikobewertung für $selectedPlace',
-                                        style: const TextStyle(
-                                          color: orthaSecondaryText,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                IconButton(
-                                  tooltip: 'Risikoanalyse aktualisieren',
-                                  onPressed: () => loadWeather(selectedPlace),
-                                  icon: const Icon(Icons.refresh),
-                                ),
-                              ],
+                          OrthaSectionHeader(
+                            icon: Icons.shield_outlined,
+                            title: 'ORTHA Risiken',
+                            subtitle: 'Risikobewertung für $selectedPlace',
+                          ),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: IconButton(
+                              tooltip: 'Risikoanalyse aktualisieren',
+                              onPressed: () => loadWeather(selectedPlace),
+                              icon: const Icon(Icons.refresh),
                             ),
                           ),
                           const SizedBox(height: 18),
