@@ -31,6 +31,7 @@ import 'services/weather_service.dart';
 
 import 'widgets/dashboard/ortha_status_card.dart';
 import 'widgets/ortha_ui/ortha_section_header.dart';
+import 'widgets/ortha_ui/ortha_responsive.dart';
 import 'widgets/ortha_ui/ortha_responsive_page.dart';
 import 'widgets/location_search_result_dialog.dart';
 import 'widgets/ortha_ui/ortha_card.dart';
@@ -782,6 +783,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
   Widget build(BuildContext context) {
     final data = weatherData;
     final risk = riskResult;
+    final ui = OrthaResponsive.of(context);
 
     final status = risk == null
         ? null
@@ -805,10 +807,10 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
           children: [
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(ui.cardPadding),
               decoration: BoxDecoration(
                 color: orthaSurface,
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(ui.cardRadius),
                 border: Border.all(color: orthaBorder.withValues(alpha: 0.85)),
                 boxShadow: [
                   BoxShadow(
@@ -824,19 +826,21 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                   Row(
                     children: [
                       Container(
-                        width: 54,
-                        height: 54,
+                        width: ui.sectionIconSize,
+                        height: ui.sectionIconSize,
                         decoration: BoxDecoration(
                           color: orthaAccent.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(
+                            ui.cardRadius * 0.6,
+                          ),
                           border: Border.all(
                             color: orthaAccent.withValues(alpha: 0.35),
                           ),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.cloud_outlined,
                           color: orthaAccent,
-                          size: 24,
+                          size: ui.iconSize,
                         ),
                       ),
                       const SizedBox(width: 12),
