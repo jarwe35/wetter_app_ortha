@@ -1613,11 +1613,20 @@ class OfficialWeatherWarningsCard extends StatelessWidget {
               text: errorMessage!,
             )
           else if (warnings.isEmpty)
-            const _OfficialWarningStatusBox(
-              icon: Icons.verified_outlined,
-              color: Color(0xFF4F8A70),
-              text:
-                  'Aktuell liegen für diesen Ort keine amtlichen Warnungen vor.',
+            Column(
+              children: const [
+                _OfficialWarningStatusBox(
+                  icon: Icons.cloud_done_outlined,
+                  color: Color(0xFF4F8A70),
+                  text: 'DWD: Keine aktive Wetterwarnung.',
+                ),
+                SizedBox(height: 10),
+                _OfficialWarningStatusBox(
+                  icon: Icons.shield_outlined,
+                  color: Color(0xFF4F8A70),
+                  text: 'BBK / MoWaS: Keine aktive Warnmeldung.',
+                ),
+              ],
             )
           else
             ...warnings.map((warning) {

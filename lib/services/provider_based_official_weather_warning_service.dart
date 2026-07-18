@@ -21,20 +21,41 @@ class ProviderBasedOfficialWeatherWarningService
     required double latitude,
     required double longitude,
   }) async {
-    final supportedProviders = providers.where(
-      (provider) =>
-          provider.supportsLocation(latitude: latitude, longitude: longitude),
-    );
+    final supportedProviders = providers
+        .where(
+          (provider) => provider.supportsLocation(
+            latitude: latitude,
+            longitude: longitude,
+          ),
+        )
+        .toList(growable: false);
 
     final warnings = <OfficialWeatherWarning>[];
 
-    for (final provider in supportedProviders) {
-      final providerWarnings = await provider.fetchWarnings(
-        latitude: latitude,
-        longitude: longitude,
-      );
+    Object? firstError;
+    StackTrace? firstStackTrace;
+    var successfulProviderCount = 0;
 
-      warnings.addAll(providerWarnings);
+    for (final provider in supportedProviders) {
+      try {
+        final providerWarnings = await provider.fetchWarnings(
+          latitude: latitude,
+          longitude: longitude,
+        );
+
+        warnings.addAll(providerWarnings);
+        successfulProviderCount++;
+      } catch (error, stackTrace) {
+        firstError ??= error;
+        firstStackTrace ??= stackTrace;
+      }
+    }
+
+    if (supportedProviders.isNotEmpty &&
+        successfulProviderCount == 0 &&
+        firstError != null &&
+        firstStackTrace != null) {
+      Error.throwWithStackTrace(firstError, firstStackTrace);
     }
 
     warnings.sort((first, second) {
