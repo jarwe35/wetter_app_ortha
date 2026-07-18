@@ -1079,6 +1079,10 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                                 )
                               else
                                 OrthaRadarMap(
+                                  key: ValueKey(
+                                    '${selectedLocation!.latitude},'
+                                    '${selectedLocation!.longitude}',
+                                  ),
                                   latitude: selectedLocation!.latitude,
                                   longitude: selectedLocation!.longitude,
                                   place: selectedLocation!.name,
