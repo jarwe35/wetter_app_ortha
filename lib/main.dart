@@ -1422,13 +1422,17 @@ class PlaceSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ui = OrthaResponsive.of(context);
+    final chipHeight = ui.isPhone ? 46.0 : 50.0;
+    final chipFontSize = ui.isPhone ? 14.0 : 15.0;
+
     return SizedBox(
-      height: 46,
+      height: chipHeight,
       child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
+        padding: EdgeInsets.symmetric(horizontal: ui.horizontalPadding * 0.25),
         scrollDirection: Axis.horizontal,
         itemCount: locations.length,
-        separatorBuilder: (_, index) => const SizedBox(width: 10),
+        separatorBuilder: (_, index) => SizedBox(width: ui.cardSpacing * 0.7),
         itemBuilder: (context, index) {
           final location = locations[index];
           final selected =
@@ -1436,7 +1440,10 @@ class PlaceSelector extends StatelessWidget {
               location.name.trim().toLowerCase();
 
           return InputChip(
-            label: Text(location.name),
+            label: Text(
+              location.name,
+              style: TextStyle(fontSize: chipFontSize),
+            ),
             selected: selected,
             onPressed: () {
               onSelect(location);
