@@ -1388,24 +1388,49 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                           ),
                           const SizedBox(height: 24),
                           OrthaSectionHeader(
-                            icon: Icons.schedule_outlined,
-                            title: 'Tagesvorhersage',
-                            subtitle: 'Wetterentwicklung der nächsten Stunden',
+                            icon: Icons.shield_outlined,
+                            title: 'ORTHA Risikoanalyse',
+                            subtitle: 'Bewertung der aktuellen Wetterlage',
+                          ),
+                          const SizedBox(height: 14),
+                          WarningLevelBar(result: risk),
+                          const SizedBox(height: 24),
+                          OrthaSectionHeader(
+                            icon: Icons.trending_up_outlined,
+                            title: 'Prognose & Entwicklung',
+                            subtitle:
+                                'Wettertrend der nächsten Stunden und Tage',
                           ),
                           const SizedBox(height: 14),
                           HourlyForecastCard(
                             forecast: data.hourlyForecast,
                             unitSettings: unitSettings,
                           ),
-                          const SizedBox(height: 24),
-                          OrthaSectionHeader(
-                            icon: Icons.calendar_month_outlined,
-                            title: '7 Tage / 14-Tage-Trend',
-                            subtitle:
-                                'Mittelfristige Wetterentwicklung für '
-                                '$selectedPlace',
+                          const SizedBox(height: 18),
+                          OfficialWeatherWarningsCard(
+                            warnings: officialWarnings,
+                            isSupported: officialWarningsSupported,
+                            isLoading: officialWarningsLoading,
+                            errorMessage: officialWarningsError,
+                            latitude:
+                                selectedLocation?.latitude ?? data.latitude,
+                            longitude:
+                                selectedLocation?.longitude ?? data.longitude,
+                            place: selectedPlace,
                           ),
-                          const SizedBox(height: 14),
+                          const SizedBox(height: 18),
+                          OrthaAdaptiveLayout(
+                            children: [
+                              RiskCard(result: risk),
+                              WeatherDetailsCard(
+                                data: data,
+                                unitSettings: unitSettings,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 18),
+                          RiskCategoriesCard(categories: risk.categories),
+                          const SizedBox(height: 18),
                           DailyForecastCard(
                             forecast: data.dailyForecast,
                             unitSettings: unitSettings,

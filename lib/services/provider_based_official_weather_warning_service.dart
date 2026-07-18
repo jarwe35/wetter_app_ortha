@@ -45,9 +45,16 @@ class ProviderBasedOfficialWeatherWarningService
 
         warnings.addAll(providerWarnings);
         successfulProviderCount++;
+
+        print(
+          'Warnquelle ${provider.sourceName}: '
+          '${providerWarnings.length} Meldung(en) geladen.',
+        );
       } catch (error, stackTrace) {
         firstError ??= error;
         firstStackTrace ??= stackTrace;
+
+        print('Warnquelle ${provider.sourceName} fehlgeschlagen: $error');
       }
     }
 
