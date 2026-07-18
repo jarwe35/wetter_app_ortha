@@ -900,14 +900,14 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                 ],
               ),
             ),
-            const SizedBox(height: 18),
+            SizedBox(height: ui.cardSpacing),
             PlaceSelector(
               locations: savedLocations,
               selectedLocation: selectedLocation,
               onSelect: _selectSavedLocation,
               onDelete: deleteSavedLocation,
             ),
-            const SizedBox(height: 18),
+            SizedBox(height: ui.cardSpacing),
             Flexible(
               child: selectedNavigationIndex == 1
                   ? ListView(
