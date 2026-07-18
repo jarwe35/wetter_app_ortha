@@ -1587,6 +1587,29 @@ class OfficialWeatherWarningsCard extends StatelessWidget {
         : Icons.shield_outlined;
   }
 
+  String compactAreaDescription(List<String> areas) {
+    final cleanedAreas = areas
+        .map((area) => area.trim())
+        .where((area) => area.isNotEmpty)
+        .toSet()
+        .toList();
+
+    if (cleanedAreas.isEmpty) {
+      return '';
+    }
+
+    const maximumVisibleAreas = 3;
+
+    if (cleanedAreas.length <= maximumVisibleAreas) {
+      return cleanedAreas.join(', ');
+    }
+
+    final visibleAreas = cleanedAreas.take(maximumVisibleAreas).join(', ');
+    final remainingAreaCount = cleanedAreas.length - maximumVisibleAreas;
+
+    return '$visibleAreas · + $remainingAreaCount weitere Orte';
+  }
+
   String formatWarningTime(DateTime value) {
     final local = value.toLocal();
     final day = local.day.toString().padLeft(2, '0');
@@ -1812,7 +1835,7 @@ class OfficialWeatherWarningsCard extends StatelessWidget {
                           const SizedBox(width: 7),
                           Expanded(
                             child: Text(
-                              warning.areaDescriptions.join(', '),
+                              compactAreaDescription(warning.areaDescriptions),
                               style: const TextStyle(color: orthaSecondaryText),
                             ),
                           ),
