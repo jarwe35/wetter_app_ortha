@@ -31,6 +31,7 @@ import 'services/weather_service.dart';
 
 import 'widgets/dashboard/ortha_status_card.dart';
 import 'widgets/ortha_ui/ortha_section_header.dart';
+import 'widgets/ortha_ui/ortha_adaptive_layout.dart';
 import 'widgets/ortha_ui/ortha_responsive.dart';
 import 'widgets/ortha_ui/ortha_responsive_page.dart';
 import 'widgets/location_search_result_dialog.dart';
@@ -1371,17 +1372,20 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                             place: selectedPlace,
                           ),
                           const SizedBox(height: 18),
-                          RiskCard(result: risk),
+                          OrthaAdaptiveLayout(
+                            children: [
+                              RiskCard(result: risk),
+                              WeatherDetailsCard(
+                                data: data,
+                                unitSettings: unitSettings,
+                              ),
+                            ],
+                          ),
                           const SizedBox(height: 18),
                           RiskCategoriesCard(categories: risk.categories),
                           const SizedBox(height: 18),
                           DailyForecastCard(
                             forecast: data.dailyForecast,
-                            unitSettings: unitSettings,
-                          ),
-                          const SizedBox(height: 18),
-                          WeatherDetailsCard(
-                            data: data,
                             unitSettings: unitSettings,
                           ),
                           const SizedBox(height: 18),
