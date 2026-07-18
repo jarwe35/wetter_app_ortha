@@ -26,7 +26,6 @@ import 'services/warning_providers/bbk/bbk_warning_client.dart';
 import 'services/warning_providers/bbk/bbk_warning_provider.dart';
 import 'services/warning_providers/dwd_cap_download_client.dart';
 import 'services/warning_providers/dwd_warning_provider.dart';
-import 'services/warning_providers/debug/debug_test_warning_provider.dart';
 import 'services/weather_service.dart';
 
 import 'widgets/dashboard/ortha_status_card.dart';
@@ -140,7 +139,6 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
   late final http.Client bbkHttpClient;
   late final HttpBbkWarningClient bbkWarningClient;
   late final BbkWarningProvider bbkWarningProvider;
-  late final DebugTestWarningProvider debugTestWarningProvider;
 
   late final OfficialWeatherWarningService officialWeatherWarningService;
 
@@ -218,14 +216,8 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
 
     bbkWarningProvider = BbkWarningProvider(client: bbkWarningClient);
 
-    debugTestWarningProvider = const DebugTestWarningProvider();
-
     officialWeatherWarningService = ProviderBasedOfficialWeatherWarningService(
-      providers: [
-        dwdWarningProvider,
-        bbkWarningProvider,
-        debugTestWarningProvider,
-      ],
+      providers: [dwdWarningProvider, bbkWarningProvider],
     );
 
     initializeUnitSettings();
