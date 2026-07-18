@@ -20,9 +20,9 @@ void main() {
         home: Scaffold(
           body: OrthaAdaptiveLayout(
             children: const [
-              SizedBox(key: Key('card-1')),
-              SizedBox(key: Key('card-2')),
-              SizedBox(key: Key('card-3')),
+              SizedBox(key: Key('card-1'), height: 100),
+              SizedBox(key: Key('card-2'), height: 160),
+              SizedBox(key: Key('card-3'), height: 220),
             ],
           ),
         ),
@@ -34,35 +34,46 @@ void main() {
     await pumpAdaptiveLayout(tester, screenSize: const Size(390, 844));
 
     expect(find.byType(Column), findsOneWidget);
+    expect(find.byType(Wrap), findsNothing);
     expect(find.byType(GridView), findsNothing);
+
     expect(find.byKey(const Key('card-1')), findsOneWidget);
     expect(find.byKey(const Key('card-2')), findsOneWidget);
     expect(find.byKey(const Key('card-3')), findsOneWidget);
   });
 
-  testWidgets('verwendet auf Tablets ein zweispaltiges Grid', (tester) async {
+  testWidgets('verwendet auf Tablets ein zweispaltiges Wrap-Layout', (
+    tester,
+  ) async {
     await pumpAdaptiveLayout(tester, screenSize: const Size(1024, 1366));
 
-    expect(find.byType(GridView), findsOneWidget);
+    expect(find.byType(Wrap), findsOneWidget);
+    expect(find.byType(GridView), findsNothing);
 
-    final gridView = tester.widget<GridView>(find.byType(GridView));
-    final delegate =
-        gridView.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount;
+    final card1TopLeft = tester.getTopLeft(find.byKey(const Key('card-1')));
+    final card2TopLeft = tester.getTopLeft(find.byKey(const Key('card-2')));
+    final card3TopLeft = tester.getTopLeft(find.byKey(const Key('card-3')));
 
-    expect(delegate.crossAxisCount, 2);
+    expect(card2TopLeft.dy, card1TopLeft.dy);
+    expect(card2TopLeft.dx, greaterThan(card1TopLeft.dx));
+    expect(card3TopLeft.dy, greaterThan(card1TopLeft.dy));
   });
 
-  testWidgets('verwendet auf großen Desktops ein dreispaltiges Grid', (
+  testWidgets('verwendet auf großen Desktops ein dreispaltiges Wrap-Layout', (
     tester,
   ) async {
     await pumpAdaptiveLayout(tester, screenSize: const Size(1920, 1080));
 
-    expect(find.byType(GridView), findsOneWidget);
+    expect(find.byType(Wrap), findsOneWidget);
+    expect(find.byType(GridView), findsNothing);
 
-    final gridView = tester.widget<GridView>(find.byType(GridView));
-    final delegate =
-        gridView.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount;
+    final card1TopLeft = tester.getTopLeft(find.byKey(const Key('card-1')));
+    final card2TopLeft = tester.getTopLeft(find.byKey(const Key('card-2')));
+    final card3TopLeft = tester.getTopLeft(find.byKey(const Key('card-3')));
 
-    expect(delegate.crossAxisCount, 3);
+    expect(card2TopLeft.dy, card1TopLeft.dy);
+    expect(card3TopLeft.dy, card1TopLeft.dy);
+    expect(card2TopLeft.dx, greaterThan(card1TopLeft.dx));
+    expect(card3TopLeft.dx, greaterThan(card2TopLeft.dx));
   });
 }
