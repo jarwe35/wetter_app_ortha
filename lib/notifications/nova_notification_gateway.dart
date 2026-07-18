@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'notification_level.dart';
@@ -16,16 +17,20 @@ class LocalNovaNotificationGateway implements NovaNotificationGateway {
       'Wetter- und Gefahrenwarnungen der NOVA Alert Engine';
 
   final FlutterLocalNotificationsPlugin _plugin;
+  final bool _notificationsSupported;
 
   bool _initialized = false;
   int _nextNotificationId = 1000;
 
-  LocalNovaNotificationGateway({FlutterLocalNotificationsPlugin? plugin})
-    : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
+  LocalNovaNotificationGateway({
+    FlutterLocalNotificationsPlugin? plugin,
+    bool? notificationsSupported,
+  }) : _plugin = plugin ?? FlutterLocalNotificationsPlugin(),
+       _notificationsSupported = notificationsSupported ?? !kIsWeb;
 
   @override
   Future<void> initialize() async {
-    if (_initialized) {
+    if (!_notificationsSupported || _initialized) {
       return;
     }
 
@@ -45,6 +50,10 @@ class LocalNovaNotificationGateway implements NovaNotificationGateway {
 
   @override
   Future<void> show(NotificationRequest request) async {
+    if (!_notificationsSupported) {
+      return;
+    }
+
     await initialize();
 
     final notificationDetails = NotificationDetails(
