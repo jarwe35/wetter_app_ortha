@@ -31,6 +31,7 @@ import 'services/weather_service.dart';
 
 import 'widgets/dashboard/ortha_status_card.dart';
 import 'widgets/ortha_ui/ortha_section_header.dart';
+import 'widgets/ortha_ui/ortha_responsive_page.dart';
 import 'widgets/location_search_result_dialog.dart';
 import 'widgets/ortha_ui/ortha_card.dart';
 import 'widgets/weather/ortha_weather_icon.dart';
@@ -798,515 +799,586 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
           });
         },
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(22),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: orthaSurface,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: orthaBorder.withValues(alpha: 0.85),
+      body: OrthaResponsivePage(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: orthaSurface,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: orthaBorder.withValues(alpha: 0.85)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.22),
+                    blurRadius: 24,
+                    offset: const Offset(0, 10),
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.22),
-                      blurRadius: 24,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 54,
-                          height: 54,
-                          decoration: BoxDecoration(
-                            color: orthaAccent.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: orthaAccent.withValues(alpha: 0.35),
-                            ),
-                          ),
-                          child: const Icon(
-                            Icons.cloud_outlined,
-                            color: orthaAccent,
-                            size: 24,
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 54,
+                        height: 54,
+                        decoration: BoxDecoration(
+                          color: orthaAccent.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: orthaAccent.withValues(alpha: 0.35),
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        const Expanded(
+                        child: const Icon(
+                          Icons.cloud_outlined,
+                          color: orthaAccent,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'ORTHA METEO Ω',
+                              style: TextStyle(
+                                fontSize: 21,
+                                fontWeight: FontWeight.bold,
+                                color: orthaPrimaryText,
+                              ),
+                            ),
+                            Text(
+                              'Wetter · Warnungen · Risiko',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: orthaSecondaryText,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Einheiten',
+                        onPressed: openUnitSettings,
+                        icon: const Icon(Icons.straighten_outlined),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      await Navigator.push<void>(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => LocationsPage(
+                            locations: savedLocations,
+                            selectedLocation: selectedLocation,
+                            onSelect: _selectSavedLocation,
+                            onDelete: deleteSavedLocation,
+                            onReorder: _reorderSavedLocationss,
+                            onRename: _renameSavedLocation,
+                          ),
+                        ),
+                      );
+
+                      if (mounted) {
+                        setState(() {});
+                      }
+                    },
+                    icon: const Icon(Icons.location_city_outlined),
+                    label: const Text('Meine Orte'),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
+            PlaceSelector(
+              locations: savedLocations,
+              selectedLocation: selectedLocation,
+              onSelect: _selectSavedLocation,
+              onDelete: deleteSavedLocation,
+            ),
+            const SizedBox(height: 18),
+            Flexible(
+              child: selectedNavigationIndex == 1
+                  ? ListView(
+                      children: [
+                        OrthaSectionHeader(
+                          icon: Icons.warning_amber_rounded,
+                          title: 'Amtliche Warnungen',
+                          subtitle: 'Warnlage für $selectedPlace',
+                        ),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: IconButton(
+                            tooltip: 'Warnungen aktualisieren',
+                            onPressed: () => loadWeather(selectedPlace),
+                            icon: const Icon(Icons.refresh),
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        if (isLoading)
+                          const CardBox(
+                            child: Text(
+                              'Wetter- und Warnungsdaten werden geladen …',
+                            ),
+                          )
+                        else if (errorMessage != null)
+                          CardBox(child: Text(errorMessage!))
+                        else
+                          OfficialWeatherWarningsCard(
+                            warnings: officialWarnings,
+                            isSupported: officialWarningsSupported,
+                            isLoading: officialWarningsLoading,
+                            errorMessage: officialWarningsError,
+                            latitude:
+                                selectedLocation?.latitude ??
+                                data?.latitude ??
+                                0.0,
+                            longitude:
+                                selectedLocation?.longitude ??
+                                data?.longitude ??
+                                0.0,
+                            place: selectedPlace,
+                          ),
+                        const SizedBox(height: 30),
+                      ],
+                    )
+                  : selectedNavigationIndex == 2
+                  ? ListView(
+                      children: [
+                        OrthaSectionHeader(
+                          icon: Icons.shield_outlined,
+                          title: 'ORTHA Risiken',
+                          subtitle: 'Risikobewertung für $selectedPlace',
+                        ),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: IconButton(
+                            tooltip: 'Risikoanalyse aktualisieren',
+                            onPressed: () => loadWeather(selectedPlace),
+                            icon: const Icon(Icons.refresh),
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        if (isLoading)
+                          const CardBox(
+                            child: Text(
+                              'Wetter- und Risikodaten werden geladen …',
+                            ),
+                          )
+                        else if (errorMessage != null)
+                          CardBox(child: Text(errorMessage!))
+                        else if (risk != null) ...[
+                          WarningLevelBar(result: risk),
+                          const SizedBox(height: 18),
+                          RiskCard(result: risk),
+                          const SizedBox(height: 18),
+                          RiskCategoriesCard(categories: risk.categories),
+                        ],
+                        const SizedBox(height: 30),
+                      ],
+                    )
+                  : selectedNavigationIndex == 3
+                  ? ListView(
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: orthaSurface,
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(
+                              color: orthaBorder.withValues(alpha: 0.85),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: orthaAccent.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(15),
+                                  border: Border.all(
+                                    color: orthaAccent.withValues(alpha: 0.35),
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.radar_outlined,
+                                  color: orthaAccent,
+                                  size: 27,
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'ORTHA Radar',
+                                      style: TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.bold,
+                                        color: orthaPrimaryText,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Radar- und Niederschlagslage für $selectedPlace',
+                                      style: const TextStyle(
+                                        color: orthaSecondaryText,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                tooltip: 'Wetterdaten aktualisieren',
+                                onPressed: () => loadWeather(selectedPlace),
+                                icon: const Icon(Icons.refresh),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        CardBox(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'ORTHA METEO Ω',
-                                style: TextStyle(
-                                  fontSize: 21,
-                                  fontWeight: FontWeight.bold,
-                                  color: orthaPrimaryText,
+                              const Row(
+                                children: [
+                                  Icon(
+                                    Icons.layers_outlined,
+                                    color: orthaAccent,
+                                  ),
+                                  SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      'Niederschlagsradar',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 18),
+                              if (selectedLocation == null)
+                                const SizedBox(
+                                  height: 380,
+                                  child: Center(
+                                    child: Text(
+                                      'Für die Radaransicht werden zunächst '
+                                      'Standortdaten geladen.',
+                                    ),
+                                  ),
+                                )
+                              else
+                                OrthaRadarMap(
+                                  latitude: selectedLocation!.latitude,
+                                  longitude: selectedLocation!.longitude,
+                                  place: selectedLocation!.name,
+                                ),
+                              const SizedBox(height: 16),
+                              const Row(
+                                children: [
+                                  Icon(
+                                    Icons.info_outline,
+                                    size: 18,
+                                    color: orthaSecondaryText,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'Radarquelle: RainViewer · '
+                                      'Basiskarte: OpenStreetMap',
+                                      style: TextStyle(
+                                        color: orthaSecondaryText,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        if (data != null)
+                          WeatherDetailsCard(
+                            data: data,
+                            unitSettings: unitSettings,
+                          ),
+                        const SizedBox(height: 30),
+                      ],
+                    )
+                  : selectedNavigationIndex == 4
+                  ? ListView(
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: orthaSurface,
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(
+                              color: orthaBorder.withValues(alpha: 0.85),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: orthaAccent.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(15),
+                                  border: Border.all(
+                                    color: orthaAccent.withValues(alpha: 0.35),
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.location_on_outlined,
+                                  color: orthaAccent,
+                                  size: 27,
                                 ),
                               ),
-                              Text(
-                                'Wetter · Warnungen · Risiko',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: orthaSecondaryText,
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Meine Orte',
+                                      style: TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.bold,
+                                        color: orthaPrimaryText,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '${savedLocations.length} gespeicherte Orte',
+                                      style: const TextStyle(
+                                        color: orthaSecondaryText,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                tooltip: 'Ort hinzufügen',
+                                onPressed: addPlace,
+                                icon: const Icon(
+                                  Icons.add_location_alt_outlined,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        IconButton(
-                          tooltip: 'Einheiten',
-                          onPressed: openUnitSettings,
-                          icon: const Icon(Icons.straighten_outlined),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    OutlinedButton.icon(
-                      onPressed: () async {
-                        await Navigator.push<void>(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => LocationsPage(
-                              locations: savedLocations,
-                              selectedLocation: selectedLocation,
-                              onSelect: _selectSavedLocation,
-                              onDelete: deleteSavedLocation,
-                              onReorder: _reorderSavedLocationss,
-                              onRename: _renameSavedLocation,
-                            ),
-                          ),
-                        );
-
-                        if (mounted) {
-                          setState(() {});
-                        }
-                      },
-                      icon: const Icon(Icons.location_city_outlined),
-                      label: const Text('Meine Orte'),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 18),
-              PlaceSelector(
-                locations: savedLocations,
-                selectedLocation: selectedLocation,
-                onSelect: _selectSavedLocation,
-                onDelete: deleteSavedLocation,
-              ),
-              const SizedBox(height: 18),
-              Flexible(
-                child: selectedNavigationIndex == 1
-                    ? ListView(
-                        children: [
-                          OrthaSectionHeader(
-                            icon: Icons.warning_amber_rounded,
-                            title: 'Amtliche Warnungen',
-                            subtitle: 'Warnlage für $selectedPlace',
-                          ),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: IconButton(
-                              tooltip: 'Warnungen aktualisieren',
-                              onPressed: () => loadWeather(selectedPlace),
-                              icon: const Icon(Icons.refresh),
-                            ),
-                          ),
-                          const SizedBox(height: 18),
-                          if (isLoading)
-                            const CardBox(
-                              child: Text(
-                                'Wetter- und Warnungsdaten werden geladen …',
+                        const SizedBox(height: 18),
+                        CardBox(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Row(
+                                children: [
+                                  Icon(
+                                    Icons.bookmarks_outlined,
+                                    color: orthaAccent,
+                                  ),
+                                  SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      'Gespeicherte Orte',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            )
-                          else if (errorMessage != null)
-                            CardBox(child: Text(errorMessage!))
-                          else
-                            OfficialWeatherWarningsCard(
-                              warnings: officialWarnings,
-                              isSupported: officialWarningsSupported,
-                              isLoading: officialWarningsLoading,
-                              errorMessage: officialWarningsError,
-                              latitude:
-                                  selectedLocation?.latitude ??
-                                  data?.latitude ??
-                                  0.0,
-                              longitude:
-                                  selectedLocation?.longitude ??
-                                  data?.longitude ??
-                                  0.0,
-                              place: selectedPlace,
-                            ),
-                          const SizedBox(height: 30),
-                        ],
-                      )
-                    : selectedNavigationIndex == 2
-                    ? ListView(
-                        children: [
+                              const SizedBox(height: 16),
+                              ...savedLocations.map((location) {
+                                final place = location.name;
+                                final selected = place == selectedPlace;
+
+                                return Container(
+                                  width: double.infinity,
+                                  margin: const EdgeInsets.only(bottom: 10),
+                                  decoration: BoxDecoration(
+                                    color: selected
+                                        ? orthaAccent.withValues(alpha: 0.10)
+                                        : orthaSurfaceElevated,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: selected
+                                          ? orthaAccent.withValues(alpha: 0.55)
+                                          : orthaBorder.withValues(alpha: 0.75),
+                                    ),
+                                  ),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    borderRadius: BorderRadius.circular(16),
+                                    clipBehavior: Clip.antiAlias,
+                                    child: ListTile(
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 14,
+                                            vertical: 5,
+                                          ),
+                                      leading: Icon(
+                                        selected
+                                            ? Icons.location_on
+                                            : Icons.location_on_outlined,
+                                        color: selected
+                                            ? orthaAccent
+                                            : orthaSecondaryText,
+                                      ),
+                                      title: Text(
+                                        place,
+                                        style: TextStyle(
+                                          color: orthaPrimaryText,
+                                          fontWeight: selected
+                                              ? FontWeight.bold
+                                              : FontWeight.normal,
+                                        ),
+                                      ),
+                                      subtitle: selected
+                                          ? const Text(
+                                              'Aktuell ausgewählter Ort',
+                                              style: TextStyle(
+                                                color: orthaSecondaryText,
+                                              ),
+                                            )
+                                          : null,
+                                      onTap: () {
+                                        final location = _findSavedLocation(
+                                          place,
+                                        );
+
+                                        if (location != null) {
+                                          _selectSavedLocation(location);
+                                        }
+                                      },
+                                      trailing: savedLocations.length > 1
+                                          ? IconButton(
+                                              tooltip: 'Ort löschen',
+                                              onPressed: () {
+                                                final location =
+                                                    _findSavedLocation(place);
+
+                                                if (location != null) {
+                                                  deleteSavedLocation(location);
+                                                }
+                                              },
+                                              icon: const Icon(
+                                                Icons.delete_outline,
+                                                color: orthaSecondaryText,
+                                              ),
+                                            )
+                                          : null,
+                                    ),
+                                  ),
+                                );
+                              }),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 54,
+                          child: FilledButton.icon(
+                            onPressed: addPlace,
+                            icon: const Icon(Icons.add_location_alt_outlined),
+                            label: const Text('Neuen Ort hinzufügen'),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: OutlinedButton.icon(
+                            onPressed: () => openLocationsPage(),
+                            icon: const Icon(Icons.tune_outlined),
+                            label: const Text('Sortieren und umbenennen'),
+                          ),
+                        ),
+                        const SizedBox(height: 30),
+                      ],
+                    )
+                  : ListView(
+                      children: [
+                        if (isLoading)
+                          const CardBox(
+                            child: Text('Wetterdaten werden geladen …'),
+                          )
+                        else if (errorMessage != null)
+                          CardBox(child: Text(errorMessage!))
+                        else if (data != null && risk != null) ...[
+                          if (status != null) OrthaStatusCard(status: status),
+                          const SizedBox(height: 24),
+                          OrthaSectionHeader(
+                            icon: Icons.cloud_outlined,
+                            title: 'Aktuelles Wetter',
+                            subtitle: 'Live Wetterlage für $selectedPlace',
+                          ),
+                          const SizedBox(height: 14),
+                          WeatherCard(data: data, unitSettings: unitSettings),
+                          const SizedBox(height: 24),
                           OrthaSectionHeader(
                             icon: Icons.shield_outlined,
-                            title: 'ORTHA Risiken',
-                            subtitle: 'Risikobewertung für $selectedPlace',
+                            title: 'ORTHA Risikoanalyse',
+                            subtitle: 'Bewertung der aktuellen Wetterlage',
                           ),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: IconButton(
-                              tooltip: 'Risikoanalyse aktualisieren',
-                              onPressed: () => loadWeather(selectedPlace),
-                              icon: const Icon(Icons.refresh),
-                            ),
+                          const SizedBox(height: 14),
+                          WarningLevelBar(result: risk),
+                          const SizedBox(height: 24),
+                          OrthaSectionHeader(
+                            icon: Icons.trending_up_outlined,
+                            title: 'Prognose & Entwicklung',
+                            subtitle:
+                                'Wettertrend der nächsten Stunden und Tage',
                           ),
-                          const SizedBox(height: 18),
-                          if (isLoading)
-                            const CardBox(
-                              child: Text(
-                                'Wetter- und Risikodaten werden geladen …',
-                              ),
-                            )
-                          else if (errorMessage != null)
-                            CardBox(child: Text(errorMessage!))
-                          else if (risk != null) ...[
-                            WarningLevelBar(result: risk),
-                            const SizedBox(height: 18),
-                            RiskCard(result: risk),
-                            const SizedBox(height: 18),
-                            RiskCategoriesCard(categories: risk.categories),
-                          ],
-                          const SizedBox(height: 30),
-                        ],
-                      )
-                    : selectedNavigationIndex == 3
-                    ? ListView(
-                        children: [
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: orthaSurface,
-                              borderRadius: BorderRadius.circular(24),
-                              border: Border.all(
-                                color: orthaBorder.withValues(alpha: 0.85),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 48,
-                                  height: 48,
-                                  decoration: BoxDecoration(
-                                    color: orthaAccent.withValues(alpha: 0.12),
-                                    borderRadius: BorderRadius.circular(15),
-                                    border: Border.all(
-                                      color: orthaAccent.withValues(
-                                        alpha: 0.35,
-                                      ),
-                                    ),
-                                  ),
-                                  child: const Icon(
-                                    Icons.radar_outlined,
-                                    color: orthaAccent,
-                                    size: 27,
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        'ORTHA Radar',
-                                        style: TextStyle(
-                                          fontSize: 22,
-                                          fontWeight: FontWeight.bold,
-                                          color: orthaPrimaryText,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Radar- und Niederschlagslage für $selectedPlace',
-                                        style: const TextStyle(
-                                          color: orthaSecondaryText,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                IconButton(
-                                  tooltip: 'Wetterdaten aktualisieren',
-                                  onPressed: () => loadWeather(selectedPlace),
-                                  icon: const Icon(Icons.refresh),
-                                ),
-                              ],
-                            ),
+                          const SizedBox(height: 14),
+                          HourlyForecastCard(
+                            forecast: data.hourlyForecast,
+                            unitSettings: unitSettings,
                           ),
                           const SizedBox(height: 18),
-                          CardBox(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Row(
-                                  children: [
-                                    Icon(
-                                      Icons.layers_outlined,
-                                      color: orthaAccent,
-                                    ),
-                                    SizedBox(width: 10),
-                                    Expanded(
-                                      child: Text(
-                                        'Niederschlagsradar',
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 18),
-                                if (selectedLocation == null)
-                                  const SizedBox(
-                                    height: 380,
-                                    child: Center(
-                                      child: Text(
-                                        'Für die Radaransicht werden zunächst '
-                                        'Standortdaten geladen.',
-                                      ),
-                                    ),
-                                  )
-                                else
-                                  OrthaRadarMap(
-                                    latitude: selectedLocation!.latitude,
-                                    longitude: selectedLocation!.longitude,
-                                    place: selectedLocation!.name,
-                                  ),
-                                const SizedBox(height: 16),
-                                const Row(
-                                  children: [
-                                    Icon(
-                                      Icons.info_outline,
-                                      size: 18,
-                                      color: orthaSecondaryText,
-                                    ),
-                                    SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        'Radarquelle: RainViewer · '
-                                        'Basiskarte: OpenStreetMap',
-                                        style: TextStyle(
-                                          color: orthaSecondaryText,
-                                          fontSize: 13,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
+                          OfficialWeatherWarningsCard(
+                            warnings: officialWarnings,
+                            isSupported: officialWarningsSupported,
+                            isLoading: officialWarningsLoading,
+                            errorMessage: officialWarningsError,
+                            latitude:
+                                selectedLocation?.latitude ?? data.latitude,
+                            longitude:
+                                selectedLocation?.longitude ?? data.longitude,
+                            place: selectedPlace,
                           ),
                           const SizedBox(height: 18),
-                          if (data != null)
-                            WeatherDetailsCard(
-                              data: data,
-                              unitSettings: unitSettings,
-                            ),
-                          const SizedBox(height: 30),
-                        ],
-                      )
-                    : selectedNavigationIndex == 4
-                    ? ListView(
-                        children: [
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: orthaSurface,
-                              borderRadius: BorderRadius.circular(24),
-                              border: Border.all(
-                                color: orthaBorder.withValues(alpha: 0.85),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 48,
-                                  height: 48,
-                                  decoration: BoxDecoration(
-                                    color: orthaAccent.withValues(alpha: 0.12),
-                                    borderRadius: BorderRadius.circular(15),
-                                    border: Border.all(
-                                      color: orthaAccent.withValues(
-                                        alpha: 0.35,
-                                      ),
-                                    ),
-                                  ),
-                                  child: const Icon(
-                                    Icons.location_on_outlined,
-                                    color: orthaAccent,
-                                    size: 27,
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        'Meine Orte',
-                                        style: TextStyle(
-                                          fontSize: 22,
-                                          fontWeight: FontWeight.bold,
-                                          color: orthaPrimaryText,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        '${savedLocations.length} gespeicherte Orte',
-                                        style: const TextStyle(
-                                          color: orthaSecondaryText,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                IconButton(
-                                  tooltip: 'Ort hinzufügen',
-                                  onPressed: addPlace,
-                                  icon: const Icon(
-                                    Icons.add_location_alt_outlined,
-                                  ),
-                                ),
-                              ],
-                            ),
+                          RiskCard(result: risk),
+                          const SizedBox(height: 18),
+                          RiskCategoriesCard(categories: risk.categories),
+                          const SizedBox(height: 18),
+                          DailyForecastCard(
+                            forecast: data.dailyForecast,
+                            unitSettings: unitSettings,
                           ),
                           const SizedBox(height: 18),
-                          CardBox(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Row(
-                                  children: [
-                                    Icon(
-                                      Icons.bookmarks_outlined,
-                                      color: orthaAccent,
-                                    ),
-                                    SizedBox(width: 10),
-                                    Expanded(
-                                      child: Text(
-                                        'Gespeicherte Orte',
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                ...savedLocations.map((location) {
-                                  final place = location.name;
-                                  final selected = place == selectedPlace;
-
-                                  return Container(
-                                    width: double.infinity,
-                                    margin: const EdgeInsets.only(bottom: 10),
-                                    decoration: BoxDecoration(
-                                      color: selected
-                                          ? orthaAccent.withValues(alpha: 0.10)
-                                          : orthaSurfaceElevated,
-                                      borderRadius: BorderRadius.circular(16),
-                                      border: Border.all(
-                                        color: selected
-                                            ? orthaAccent.withValues(
-                                                alpha: 0.55,
-                                              )
-                                            : orthaBorder.withValues(
-                                                alpha: 0.75,
-                                              ),
-                                      ),
-                                    ),
-                                    child: Material(
-                                      color: Colors.transparent,
-                                      borderRadius: BorderRadius.circular(16),
-                                      clipBehavior: Clip.antiAlias,
-                                      child: ListTile(
-                                        contentPadding:
-                                            const EdgeInsets.symmetric(
-                                              horizontal: 14,
-                                              vertical: 5,
-                                            ),
-                                        leading: Icon(
-                                          selected
-                                              ? Icons.location_on
-                                              : Icons.location_on_outlined,
-                                          color: selected
-                                              ? orthaAccent
-                                              : orthaSecondaryText,
-                                        ),
-                                        title: Text(
-                                          place,
-                                          style: TextStyle(
-                                            color: orthaPrimaryText,
-                                            fontWeight: selected
-                                                ? FontWeight.bold
-                                                : FontWeight.normal,
-                                          ),
-                                        ),
-                                        subtitle: selected
-                                            ? const Text(
-                                                'Aktuell ausgewählter Ort',
-                                                style: TextStyle(
-                                                  color: orthaSecondaryText,
-                                                ),
-                                              )
-                                            : null,
-                                        onTap: () {
-                                          final location = _findSavedLocation(
-                                            place,
-                                          );
-
-                                          if (location != null) {
-                                            _selectSavedLocation(location);
-                                          }
-                                        },
-                                        trailing: savedLocations.length > 1
-                                            ? IconButton(
-                                                tooltip: 'Ort löschen',
-                                                onPressed: () {
-                                                  final location =
-                                                      _findSavedLocation(place);
-
-                                                  if (location != null) {
-                                                    deleteSavedLocation(
-                                                      location,
-                                                    );
-                                                  }
-                                                },
-                                                icon: const Icon(
-                                                  Icons.delete_outline,
-                                                  color: orthaSecondaryText,
-                                                ),
-                                              )
-                                            : null,
-                                      ),
-                                    ),
-                                  );
-                                }),
-                              ],
-                            ),
+                          WeatherDetailsCard(
+                            data: data,
+                            unitSettings: unitSettings,
                           ),
                           const SizedBox(height: 18),
                           SizedBox(
@@ -1315,105 +1387,15 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                             child: FilledButton.icon(
                               onPressed: addPlace,
                               icon: const Icon(Icons.add_location_alt_outlined),
-                              label: const Text('Neuen Ort hinzufügen'),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 50,
-                            child: OutlinedButton.icon(
-                              onPressed: () => openLocationsPage(),
-                              icon: const Icon(Icons.tune_outlined),
-                              label: const Text('Sortieren und umbenennen'),
+                              label: const Text('Ort hinzufügen'),
                             ),
                           ),
                           const SizedBox(height: 30),
                         ],
-                      )
-                    : ListView(
-                        children: [
-                          if (isLoading)
-                            const CardBox(
-                              child: Text('Wetterdaten werden geladen …'),
-                            )
-                          else if (errorMessage != null)
-                            CardBox(child: Text(errorMessage!))
-                          else if (data != null && risk != null) ...[
-                            if (status != null) OrthaStatusCard(status: status),
-                            const SizedBox(height: 24),
-                            OrthaSectionHeader(
-                              icon: Icons.cloud_outlined,
-                              title: 'Aktuelles Wetter',
-                              subtitle: 'Live Wetterlage für $selectedPlace',
-                            ),
-                            const SizedBox(height: 14),
-                            WeatherCard(data: data, unitSettings: unitSettings),
-                            const SizedBox(height: 24),
-                            OrthaSectionHeader(
-                              icon: Icons.shield_outlined,
-                              title: 'ORTHA Risikoanalyse',
-                              subtitle: 'Bewertung der aktuellen Wetterlage',
-                            ),
-                            const SizedBox(height: 14),
-                            WarningLevelBar(result: risk),
-                            const SizedBox(height: 24),
-                            OrthaSectionHeader(
-                              icon: Icons.trending_up_outlined,
-                              title: 'Prognose & Entwicklung',
-                              subtitle:
-                                  'Wettertrend der nächsten Stunden und Tage',
-                            ),
-                            const SizedBox(height: 14),
-                            HourlyForecastCard(
-                              forecast: data.hourlyForecast,
-                              unitSettings: unitSettings,
-                            ),
-                            const SizedBox(height: 18),
-                            OfficialWeatherWarningsCard(
-                              warnings: officialWarnings,
-                              isSupported: officialWarningsSupported,
-                              isLoading: officialWarningsLoading,
-                              errorMessage: officialWarningsError,
-                              latitude:
-                                  selectedLocation?.latitude ?? data.latitude,
-                              longitude:
-                                  selectedLocation?.longitude ?? data.longitude,
-                              place: selectedPlace,
-                            ),
-                            const SizedBox(height: 18),
-                            RiskCard(result: risk),
-                            const SizedBox(height: 18),
-                            RiskCategoriesCard(categories: risk.categories),
-                            const SizedBox(height: 18),
-                            DailyForecastCard(
-                              forecast: data.dailyForecast,
-                              unitSettings: unitSettings,
-                            ),
-                            const SizedBox(height: 18),
-                            WeatherDetailsCard(
-                              data: data,
-                              unitSettings: unitSettings,
-                            ),
-                            const SizedBox(height: 18),
-                            SizedBox(
-                              width: double.infinity,
-                              height: 54,
-                              child: FilledButton.icon(
-                                onPressed: addPlace,
-                                icon: const Icon(
-                                  Icons.add_location_alt_outlined,
-                                ),
-                                label: const Text('Ort hinzufügen'),
-                              ),
-                            ),
-                            const SizedBox(height: 30),
-                          ],
-                        ],
-                      ),
-              ),
-            ],
-          ),
+                      ],
+                    ),
+            ),
+          ],
         ),
       ),
     );
