@@ -1337,6 +1337,57 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                           WeatherCard(data: data, unitSettings: unitSettings),
                           const SizedBox(height: 24),
                           OrthaSectionHeader(
+                            icon: Icons.radar_outlined,
+                            title: 'Live-Radar',
+                            subtitle:
+                                'Aktuelle Niederschlagslage für $selectedPlace',
+                          ),
+                          const SizedBox(height: 14),
+                          CardBox(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                OrthaRadarMap(
+                                  key: ValueKey(
+                                    'dashboard-radar-'
+                                    '${selectedLocation?.latitude ?? data.latitude},'
+                                    '${selectedLocation?.longitude ?? data.longitude}',
+                                  ),
+                                  latitude:
+                                      selectedLocation?.latitude ??
+                                      data.latitude,
+                                  longitude:
+                                      selectedLocation?.longitude ??
+                                      data.longitude,
+                                  place:
+                                      selectedLocation?.name ?? selectedPlace,
+                                ),
+                                const SizedBox(height: 16),
+                                const Row(
+                                  children: [
+                                    Icon(
+                                      Icons.info_outline,
+                                      size: 18,
+                                      color: orthaSecondaryText,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        'Radarquelle: RainViewer · '
+                                        'Basiskarte: OpenStreetMap',
+                                        style: TextStyle(
+                                          color: orthaSecondaryText,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          OrthaSectionHeader(
                             icon: Icons.shield_outlined,
                             title: 'ORTHA Risikoanalyse',
                             subtitle: 'Bewertung der aktuellen Wetterlage',
