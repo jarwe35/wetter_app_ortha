@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../notifications/nova_signal_level.dart';
 import '../notifications/nova_signal_settings.dart';
 import '../notifications/nova_signal_settings_provider.dart';
+import '../notifications/nova_speech_service.dart';
 
 const Color _orthaSurface = Color(0xFFFFFFFF);
 const Color _orthaSurfaceElevated = Color(0xFFF5FAFE);
@@ -12,9 +13,14 @@ const Color _orthaAccent = Color(0xFFD5A84A);
 const Color _orthaBorder = Color(0xFFD3E2EC);
 
 class NovaPage extends StatefulWidget {
-  const NovaPage({super.key, required this.settingsProvider});
+  const NovaPage({
+    super.key,
+    required this.settingsProvider,
+    required this.speechService,
+  });
 
   final NovaSignalSettingsProvider settingsProvider;
+  final NovaSpeechService speechService;
 
   @override
   State<NovaPage> createState() => _NovaPageState();
@@ -24,6 +30,7 @@ class _NovaPageState extends State<NovaPage> {
   NovaSignalSettings? _settings;
   bool _isLoading = true;
   bool _isSaving = false;
+  bool _isTestingSpeech = false;
   String? _errorMessage;
 
   @override
@@ -133,6 +140,48 @@ class _NovaPageState extends State<NovaPage> {
         minimumLevel: current.minimumLevel,
       ),
     );
+  }
+
+  Future<void> _testSpeech() async {
+    if (_isTestingSpeech) {
+      return;
+    }
+
+    setState(() {
+      _isTestingSpeech = true;
+      _errorMessage = null;
+    });
+
+    try {
+      await widget.speechService.speak(
+        'NOVA Sprachausgabe ist aktiviert. '
+        'Warnmeldungen können vorgelesen werden.',
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(content: Text('NOVA-Testansage wurde ausgeführt.')),
+        );
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _errorMessage = 'Die NOVA-Sprachausgabe konnte nicht gestartet werden.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isTestingSpeech = false;
+        });
+      }
+    }
   }
 
   Future<void> _setMinimumLevel(NovaSignalLevel level) async {
@@ -251,7 +300,7 @@ class _NovaPageState extends State<NovaPage> {
         const SizedBox(height: 18),
         _buildMinimumLevelCard(settings),
         const SizedBox(height: 18),
-        _buildAccessibilityPreviewCard(),
+        _buildAccessibilityPreviewCard(settings),
         const SizedBox(height: 30),
       ],
     );
@@ -498,18 +547,18 @@ class _NovaPageState extends State<NovaPage> {
     );
   }
 
-  Widget _buildAccessibilityPreviewCard() {
-    return const _NovaCard(
+  Widget _buildAccessibilityPreviewCard(NovaSignalSettings settings) {
+    return _NovaCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _CardTitle(
+          const _CardTitle(
             icon: Icons.accessibility_new_outlined,
             title: 'Barrierefreiheit',
-            subtitle: 'Vorbereitung für gesprochene Warnmeldungen',
+            subtitle: 'Gesprochene Warnmeldungen prüfen',
           ),
-          SizedBox(height: 16),
-          Row(
+          const SizedBox(height: 16),
+          const Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Icon(
@@ -519,14 +568,43 @@ class _NovaPageState extends State<NovaPage> {
               SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'Die optionale Sprachausgabe für sehbehinderte Menschen '
-                  'wird im nächsten NOVA-Schritt direkt mit der vorhandenen '
-                  'TTS-Infrastruktur verbunden.',
+                  'NOVA kann Warnmeldungen zusätzlich vorlesen. '
+                  'Mit der Testansage lassen sich Stimme, Lautstärke und '
+                  'TTS-Funktion des Geräts prüfen.',
                   style: TextStyle(color: _orthaSecondaryText, height: 1.45),
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 18),
+          if (settings.speechEnabled)
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                key: const Key('nova-speech-test-button'),
+                onPressed: _isTestingSpeech ? null : _testSpeech,
+                icon: _isTestingSpeech
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.volume_up_outlined),
+                label: Text(
+                  _isTestingSpeech
+                      ? 'Testansage läuft …'
+                      : 'Sprachausgabe testen',
+                ),
+              ),
+            )
+          else
+            const Text(
+              'Aktivieren Sie zunächst den Schalter „Warnungen vorlesen“.',
+              style: TextStyle(
+                color: _orthaSecondaryText,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
         ],
       ),
     );

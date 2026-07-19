@@ -126,6 +126,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
 
   late final LocalNovaNotificationGateway novaNotificationGateway;
   late final NovaAlertDispatcher novaAlertDispatcher;
+  late final FlutterNovaSpeechService novaSpeechService;
   late final NovaSignalSettingsStore novaSignalSettingsStore;
   late final NovaSignalSettingsProvider novaSignalSettingsProvider;
   late final NovaSignalCoordinator novaSignalCoordinator;
@@ -178,10 +179,12 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
       settingsProvider: novaSignalSettingsProvider,
     );
 
+    novaSpeechService = FlutterNovaSpeechService();
+
     novaAlertDispatcher = NovaAlertDispatcher(
       notificationGateway: novaNotificationGateway,
       coordinator: novaSignalCoordinator,
-      speechService: FlutterNovaSpeechService(),
+      speechService: novaSpeechService,
     );
     novaAlertHistoryStore = const SharedPreferencesAlertHistoryStore();
     novaDuplicateAlertGuard = NovaDuplicateAlertGuard(
@@ -1330,7 +1333,10 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                       ],
                     )
                   : selectedNavigationIndex == 7
-                  ? NovaPage(settingsProvider: novaSignalSettingsProvider)
+                  ? NovaPage(
+                      settingsProvider: novaSignalSettingsProvider,
+                      speechService: novaSpeechService,
+                    )
                   : ListView(
                       children: [
                         if (isLoading)
