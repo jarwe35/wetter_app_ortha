@@ -34,7 +34,7 @@ class NovaSignalDecisionEngine {
       push: allowed,
       sound: allowed && settings.soundEnabled && policy.sound,
       vibration: allowed && settings.vibrationEnabled && policy.vibration,
-      speak: false,
+      speak: allowed && settings.speechEnabled,
     );
   }
 }

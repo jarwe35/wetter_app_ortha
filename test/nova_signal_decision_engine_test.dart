@@ -41,4 +41,26 @@ void main() {
 
     expect(result.push, true);
   });
+
+  test('Aktivierte Sprachausgabe setzt speak auf true', () {
+    const engine = NovaSignalDecisionEngine();
+
+    final result = engine.evaluate(
+      level: NovaSignalLevel.warning,
+      settings: const NovaSignalSettings(speechEnabled: true),
+    );
+
+    expect(result.speak, isTrue);
+  });
+
+  test('Deaktivierte Sprachausgabe setzt speak auf false', () {
+    const engine = NovaSignalDecisionEngine();
+
+    final result = engine.evaluate(
+      level: NovaSignalLevel.warning,
+      settings: const NovaSignalSettings(speechEnabled: false),
+    );
+
+    expect(result.speak, isFalse);
+  });
 }
