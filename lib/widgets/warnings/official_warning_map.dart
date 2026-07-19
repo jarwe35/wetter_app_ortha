@@ -111,19 +111,26 @@ class OfficialWarningMap extends StatelessWidget {
             ],
           ),
           Positioned(
-            bottom: 12,
-            left: 12,
-            right: 12,
+            bottom: 10,
+            left: 10,
+            right: 10,
             child: IgnorePointer(
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
+                  horizontal: 10,
+                  vertical: 7,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF102235).withValues(alpha: 0.94),
+                  color: const Color(0xFF102235).withValues(alpha: 0.96),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFF27465D)),
+                  border: Border.all(color: const Color(0xFF41627A)),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x33000000),
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Row(
                   children: [
@@ -131,22 +138,30 @@ class OfficialWarningMap extends StatelessWidget {
                       locationIsInside
                           ? Icons.location_on_outlined
                           : Icons.location_off_outlined,
-                      size: 19,
-                      color: const Color(0xFFD5A84A),
+                      size: 21,
+                      color: const Color(0xFFFFC83D),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         locationIsInside
-                            ? 'Der ausgewählte Ort liegt innerhalb des '
-                                  'amtlichen Warngebietes.'
-                            : 'Der ausgewählte Ort liegt außerhalb des '
-                                  'amtlichen Warngebietes.',
+                            ? 'Du befindest dich im Warnbereich.'
+                            : 'Du befindest dich außerhalb des Warnbereichs.',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
+                          color: Colors.white,
                           fontSize: 12.5,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w700,
+                          height: 1.15,
                         ),
                       ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Icon(
+                      Icons.info_outline,
+                      size: 20,
+                      color: Colors.white,
                     ),
                   ],
                 ),
@@ -154,33 +169,53 @@ class OfficialWarningMap extends StatelessWidget {
             ),
           ),
           Positioned(
-            top: 12,
-            left: 12,
-            right: 12,
+            top: 10,
+            left: 10,
+            right: 10,
             child: IgnorePointer(
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 9,
+                  horizontal: 10,
+                  vertical: 7,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF102235).withValues(alpha: 0.92),
+                  color: const Color(0xFF102235).withValues(alpha: 0.96),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFF27465D)),
+                  border: Border.all(color: const Color(0xFF41627A)),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x33000000),
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: const Row(
                   children: [
                     Icon(
                       Icons.map_outlined,
-                      size: 18,
-                      color: Color(0xFFD5A84A),
+                      size: 21,
+                      color: Color(0xFFFFC83D),
                     ),
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Amtliches Warngebiet',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                        'Angezeigter Bereich',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          height: 1.15,
+                        ),
                       ),
+                    ),
+                    SizedBox(width: 6),
+                    Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      size: 23,
+                      color: Colors.white,
                     ),
                   ],
                 ),
