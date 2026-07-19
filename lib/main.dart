@@ -19,6 +19,7 @@ import 'models/saved_location.dart';
 import 'pages/locations_page.dart';
 import 'pages/satellite_page.dart';
 import 'pages/pollen_page.dart';
+import 'pages/nova_page.dart';
 import 'services/location_migration_service.dart';
 import 'services/location_service.dart';
 import 'services/location_storage_service.dart';
@@ -1325,6 +1326,8 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                         const SizedBox(height: 30),
                       ],
                     )
+                  : selectedNavigationIndex == 7
+                  ? NovaPage(settingsProvider: novaSignalSettingsProvider)
                   : ListView(
                       children: [
                         if (isLoading)
