@@ -6,7 +6,7 @@ class FlutterNovaSpeechService implements NovaSpeechService {
   FlutterNovaSpeechService({
     FlutterTts? flutterTts,
     this.language = 'de-DE',
-    this.speechRate = 0.5,
+    this.speechRate = 0.525,
     this.volume = 1.0,
     this.pitch = 1.0,
   }) : _flutterTts = flutterTts ?? FlutterTts();
