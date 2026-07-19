@@ -95,6 +95,7 @@ class _NovaPageState extends State<NovaPage> {
       NovaSignalSettings(
         soundEnabled: enabled,
         vibrationEnabled: current.vibrationEnabled,
+        speechEnabled: current.speechEnabled,
         minimumLevel: current.minimumLevel,
       ),
     );
@@ -111,6 +112,24 @@ class _NovaPageState extends State<NovaPage> {
       NovaSignalSettings(
         soundEnabled: current.soundEnabled,
         vibrationEnabled: enabled,
+        speechEnabled: current.speechEnabled,
+        minimumLevel: current.minimumLevel,
+      ),
+    );
+  }
+
+  Future<void> _setSpeechEnabled(bool enabled) async {
+    final current = _settings;
+
+    if (current == null) {
+      return;
+    }
+
+    await _saveSettings(
+      NovaSignalSettings(
+        soundEnabled: current.soundEnabled,
+        vibrationEnabled: current.vibrationEnabled,
+        speechEnabled: enabled,
         minimumLevel: current.minimumLevel,
       ),
     );
@@ -127,6 +146,7 @@ class _NovaPageState extends State<NovaPage> {
       NovaSignalSettings(
         soundEnabled: current.soundEnabled,
         vibrationEnabled: current.vibrationEnabled,
+        speechEnabled: current.speechEnabled,
         minimumLevel: level,
       ),
     );
@@ -381,6 +401,28 @@ class _NovaPageState extends State<NovaPage> {
             ),
             subtitle: const Text(
               'Gefahrenmeldungen zusätzlich durch Vibration signalisieren.',
+              style: TextStyle(color: _orthaSecondaryText),
+            ),
+          ),
+          const Divider(color: _orthaBorder),
+          SwitchListTile(
+            key: const Key('nova-speech-switch'),
+            contentPadding: EdgeInsets.zero,
+            value: settings.speechEnabled,
+            onChanged: _isSaving ? null : _setSpeechEnabled,
+            secondary: const Icon(
+              Icons.record_voice_over_outlined,
+              color: _orthaAccent,
+            ),
+            title: const Text(
+              'Warnungen vorlesen',
+              style: TextStyle(
+                color: _orthaPrimaryText,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            subtitle: const Text(
+              'NOVA darf Warnmeldungen zusätzlich per Sprachausgabe vorlesen.',
               style: TextStyle(color: _orthaSecondaryText),
             ),
           ),

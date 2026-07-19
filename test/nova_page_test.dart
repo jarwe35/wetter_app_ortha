@@ -10,6 +10,7 @@ void main() {
     SharedPreferences.setMockInitialValues({
       'nova_signal_sound_enabled': true,
       'nova_signal_vibration_enabled': false,
+      'nova_signal_speech_enabled': true,
       'nova_signal_minimum_level': 2,
     });
 
@@ -27,6 +28,14 @@ void main() {
 
     expect(find.text('NOVA Ω'), findsOneWidget);
     expect(find.text('Signalisierung'), findsOneWidget);
+    expect(find.text('Warnungen vorlesen'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.text('Mindestwarnstufe'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+
     expect(find.text('Mindestwarnstufe'), findsOneWidget);
 
     final soundSwitch = tester.widget<SwitchListTile>(
@@ -35,9 +44,13 @@ void main() {
     final vibrationSwitch = tester.widget<SwitchListTile>(
       find.byKey(const Key('nova-vibration-switch')),
     );
+    final speechSwitch = tester.widget<SwitchListTile>(
+      find.byKey(const Key('nova-speech-switch')),
+    );
 
     expect(soundSwitch.value, isTrue);
     expect(vibrationSwitch.value, isFalse);
+    expect(speechSwitch.value, isTrue);
   });
 
   testWidgets('NOVA-Seite speichert geänderte Toneinstellung', (tester) async {
@@ -61,5 +74,31 @@ void main() {
     final preferences = await SharedPreferences.getInstance();
 
     expect(preferences.getBool('nova_signal_sound_enabled'), isFalse);
+    expect(preferences.getBool('nova_signal_speech_enabled'), isFalse);
+  });
+
+  testWidgets('NOVA-Seite speichert aktivierte Sprachausgabe', (tester) async {
+    SharedPreferences.setMockInitialValues({
+      'nova_signal_speech_enabled': false,
+    });
+
+    final provider = NovaSignalSettingsProvider(
+      const NovaSignalSettingsStore(),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: NovaPage(settingsProvider: provider)),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('nova-speech-switch')));
+    await tester.pumpAndSettle();
+
+    final preferences = await SharedPreferences.getInstance();
+
+    expect(preferences.getBool('nova_signal_speech_enabled'), isTrue);
   });
 }
