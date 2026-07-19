@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-const Color _orthaBackground = Color(0xFFF4F8FB);
 const Color _orthaSurface = Color(0xFFFFFFFF);
 const Color _orthaPrimaryText = Color(0xFF17324D);
 const Color _orthaSecondaryText = Color(0xFF607D8B);
