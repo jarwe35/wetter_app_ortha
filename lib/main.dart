@@ -787,13 +787,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
           );
 
     return Scaffold(
-      drawer: OrthaNavigationDrawer(
-        onSelect: (index) {
-          setState(() {
-            selectedNavigationIndex = index;
-          });
-        },
-      ),
+      drawer: OrthaNavigationDrawer(onSelect: handleNavigationSelection),
       body: OrthaResponsivePage(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
