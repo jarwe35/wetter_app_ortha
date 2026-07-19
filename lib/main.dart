@@ -1116,6 +1116,107 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                   : selectedNavigationIndex == 4
                   ? ListView(
                       children: [
+                        OrthaSectionHeader(
+                          icon: Icons.satellite_alt_outlined,
+                          title: 'ORTHA Satellit',
+                          subtitle:
+                              'Satelliten- und Wolkenlage für $selectedPlace',
+                        ),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: IconButton(
+                            tooltip: 'Satellitendaten aktualisieren',
+                            onPressed: () => loadWeather(selectedPlace),
+                            icon: const Icon(Icons.refresh),
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        CardBox(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Row(
+                                children: [
+                                  Icon(
+                                    Icons.cloud_outlined,
+                                    color: orthaAccent,
+                                  ),
+                                  SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      'Satellitenansicht',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'Die Satellitenkarte wird in einem der nächsten '
+                                'Entwicklungsschritte angebunden. Bereits verfügbar '
+                                'ist die aktuelle Bewölkung für den ausgewählten Ort.',
+                                style: TextStyle(
+                                  color: orthaSecondaryText,
+                                  height: 1.45,
+                                ),
+                              ),
+                              const SizedBox(height: 18),
+                              if (isLoading)
+                                const Center(child: CircularProgressIndicator())
+                              else if (errorMessage != null)
+                                Text(errorMessage!)
+                              else if (data != null)
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.filter_drama_outlined,
+                                      color: orthaAccent,
+                                      size: 32,
+                                    ),
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'Aktuelle Bewölkung',
+                                            style: TextStyle(
+                                              color: orthaSecondaryText,
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            '${data.cloudCover} %',
+                                            style: const TextStyle(
+                                              fontSize: 26,
+                                              fontWeight: FontWeight.bold,
+                                              color: orthaPrimaryText,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              else
+                                const Text(
+                                  'Noch keine Wetterdaten verfügbar.',
+                                  style: TextStyle(color: orthaSecondaryText),
+                                ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 30),
+                      ],
+                    )
+                  : selectedNavigationIndex == 6
+                  ? ListView(
+                      children: [
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(20),
