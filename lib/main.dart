@@ -30,7 +30,6 @@ import 'services/weather_service.dart';
 
 import 'widgets/dashboard/ortha_status_card.dart';
 import 'widgets/ortha_ui/ortha_section_header.dart';
-import 'widgets/ortha_ui/ortha_adaptive_layout.dart';
 import 'widgets/ortha_ui/ortha_responsive.dart';
 import 'widgets/ortha_ui/ortha_responsive_page.dart';
 import 'widgets/location_search_result_dialog.dart';
