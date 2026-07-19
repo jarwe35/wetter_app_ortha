@@ -1214,6 +1214,93 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                         const SizedBox(height: 30),
                       ],
                     )
+                  : selectedNavigationIndex == 5
+                  ? ListView(
+                      children: [
+                        OrthaSectionHeader(
+                          icon: Icons.grass_outlined,
+                          title: 'ORTHA Pollen',
+                          subtitle:
+                              'Pollenflug und Belastung für $selectedPlace',
+                        ),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: IconButton(
+                            tooltip: 'Pollendaten aktualisieren',
+                            onPressed: () => loadWeather(selectedPlace),
+                            icon: const Icon(Icons.refresh),
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        CardBox(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Row(
+                                children: [
+                                  Icon(Icons.eco_outlined, color: orthaAccent),
+                                  SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      'Pollenflugvorhersage',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'Die standortbezogene Pollenflugvorhersage wird '
+                                'in einem der nächsten Entwicklungsschritte '
+                                'angebunden. Geplant sind Belastungsstufen für '
+                                'wichtige Pollenarten sowie persönliche Hinweise.',
+                                style: TextStyle(
+                                  color: orthaSecondaryText,
+                                  height: 1.45,
+                                ),
+                              ),
+                              const SizedBox(height: 18),
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: orthaAccent.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: orthaAccent.withValues(alpha: 0.22),
+                                  ),
+                                ),
+                                child: const Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(
+                                      Icons.info_outline,
+                                      color: orthaAccent,
+                                    ),
+                                    SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        'Noch keine Pollendaten verfügbar. '
+                                        'Die Seite ist bereits vollständig in '
+                                        'die ORTHA-Navigation eingebunden.',
+                                        style: TextStyle(
+                                          color: orthaSecondaryText,
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 30),
+                      ],
+                    )
                   : selectedNavigationIndex == 6
                   ? ListView(
                       children: [
