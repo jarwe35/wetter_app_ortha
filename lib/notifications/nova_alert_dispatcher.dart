@@ -4,16 +4,19 @@ import 'notification_level.dart';
 import 'nova_signal_service.dart';
 import 'nova_signal_level.dart';
 import 'nova_signal_coordinator.dart';
+import 'nova_speech_service.dart';
 
 class NovaAlertDispatcher {
   final NovaNotificationGateway notificationGateway;
   final NovaSignalService signalService;
   final NovaSignalCoordinator? coordinator;
+  final NovaSpeechService? speechService;
 
   const NovaAlertDispatcher({
     required this.notificationGateway,
     this.signalService = const NovaSignalService(),
     this.coordinator,
+    this.speechService,
   });
 
   Future<bool> dispatch(NotificationRequest? request) async {
@@ -30,7 +33,7 @@ class NovaAlertDispatcher {
       final decision = await coordinator!.evaluate(signalLevel);
 
       shouldPlaySound = request.playSound || decision.sound;
-      shouldSpeak = request.speakMessage || decision.speak;
+      shouldSpeak = request.speakMessage && decision.speak;
     } else {
       final decision = signalService.evaluate(signalLevel);
 
@@ -51,6 +54,10 @@ class NovaAlertDispatcher {
           );
 
     await notificationGateway.show(requestToSend);
+
+    if (requestToSend.speakMessage && speechService != null) {
+      await speechService!.speak(requestToSend.message);
+    }
 
     return true;
   }

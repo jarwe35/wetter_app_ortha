@@ -5,6 +5,7 @@ import 'engine/risk_engine.dart';
 import 'engine/official_warning_pipeline.dart';
 import 'engine/recommendation_engine.dart';
 import 'notifications/nova_alert_dispatcher.dart';
+import 'notifications/flutter_nova_speech_service.dart';
 import 'notifications/nova_alert_engine.dart';
 import 'notifications/nova_duplicate_alert_guard.dart';
 import 'notifications/nova_notification_gateway.dart';
@@ -179,6 +180,8 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
 
     novaAlertDispatcher = NovaAlertDispatcher(
       notificationGateway: novaNotificationGateway,
+      coordinator: novaSignalCoordinator,
+      speechService: FlutterNovaSpeechService(),
     );
     novaAlertHistoryStore = const SharedPreferencesAlertHistoryStore();
     novaDuplicateAlertGuard = NovaDuplicateAlertGuard(

@@ -3,6 +3,30 @@ import 'package:wetter_app_ortha/notifications/nova_alert_dispatcher.dart';
 import 'package:wetter_app_ortha/notifications/nova_notification_gateway.dart';
 import 'package:wetter_app_ortha/notifications/notification_level.dart';
 import 'package:wetter_app_ortha/notifications/notification_request.dart';
+import 'package:wetter_app_ortha/notifications/nova_speech_service.dart';
+
+class RecordingNovaSpeechService implements NovaSpeechService {
+  int initializeCalls = 0;
+  int speakCalls = 0;
+  int stopCalls = 0;
+  String? lastMessage;
+
+  @override
+  Future<void> initialize() async {
+    initializeCalls++;
+  }
+
+  @override
+  Future<void> speak(String message) async {
+    speakCalls++;
+    lastMessage = message;
+  }
+
+  @override
+  Future<void> stop() async {
+    stopCalls++;
+  }
+}
 
 class RecordingNotificationGateway implements NovaNotificationGateway {
   int initializeCalls = 0;
@@ -68,5 +92,49 @@ void main() {
     expect(gateway.lastRequest?.level, NotificationLevel.emergency);
     expect(gateway.lastRequest?.playSound, isTrue);
     expect(gateway.lastRequest?.speakMessage, isTrue);
+  });
+
+  test('liest eine ausdrücklich angeforderte Warnung vor', () async {
+    final gateway = RecordingNotificationGateway();
+    final speechService = RecordingNovaSpeechService();
+
+    final dispatcher = NovaAlertDispatcher(
+      notificationGateway: gateway,
+      speechService: speechService,
+    );
+
+    const request = NotificationRequest(
+      level: NotificationLevel.emergency,
+      title: 'NOVA Akutwarnung',
+      message: 'Schwere Unwettergefahr.',
+      speakMessage: true,
+    );
+
+    await dispatcher.dispatch(request);
+
+    expect(speechService.speakCalls, 1);
+    expect(speechService.lastMessage, 'Schwere Unwettergefahr.');
+  });
+
+  test('liest eine Warnung ohne Sprachfreigabe nicht vor', () async {
+    final gateway = RecordingNotificationGateway();
+    final speechService = RecordingNovaSpeechService();
+
+    final dispatcher = NovaAlertDispatcher(
+      notificationGateway: gateway,
+      speechService: speechService,
+    );
+
+    const request = NotificationRequest(
+      level: NotificationLevel.warning,
+      title: 'NOVA Wetterwarnung',
+      message: 'Starke Windböen möglich.',
+      speakMessage: false,
+    );
+
+    await dispatcher.dispatch(request);
+
+    expect(speechService.speakCalls, 0);
+    expect(speechService.lastMessage, isNull);
   });
 }
