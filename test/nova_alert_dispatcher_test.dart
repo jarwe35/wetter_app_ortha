@@ -4,12 +4,19 @@ import 'package:wetter_app_ortha/notifications/nova_notification_gateway.dart';
 import 'package:wetter_app_ortha/notifications/notification_level.dart';
 import 'package:wetter_app_ortha/notifications/notification_request.dart';
 import 'package:wetter_app_ortha/notifications/nova_speech_service.dart';
+import 'package:wetter_app_ortha/notifications/nova_speech_voice.dart';
 
 class RecordingNovaSpeechService implements NovaSpeechService {
   int initializeCalls = 0;
   int speakCalls = 0;
   int stopCalls = 0;
   String? lastMessage;
+
+  @override
+  Future<List<NovaSpeechVoice>> getAvailableVoices() async => const [];
+
+  @override
+  Future<void> selectVoice(NovaSpeechVoice? voice) async {}
 
   @override
   Future<void> initialize() async {

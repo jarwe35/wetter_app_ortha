@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wetter_app_ortha/notifications/nova_signal_settings_provider.dart';
 import 'package:wetter_app_ortha/notifications/nova_signal_settings_store.dart';
 import 'package:wetter_app_ortha/notifications/nova_speech_service.dart';
+import 'package:wetter_app_ortha/notifications/nova_speech_voice.dart';
 import 'package:wetter_app_ortha/pages/nova_page.dart';
 
 class RecordingNovaSpeechService implements NovaSpeechService {
@@ -11,6 +12,12 @@ class RecordingNovaSpeechService implements NovaSpeechService {
   int speakCalls = 0;
   int stopCalls = 0;
   String? lastMessage;
+
+  @override
+  Future<List<NovaSpeechVoice>> getAvailableVoices() async => const [];
+
+  @override
+  Future<void> selectVoice(NovaSpeechVoice? voice) async {}
 
   @override
   Future<void> initialize() async {
