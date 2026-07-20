@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../models/ortha_status_model.dart';
+import '../../theme/ortha_colors.dart';
+import '../../theme/ortha_spacing.dart';
+import '../../theme/ortha_status_colors.dart';
+import '../../theme/ortha_text_styles.dart';
 import '../ortha_ui/ortha_card.dart';
 
 class OrthaStatusCard extends StatelessWidget {
@@ -8,21 +12,7 @@ class OrthaStatusCard extends StatelessWidget {
 
   const OrthaStatusCard({super.key, required this.status});
 
-  Color get _statusColor {
-    switch (status.level) {
-      case OrthaStatusLevel.green:
-        return const Color(0xFF4CAF50);
-
-      case OrthaStatusLevel.yellow:
-        return const Color(0xFFFBC02D);
-
-      case OrthaStatusLevel.orange:
-        return const Color(0xFFFF9800);
-
-      case OrthaStatusLevel.red:
-        return const Color(0xFFD32F2F);
-    }
-  }
+  Color get _statusColor => OrthaStatusColors.forLevel(status.level);
 
   @override
   Widget build(BuildContext context) {
@@ -40,38 +30,40 @@ class OrthaStatusCard extends StatelessWidget {
                   color: _statusColor,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: OrthaSpacing.medium),
               Expanded(
-                child: Text(
-                  status.title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+                child: Text(status.title, style: OrthaTextStyles.cardTitle),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Text(
-            status.statusText,
-            style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 18),
-          _InfoRow(label: 'ORTHA-Bewertung', value: status.riskText),
-          const SizedBox(height: 10),
+          const SizedBox(height: OrthaSpacing.large),
+          Text(status.statusText, style: OrthaTextStyles.statusTitle),
+          const SizedBox(height: OrthaSpacing.section),
+          _InfoRow(label: 'ORTHA-Analyse', value: status.riskText),
+          const SizedBox(height: OrthaSpacing.medium),
           _InfoRow(label: 'Amtliche Warnungen', value: status.warningText),
-          const SizedBox(height: 10),
+          const SizedBox(height: OrthaSpacing.medium),
           _InfoRow(label: 'Ort', value: status.location),
-          const SizedBox(height: 18),
-          const Text(
-            'Kurzbewertung',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            status.recommendation,
-            style: const TextStyle(fontSize: 15, height: 1.4),
+          const SizedBox(height: OrthaSpacing.section),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(OrthaSpacing.large),
+            decoration: BoxDecoration(
+              color: OrthaColors.informationBackground,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: OrthaColors.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Kurzbewertung',
+                  style: OrthaTextStyles.informationLabel,
+                ),
+                const SizedBox(height: OrthaSpacing.small),
+                Text(status.recommendation, style: OrthaTextStyles.body),
+              ],
+            ),
           ),
         ],
       ),
@@ -87,19 +79,33 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 148,
-          child: Text(
-            label,
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(child: Text(value)),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 420) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: OrthaTextStyles.informationLabel),
+              const SizedBox(height: OrthaSpacing.xSmall),
+              Text(value, style: OrthaTextStyles.informationValue),
+            ],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 148,
+              child: Text(label, style: OrthaTextStyles.informationLabel),
+            ),
+            const SizedBox(width: OrthaSpacing.small),
+            Expanded(
+              child: Text(value, style: OrthaTextStyles.informationValue),
+            ),
+          ],
+        );
+      },
     );
   }
 }

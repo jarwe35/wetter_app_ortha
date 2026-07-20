@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../theme/ortha_colors.dart';
 import 'ortha_responsive.dart';
 
 class OrthaCard extends StatelessWidget {
@@ -13,7 +14,7 @@ class OrthaCard extends StatelessWidget {
     super.key,
     required this.child,
     this.padding,
-    this.backgroundColor = Colors.white,
+    this.backgroundColor = OrthaColors.surface,
     this.borderRadius,
     this.elevated = true,
   });
@@ -31,13 +32,13 @@ class OrthaCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(effectiveBorderRadius),
-        border: Border.all(color: const Color(0xFFD3E2EC)),
+        border: Border.all(color: OrthaColors.border),
         boxShadow: elevated
-            ? [
+            ? const [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.10),
+                  color: OrthaColors.shadow,
                   blurRadius: 28,
-                  offset: const Offset(0, 14),
+                  offset: Offset(0, 14),
                 ),
               ]
             : const [],
