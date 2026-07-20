@@ -1,6 +1,7 @@
 import '../models/official_weather_warning.dart';
 import 'official_weather_warning_service.dart';
 import 'warning_providers/official_warning_provider.dart';
+import 'package:flutter/foundation.dart';
 
 class ProviderBasedOfficialWeatherWarningService
     implements OfficialWeatherWarningService {
@@ -46,7 +47,7 @@ class ProviderBasedOfficialWeatherWarningService
         warnings.addAll(providerWarnings);
         successfulProviderCount++;
 
-        print(
+        debugPrint(
           'Warnquelle ${provider.sourceName}: '
           '${providerWarnings.length} Meldung(en) geladen.',
         );
@@ -54,7 +55,7 @@ class ProviderBasedOfficialWeatherWarningService
         firstError ??= error;
         firstStackTrace ??= stackTrace;
 
-        print('Warnquelle ${provider.sourceName} fehlgeschlagen: $error');
+        debugPrint('Warnquelle ${provider.sourceName} fehlgeschlagen: $error');
       }
     }
 
