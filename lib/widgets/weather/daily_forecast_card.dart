@@ -32,14 +32,18 @@ class _DailyForecastCardState extends State<DailyForecastCard> {
               Expanded(
                 child: Text(
                   'Tagesvorhersage',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: orthaPrimaryText,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 6),
           const Text(
-            'Temperaturspanne und Niederschlagswahrscheinlichkeit',
+            'Temperaturen und Niederschlagswahrscheinlichkeit',
             style: TextStyle(color: orthaSecondaryText, fontSize: 13),
           ),
           const SizedBox(height: 14),
@@ -63,118 +67,38 @@ class _DailyForecastCardState extends State<DailyForecastCard> {
               },
             ),
           ),
-          const SizedBox(height: 16),
-          ...visibleForecast.map(
-            (day) => Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: orthaSurfaceElevated,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: orthaBorder.withValues(alpha: 0.85)),
-              ),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final veryCompact = constraints.maxWidth < 330;
-                  final compact = constraints.maxWidth < 520;
-                  final iconSize = veryCompact ? 40.0 : 46.0;
-                  final horizontalGap = veryCompact ? 9.0 : 12.0;
+          const SizedBox(height: 18),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final veryCompact = constraints.maxWidth < 350;
+              final tileWidth = veryCompact ? 98.0 : 110.0;
+              final tileHeight = veryCompact ? 240.0 : 252.0;
 
-                  final weatherInfo = Row(
-                    children: [
-                      OrthaWeatherIcon(
-                        weatherCode: day.weatherCode,
-                        size: iconSize,
-                        semanticLabel: weatherText(day.weatherCode),
-                      ),
-                      SizedBox(width: horizontalGap),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              shortDate(day.date),
-                              style: const TextStyle(
-                                color: orthaPrimaryText,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              weatherText(day.weatherCode),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: orthaSecondaryText,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  );
+              return SizedBox(
+                height: tileHeight,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.only(bottom: 4),
+                  itemCount: visibleForecast.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(width: 10),
+                  itemBuilder: (context, index) {
+                    final day = visibleForecast[index];
 
-                  final values = Row(
-                    mainAxisSize: compact ? MainAxisSize.max : MainAxisSize.min,
-                    children: [
-                      Expanded(
-                        flex: compact ? 1 : 0,
-                        child: _ForecastValue(
-                          icon: Icons.arrow_downward,
-                          label: 'Min',
-                          value: formatTemperature(
-                            day.temperatureMin,
-                            widget.unitSettings,
-                            decimals: 0,
-                          ),
-                        ),
+                    return SizedBox(
+                      width: tileWidth,
+                      child: _DailyForecastTile(
+                        day: day,
+                        unitSettings: widget.unitSettings,
+                        isToday: _isToday(day.date),
+                        compact: veryCompact,
                       ),
-                      SizedBox(width: veryCompact ? 8 : 14),
-                      Expanded(
-                        flex: compact ? 1 : 0,
-                        child: _ForecastValue(
-                          icon: Icons.arrow_upward,
-                          label: 'Max',
-                          value: formatTemperature(
-                            day.temperatureMax,
-                            widget.unitSettings,
-                            decimals: 0,
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: veryCompact ? 8 : 14),
-                      Expanded(
-                        flex: compact ? 1 : 0,
-                        child: _ForecastValue(
-                          icon: Icons.water_drop_outlined,
-                          label: 'Regen',
-                          value: '${day.precipitationProbability} %',
-                        ),
-                      ),
-                    ],
-                  );
-
-                  if (compact) {
-                    return Column(
-                      children: [
-                        weatherInfo,
-                        SizedBox(height: veryCompact ? 11 : 14),
-                        values,
-                      ],
                     );
-                  }
-
-                  return Row(
-                    children: [
-                      Expanded(child: weatherInfo),
-                      const SizedBox(width: 18),
-                      SizedBox(width: 300, child: values),
-                    ],
-                  );
-                },
-              ),
-            ),
+                  },
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -182,42 +106,205 @@ class _DailyForecastCardState extends State<DailyForecastCard> {
   }
 }
 
-class _ForecastValue extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
+class _DailyForecastTile extends StatelessWidget {
+  final DailyForecast day;
+  final UnitSettings unitSettings;
+  final bool isToday;
+  final bool compact;
 
-  const _ForecastValue({
-    required this.icon,
-    required this.label,
-    required this.value,
+  const _DailyForecastTile({
+    required this.day,
+    required this.unitSettings,
+    required this.isToday,
+    required this.compact,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 15, color: orthaSecondaryText),
-            const SizedBox(width: 5),
-            Text(
-              label,
-              style: const TextStyle(color: orthaSecondaryText, fontSize: 11),
+    return Semantics(
+      label:
+          '${_forecastDayLabel(day.date, isToday: isToday)}, '
+          '${weatherText(day.weatherCode)}, '
+          'Höchsttemperatur '
+          '${formatTemperature(day.temperatureMax, unitSettings, decimals: 0)}, '
+          'Tiefsttemperatur '
+          '${formatTemperature(day.temperatureMin, unitSettings, decimals: 0)}, '
+          '${day.precipitationProbability} Prozent Niederschlagswahrscheinlichkeit',
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: compact ? 9 : 11,
+          vertical: 13,
+        ),
+        decoration: BoxDecoration(
+          color: isToday ? const Color(0xFFFFF8E8) : orthaSurfaceElevated,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: isToday
+                ? orthaAccent.withValues(alpha: 0.48)
+                : orthaBorder.withValues(alpha: 0.88),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.055),
+              blurRadius: 12,
+              offset: const Offset(0, 5),
             ),
           ],
         ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            color: orthaPrimaryText,
-            fontWeight: FontWeight.bold,
-          ),
+        child: Column(
+          children: [
+            Text(
+              isToday ? 'Heute' : _shortWeekday(day.date),
+              maxLines: 1,
+              style: const TextStyle(
+                color: orthaPrimaryText,
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _dayAndMonth(day.date),
+              maxLines: 1,
+              style: const TextStyle(
+                color: orthaSecondaryText,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 12),
+            OrthaWeatherIcon(
+              weatherCode: day.weatherCode,
+              size: compact ? 43 : 49,
+              semanticLabel: weatherText(day.weatherCode),
+            ),
+            const Spacer(),
+            Text(
+              formatTemperature(day.temperatureMax, unitSettings, decimals: 0),
+              style: const TextStyle(
+                color: Color(0xFFD84B45),
+                fontSize: 23,
+                height: 1,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 7),
+            Text(
+              formatTemperature(day.temperatureMin, unitSettings, decimals: 0),
+              style: const TextStyle(
+                color: Color(0xFF327CC1),
+                fontSize: 19,
+                height: 1,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const Spacer(),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.water_drop_outlined,
+                  size: 16,
+                  color: orthaSecondaryText,
+                ),
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    '${day.precipitationProbability} %',
+                    maxLines: 1,
+                    overflow: TextOverflow.fade,
+                    softWrap: false,
+                    style: const TextStyle(
+                      color: orthaSecondaryText,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
+}
+
+bool _isToday(String value) {
+  final date = DateTime.tryParse(value);
+
+  if (date == null) {
+    return false;
+  }
+
+  final now = DateTime.now();
+
+  return date.year == now.year &&
+      date.month == now.month &&
+      date.day == now.day;
+}
+
+String _forecastDayLabel(String value, {required bool isToday}) {
+  if (isToday) {
+    return 'Heute, ${_dayAndMonth(value)}';
+  }
+
+  return '${_longWeekday(value)}, ${_dayAndMonth(value)}';
+}
+
+String _shortWeekday(String value) {
+  final date = DateTime.tryParse(value);
+
+  if (date == null) {
+    return shortDate(value);
+  }
+
+  const weekdays = <String>['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+
+  return weekdays[date.weekday - 1];
+}
+
+String _longWeekday(String value) {
+  final date = DateTime.tryParse(value);
+
+  if (date == null) {
+    return shortDate(value);
+  }
+
+  const weekdays = <String>[
+    'Montag',
+    'Dienstag',
+    'Mittwoch',
+    'Donnerstag',
+    'Freitag',
+    'Samstag',
+    'Sonntag',
+  ];
+
+  return weekdays[date.weekday - 1];
+}
+
+String _dayAndMonth(String value) {
+  final date = DateTime.tryParse(value);
+
+  if (date == null) {
+    return shortDate(value);
+  }
+
+  const months = <String>[
+    'Januar',
+    'Februar',
+    'März',
+    'April',
+    'Mai',
+    'Juni',
+    'Juli',
+    'August',
+    'September',
+    'Oktober',
+    'November',
+    'Dezember',
+  ];
+
+  return '${date.day}. ${months[date.month - 1]}';
 }

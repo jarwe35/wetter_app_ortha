@@ -347,19 +347,31 @@ class _OrthaRadarMapState extends State<OrthaRadarMap> {
                         IconButton(
                           tooltip: 'Hineinzoomen',
                           onPressed: _zoomIn,
-                          icon: const Icon(Icons.add),
+                          icon: const Icon(
+                            Icons.add,
+                            color: Colors.white,
+                            size: 30,
+                          ),
                         ),
                         Container(width: 34, height: 1, color: Colors.white24),
                         IconButton(
                           tooltip: 'Herauszoomen',
                           onPressed: _zoomOut,
-                          icon: const Icon(Icons.remove),
+                          icon: const Icon(
+                            Icons.remove,
+                            color: Colors.white,
+                            size: 30,
+                          ),
                         ),
                         Container(width: 34, height: 1, color: Colors.white24),
                         IconButton(
                           tooltip: 'Ort zentrieren',
                           onPressed: _centerOnLocation,
-                          icon: const Icon(Icons.my_location_outlined),
+                          icon: const Icon(
+                            Icons.my_location_outlined,
+                            color: Colors.white,
+                            size: 28,
+                          ),
                         ),
                       ],
                     ),
