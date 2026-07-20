@@ -32,7 +32,6 @@ import 'services/warning_providers/dwd_cap_download_client.dart';
 import 'services/warning_providers/dwd_warning_provider.dart';
 import 'services/weather_service.dart';
 
-import 'widgets/dashboard/ortha_status_card.dart';
 import 'widgets/ortha_ui/ortha_section_header.dart';
 import 'widgets/ortha_ui/ortha_responsive.dart';
 import 'widgets/ortha_ui/ortha_responsive_page.dart';
@@ -47,7 +46,6 @@ import 'settings/unit_settings.dart';
 import 'settings/unit_settings_page.dart';
 import 'settings/unit_settings_service.dart';
 import 'utils/official_warning_text_formatter.dart';
-import 'utils/ortha_status_builder.dart';
 
 part 'widgets/weather/daily_forecast_card.dart';
 part 'widgets/weather/hourly_forecast_card.dart';
@@ -786,14 +784,6 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
     final risk = riskResult;
     final ui = OrthaResponsive.of(context);
 
-    final status = risk == null
-        ? null
-        : const OrthaStatusBuilder().build(
-            risk: risk,
-            warnings: officialWarnings,
-            location: selectedPlace,
-          );
-
     return Scaffold(
       drawer: OrthaNavigationDrawer(onSelect: handleNavigationSelection),
       body: OrthaResponsivePage(
@@ -1346,7 +1336,6 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                         else if (errorMessage != null)
                           CardBox(child: Text(errorMessage!))
                         else if (data != null && risk != null) ...[
-                          if (status != null) OrthaStatusCard(status: status),
                           const SizedBox(height: 24),
                           OrthaSectionHeader(
                             icon: Icons.cloud_outlined,
