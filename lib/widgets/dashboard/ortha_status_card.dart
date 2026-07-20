@@ -58,11 +58,21 @@ class OrthaStatusCard extends StatelessWidget {
             style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 18),
-          _InfoRow(label: 'Risiko', value: status.riskText),
-          const SizedBox(height: 8),
-          _InfoRow(label: 'Warnungen', value: status.warningText),
-          const SizedBox(height: 8),
+          _InfoRow(label: 'ORTHA-Bewertung', value: status.riskText),
+          const SizedBox(height: 10),
+          _InfoRow(label: 'Amtliche Warnungen', value: status.warningText),
+          const SizedBox(height: 10),
           _InfoRow(label: 'Ort', value: status.location),
+          const SizedBox(height: 18),
+          const Text(
+            'Kurzbewertung',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            status.recommendation,
+            style: const TextStyle(fontSize: 15, height: 1.4),
+          ),
         ],
       ),
     );
@@ -78,14 +88,16 @@ class _InfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(
-          width: 100,
+          width: 148,
           child: Text(
             label,
             style: const TextStyle(fontWeight: FontWeight.w600),
           ),
         ),
+        const SizedBox(width: 8),
         Expanded(child: Text(value)),
       ],
     );

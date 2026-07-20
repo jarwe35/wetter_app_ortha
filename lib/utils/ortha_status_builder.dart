@@ -12,59 +12,74 @@ class OrthaStatusBuilder {
   }) {
     final warningActive = warnings.any((warning) => warning.isActive);
 
-    final warningText = warningActive
-        ? 'Amtliche Warnung aktiv'
-        : 'Keine amtliche Warnung';
+    final warningText = warningActive ? 'Aktiv' : 'Keine';
 
     switch (risk.level) {
       case RiskLevel.red:
         return OrthaStatusModel(
           level: OrthaStatusLevel.red,
-          title: 'Akute Wettergefahr',
-          statusText: 'Handlung empfohlen',
+          title: 'Aktuelle Lage',
+          statusText: 'Akute Warnlage',
           riskText: risk.message,
           warningText: warningText,
           location: location,
           recommendation:
-              'Sicherheitsmaßnahmen prüfen und Warnhinweise beachten.',
+              'Es besteht eine ernst zu nehmende Wetterlage. '
+              'Amtliche Warnhinweise beachten und geeignete '
+              'Sicherheitsmaßnahmen ergreifen.',
           timestamp: DateTime.now(),
         );
 
       case RiskLevel.orange:
         return OrthaStatusModel(
           level: OrthaStatusLevel.orange,
-          title: 'Erhöhte Wetterlage',
-          statusText: 'Aufmerksamkeit empfohlen',
+          title: 'Aktuelle Lage',
+          statusText: warningActive
+              ? 'Amtliche Warnlage'
+              : 'Erhöhte Wetterlage',
           riskText: risk.message,
           warningText: warningText,
           location: location,
           recommendation:
-              'Aktuelle Entwicklung beobachten und Aktivitäten anpassen.',
+              'Die Wetterlage weist deutliche Auffälligkeiten auf. '
+              'Die weitere Entwicklung sollte aufmerksam verfolgt werden.',
           timestamp: DateTime.now(),
         );
 
       case RiskLevel.yellow:
         return OrthaStatusModel(
           level: OrthaStatusLevel.yellow,
-          title: 'Veränderte Wetterlage',
-          statusText: 'Beobachtung empfohlen',
+          title: 'Aktuelle Lage',
+          statusText: warningActive
+              ? 'Amtliche Warnlage'
+              : 'Normale Wetterlage',
           riskText: risk.message,
           warningText: warningText,
           location: location,
-          recommendation:
-              'Wetterentwicklung verfolgen und vorbereitet bleiben.',
+          recommendation: warningActive
+              ? 'Es liegt mindestens eine amtliche Warnung vor. '
+                    'Die zugehörigen Hinweise sollten beachtet werden.'
+              : 'Zurzeit liegen keine amtlichen Wetterwarnungen vor. '
+                    'ORTHA erkennt einzelne Wetterfaktoren und überwacht '
+                    'deren weitere Entwicklung.',
           timestamp: DateTime.now(),
         );
 
       case RiskLevel.green:
         return OrthaStatusModel(
           level: OrthaStatusLevel.green,
-          title: 'Lage stabil',
-          statusText: 'Keine besonderen Maßnahmen nötig',
+          title: 'Aktuelle Lage',
+          statusText: warningActive
+              ? 'Amtliche Warnlage'
+              : 'Normale Wetterlage',
           riskText: risk.message,
           warningText: warningText,
           location: location,
-          recommendation: 'Keine besonderen Maßnahmen erforderlich.',
+          recommendation: warningActive
+              ? 'Es liegt mindestens eine amtliche Warnung vor. '
+                    'Die zugehörigen Hinweise sollten beachtet werden.'
+              : 'Es bestehen derzeit keine besonderen Wetterrisiken. '
+                    'Die Wetterlage wird weiterhin automatisch überwacht.',
           timestamp: DateTime.now(),
         );
     }
