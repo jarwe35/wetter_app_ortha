@@ -18,6 +18,9 @@ class LocationsPage extends StatefulWidget {
   final ValueChanged<SavedLocation> onDelete;
   final ValueChanged<List<SavedLocation>> onReorder;
   final void Function(SavedLocation location, String newName) onRename;
+  final bool isUsingCurrentLocation;
+  final bool isCurrentLocationLoading;
+  final Future<void> Function() onUseCurrentLocation;
 
   const LocationsPage({
     super.key,
@@ -27,6 +30,9 @@ class LocationsPage extends StatefulWidget {
     required this.onDelete,
     required this.onReorder,
     required this.onRename,
+    required this.isUsingCurrentLocation,
+    required this.isCurrentLocationLoading,
+    required this.onUseCurrentLocation,
   });
 
   @override
@@ -248,6 +254,126 @@ class _LocationsPageState extends State<LocationsPage> {
                     ),
                   ],
                 ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(22, 0, 22, 18),
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: widget.isUsingCurrentLocation
+                      ? _orthaAccent.withValues(alpha: 0.10)
+                      : _orthaSurface,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: widget.isUsingCurrentLocation
+                        ? _orthaAccent.withValues(alpha: 0.58)
+                        : _orthaBorder.withValues(alpha: 0.82),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.18),
+                      blurRadius: 14,
+                      offset: const Offset(0, 7),
+                    ),
+                  ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(18),
+                  clipBehavior: Clip.antiAlias,
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                    leading: Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: widget.isUsingCurrentLocation
+                            ? _orthaAccent.withValues(alpha: 0.16)
+                            : _orthaSurfaceElevated,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: widget.isUsingCurrentLocation
+                              ? _orthaAccent.withValues(alpha: 0.55)
+                              : _orthaBorder.withValues(alpha: 0.72),
+                        ),
+                      ),
+                      child: widget.isCurrentLocationLoading
+                          ? const Padding(
+                              padding: EdgeInsets.all(12),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.4,
+                                color: _orthaAccent,
+                              ),
+                            )
+                          : Icon(
+                              widget.isUsingCurrentLocation
+                                  ? Icons.my_location
+                                  : Icons.my_location_outlined,
+                              color: widget.isUsingCurrentLocation
+                                  ? _orthaAccent
+                                  : _orthaSecondaryText,
+                            ),
+                    ),
+                    title: const Text(
+                      'Mein Standort',
+                      style: TextStyle(
+                        color: _orthaPrimaryText,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        widget.isCurrentLocationLoading
+                            ? 'Standort wird bestimmt …'
+                            : widget.isUsingCurrentLocation
+                            ? 'Aktueller GPS-Standort'
+                            : 'Wetter und Warnungen am Aufenthaltsort',
+                        style: const TextStyle(color: _orthaSecondaryText),
+                      ),
+                    ),
+                    trailing: widget.isCurrentLocationLoading
+                        ? null
+                        : Icon(
+                            widget.isUsingCurrentLocation
+                                ? Icons.check_circle
+                                : Icons.chevron_right,
+                            color: widget.isUsingCurrentLocation
+                                ? _orthaAccent
+                                : _orthaSecondaryText,
+                          ),
+                    onTap: widget.isCurrentLocationLoading
+                        ? null
+                        : () async {
+                            await widget.onUseCurrentLocation();
+
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                            }
+                          },
+                  ),
+                ),
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(22, 0, 22, 10),
+              child: Row(
+                children: [
+                  Icon(Icons.star_outline, color: _orthaAccent, size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    'Gespeicherte Orte',
+                    style: TextStyle(
+                      color: _orthaPrimaryText,
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
             ),
             Expanded(

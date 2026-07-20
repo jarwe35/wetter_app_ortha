@@ -1,204 +1,245 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
-const Color _orthaSurface = Color(0xFFFFFFFF);
-const Color _orthaPrimaryText = Color(0xFF17324D);
-const Color _orthaSecondaryText = Color(0xFF607D8B);
-const Color _orthaAccent = Color(0xFFD5A84A);
-const Color _orthaBorder = Color(0xFFD6E2EA);
-
-class SatellitePage extends StatelessWidget {
+class SatellitePage extends StatefulWidget {
   final String place;
-  final num? cloudCover;
-  final bool isLoading;
-  final String? errorMessage;
-  final VoidCallback onRefresh;
+  final double? latitude;
+  final double? longitude;
+  final Future<void> Function()? onRefresh;
 
   const SatellitePage({
     super.key,
     required this.place,
-    required this.cloudCover,
-    required this.isLoading,
-    required this.errorMessage,
-    required this.onRefresh,
+    required this.latitude,
+    required this.longitude,
+    this.onRefresh,
   });
 
   @override
+  State<SatellitePage> createState() => _SatellitePageState();
+}
+
+class _SatellitePageState extends State<SatellitePage> {
+  static const String _satelliteUrl =
+      'https://server.arcgisonline.com/ArcGIS/rest/services/'
+      'World_Imagery/MapServer/tile/{z}/{y}/{x}';
+
+  final MapController _mapController = MapController();
+
+  bool _isRefreshing = false;
+
+  LatLng get _center {
+    final latitude = widget.latitude;
+    final longitude = widget.longitude;
+
+    if (latitude == null || longitude == null) {
+      return const LatLng(51.2277, 6.7735);
+    }
+
+    return LatLng(latitude, longitude);
+  }
+
+  Future<void> _refresh() async {
+    if (_isRefreshing) return;
+
+    setState(() {
+      _isRefreshing = true;
+    });
+
+    try {
+      await widget.onRefresh?.call();
+
+      if (!mounted) return;
+
+      _mapController.move(_center, _mapController.camera.zoom);
+
+      setState(() {});
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isRefreshing = false;
+        });
+      }
+    }
+  }
+
+  void _zoomIn() {
+    final camera = _mapController.camera;
+    _mapController.move(camera.center, camera.zoom + 1);
+  }
+
+  void _zoomOut() {
+    final camera = _mapController.camera;
+    _mapController.move(camera.center, camera.zoom - 1);
+  }
+
+  void _centerOnLocation() {
+    _mapController.move(_center, 10);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return ListView(
-      children: [
-        _SectionHeader(
-          icon: Icons.satellite_alt_outlined,
-          title: 'ORTHA Satellit',
-          subtitle: 'Satelliten- und Wolkenlage für $place',
-        ),
-        Align(
-          alignment: Alignment.centerRight,
-          child: IconButton(
+    final hasCoordinates = widget.latitude != null && widget.longitude != null;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Satellitenansicht'),
+        actions: [
+          IconButton(
             tooltip: 'Satellitendaten aktualisieren',
-            onPressed: onRefresh,
-            icon: const Icon(Icons.refresh),
-          ),
-        ),
-        const SizedBox(height: 18),
-        _CardBox(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Row(
-                children: [
-                  Icon(Icons.cloud_outlined, color: _orthaAccent),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Satellitenansicht',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Die Satellitenkarte wird in einem der nächsten '
-                'Entwicklungsschritte angebunden. Bereits verfügbar '
-                'ist die aktuelle Bewölkung für den ausgewählten Ort.',
-                style: TextStyle(color: _orthaSecondaryText, height: 1.45),
-              ),
-              const SizedBox(height: 18),
-              if (isLoading)
-                const Center(child: CircularProgressIndicator())
-              else if (errorMessage != null)
-                Text(
-                  errorMessage!,
-                  style: const TextStyle(color: _orthaPrimaryText),
-                )
-              else if (cloudCover != null)
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.filter_drama_outlined,
-                      color: _orthaAccent,
-                      size: 32,
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Aktuelle Bewölkung',
-                            style: TextStyle(
-                              color: _orthaSecondaryText,
-                              fontSize: 13,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${cloudCover!.round()} %',
-                            style: const TextStyle(
-                              fontSize: 26,
-                              fontWeight: FontWeight.bold,
-                              color: _orthaPrimaryText,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                )
-              else
-                const Text(
-                  'Noch keine Wetterdaten verfügbar.',
-                  style: TextStyle(color: _orthaSecondaryText),
-                ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 30),
-      ],
-    );
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-
-  const _SectionHeader({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: _orthaSurface,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: _orthaBorder),
-          ),
-          child: Icon(icon, color: _orthaAccent, size: 28),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  color: _orthaPrimaryText,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: const TextStyle(
-                  color: _orthaSecondaryText,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _CardBox extends StatelessWidget {
-  final Widget child;
-
-  const _CardBox({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: _orthaSurface,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: _orthaBorder),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
+            onPressed: _isRefreshing ? null : _refresh,
+            icon: _isRefreshing
+                ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2.3),
+                  )
+                : const Icon(Icons.refresh),
           ),
         ],
       ),
-      child: child,
+      body: Stack(
+        children: [
+          FlutterMap(
+            mapController: _mapController,
+            options: MapOptions(
+              initialCenter: _center,
+              initialZoom: hasCoordinates ? 10 : 6,
+              minZoom: 2,
+              maxZoom: 18,
+              interactionOptions: const InteractionOptions(
+                flags: InteractiveFlag.all,
+              ),
+            ),
+            children: [
+              TileLayer(
+                urlTemplate: _satelliteUrl,
+                userAgentPackageName: 'com.example.wetter_app_ortha',
+                maxZoom: 18,
+                tileDisplay: const TileDisplay.fadeIn(),
+              ),
+              if (hasCoordinates)
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: _center,
+                      width: 58,
+                      height: 58,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withValues(alpha: 0.20),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2.5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.35),
+                              blurRadius: 10,
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.my_location,
+                          color: Colors.white,
+                          size: 30,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              RichAttributionWidget(
+                attributions: const [
+                  TextSourceAttribution('Esri, Maxar, Earthstar Geographics'),
+                ],
+              ),
+            ],
+          ),
+          Positioned(
+            top: 16,
+            left: 16,
+            right: 16,
+            child: SafeArea(
+              bottom: false,
+              child: Card(
+                color: Colors.black.withValues(alpha: 0.70),
+                elevation: 8,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.satellite_alt_outlined,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              widget.place,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              hasCoordinates
+                                  ? 'Satellitenbild am ausgewählten Standort'
+                                  : 'Keine Standortkoordinaten verfügbar',
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.78),
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            right: 16,
+            bottom: 28,
+            child: SafeArea(
+              top: false,
+              child: Column(
+                children: [
+                  FloatingActionButton.small(
+                    heroTag: 'satellite_zoom_in',
+                    tooltip: 'Vergrößern',
+                    onPressed: _zoomIn,
+                    child: const Icon(Icons.add),
+                  ),
+                  const SizedBox(height: 10),
+                  FloatingActionButton.small(
+                    heroTag: 'satellite_zoom_out',
+                    tooltip: 'Verkleinern',
+                    onPressed: _zoomOut,
+                    child: const Icon(Icons.remove),
+                  ),
+                  const SizedBox(height: 10),
+                  FloatingActionButton.small(
+                    heroTag: 'satellite_center',
+                    tooltip: 'Standort zentrieren',
+                    onPressed: _centerOnLocation,
+                    child: const Icon(Icons.my_location),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

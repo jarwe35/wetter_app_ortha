@@ -66,5 +66,7 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>ORTHA METEO benötigt Deinen Standort, um Wetterdaten, Warnungen und Risiken für Deinen aktuellen Aufenthaltsort bereitzustellen.</string>
 </dict>
 </plist>

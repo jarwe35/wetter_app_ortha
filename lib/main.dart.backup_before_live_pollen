@@ -1311,8 +1311,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                   : selectedNavigationIndex == 5
                   ? PollenPage(
                       place: selectedPlace,
-                      latitude: selectedLocation?.latitude,
-                      longitude: selectedLocation?.longitude,
+                      onRefresh: () => loadWeather(selectedPlace),
                     )
                   : selectedNavigationIndex == 6
                   ? ListView(
