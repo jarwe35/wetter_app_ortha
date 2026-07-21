@@ -3,14 +3,17 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../models/satellite_layer.dart';
+import '../models/official_weather_warning.dart';
 import '../services/satellite/esri_satellite_source.dart';
 import '../services/satellite/satellite_controller.dart';
 import '../services/satellite/satellite_layer_registry.dart';
+import '../widgets/warnings/official_warning_polygon_overlay.dart';
 
 class SatellitePage extends StatefulWidget {
   final String place;
   final double? latitude;
   final double? longitude;
+  final List<OfficialWeatherWarning> warnings;
   final Future<void> Function()? onRefresh;
 
   const SatellitePage({
@@ -18,6 +21,7 @@ class SatellitePage extends StatefulWidget {
     required this.place,
     required this.latitude,
     required this.longitude,
+    this.warnings = const [],
     this.onRefresh,
   });
 
@@ -51,7 +55,7 @@ class _SatellitePageState extends State<SatellitePage> {
 
     try {
       final states = await _satelliteController.loadLayer(
-        layerId: _selectedLayerId,
+        layerId: SatelliteLayerRegistry.esriWorldImagery.id,
         latitude: widget.latitude ?? 51.2277,
         longitude: widget.longitude ?? 6.7735,
       );
@@ -88,8 +92,6 @@ class _SatellitePageState extends State<SatellitePage> {
     setState(() {
       _selectedLayerId = layerId;
     });
-
-    await _loadBaseLayer();
   }
 
   Future<void> _showLayerSelection() async {
@@ -115,7 +117,14 @@ class _SatellitePageState extends State<SatellitePage> {
                   selected: definition.id == _selectedLayerId,
                   available:
                       definition.id ==
-                      SatelliteLayerRegistry.esriWorldImagery.id,
+                          SatelliteLayerRegistry.esriWorldImagery.id ||
+                      (definition.id ==
+                              SatelliteLayerRegistry.officialWarnings.id &&
+                          widget.warnings.any(
+                            (warning) =>
+                                warning.geometry != null &&
+                                !warning.geometry!.isEmpty,
+                          )),
                   onSelected: () {
                     Navigator.of(context).pop(definition.id);
                   },
@@ -187,7 +196,18 @@ class _SatellitePageState extends State<SatellitePage> {
         SatelliteLayerRegistry.esriWorldImagery;
     final baseLayerAvailable =
         _baseLayerState?.availability == SatelliteLayerAvailability.available;
-    final layerStatusText = _isLoadingBaseLayer
+    final warningOverlaySelected =
+        _selectedLayerId == SatelliteLayerRegistry.officialWarnings.id;
+    final warningGeometryCount = widget.warnings
+        .where(
+          (warning) => warning.geometry != null && !warning.geometry!.isEmpty,
+        )
+        .length;
+    final layerStatusText = warningOverlaySelected
+        ? warningGeometryCount == 0
+              ? 'Keine Warngebiete verfügbar'
+              : '$warningGeometryCount Warngebiet(e) aktiv'
+        : _isLoadingBaseLayer
         ? 'Wird geladen'
         : _baseLayerError != null
         ? 'Fehler'
@@ -236,6 +256,8 @@ class _SatellitePageState extends State<SatellitePage> {
                   maxZoom: 18,
                   tileDisplay: const TileDisplay.fadeIn(),
                 ),
+              if (warningOverlaySelected)
+                OfficialWarningPolygonOverlay(warnings: widget.warnings),
               if (hasCoordinates)
                 MarkerLayer(
                   markers: [

@@ -1303,6 +1303,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                       place: selectedPlace,
                       latitude: selectedLocation?.latitude,
                       longitude: selectedLocation?.longitude,
+                      warnings: officialWarnings,
                       onRefresh: () => loadWeather(
                         selectedPlace,
                         locationOverride: selectedLocation,
