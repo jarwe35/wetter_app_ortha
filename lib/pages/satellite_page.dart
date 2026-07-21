@@ -29,7 +29,9 @@ class _SatellitePageState extends State<SatellitePage> {
   final SatelliteController _satelliteController = SatelliteController();
 
   SatelliteLayerState? _baseLayerState;
+  bool _isLoadingBaseLayer = true;
   bool _isRefreshing = false;
+  String? _baseLayerError;
 
   @override
   void initState() {
@@ -38,16 +40,43 @@ class _SatellitePageState extends State<SatellitePage> {
   }
 
   Future<void> _loadBaseLayer() async {
-    final states = await _satelliteController.loadDefault(
-      latitude: widget.latitude ?? 51.2277,
-      longitude: widget.longitude ?? 6.7735,
-    );
+    if (mounted) {
+      setState(() {
+        _isLoadingBaseLayer = true;
+        _baseLayerError = null;
+      });
+    }
 
-    if (!mounted) return;
+    try {
+      final states = await _satelliteController.loadDefault(
+        latitude: widget.latitude ?? 51.2277,
+        longitude: widget.longitude ?? 6.7735,
+      );
 
-    setState(() {
-      _baseLayerState = states.isEmpty ? null : states.first;
-    });
+      if (!mounted) return;
+
+      setState(() {
+        _baseLayerState = states.isEmpty ? null : states.first;
+
+        if (states.isEmpty) {
+          _baseLayerError =
+              'Die Satelliten-Basiskarte ist derzeit nicht verfügbar.';
+        }
+      });
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _baseLayerState = null;
+        _baseLayerError = 'Die Satellitendaten konnten nicht geladen werden.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingBaseLayer = false;
+        });
+      }
+    }
   }
 
   LatLng get _center {
@@ -230,6 +259,79 @@ class _SatellitePageState extends State<SatellitePage> {
               ),
             ),
           ),
+          if (_isLoadingBaseLayer)
+            const Positioned.fill(
+              child: IgnorePointer(
+                child: ColoredBox(
+                  color: Color(0x33000000),
+                  child: Center(
+                    child: Card(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 22,
+                          vertical: 18,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.4,
+                              ),
+                            ),
+                            SizedBox(width: 14),
+                            Text('Satellitenbild wird geladen …'),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          if (!_isLoadingBaseLayer && _baseLayerError != null)
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 28,
+              child: SafeArea(
+                top: false,
+                child: Card(
+                  color: Theme.of(context).colorScheme.errorContainer,
+                  elevation: 8,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.cloud_off_outlined,
+                          color: Theme.of(context).colorScheme.onErrorContainer,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            _baseLayerError!,
+                            style: TextStyle(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onErrorContainer,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'Erneut versuchen',
+                          onPressed: _loadBaseLayer,
+                          icon: const Icon(Icons.refresh),
+                          color: Theme.of(context).colorScheme.onErrorContainer,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
           Positioned(
             right: 16,
             bottom: 28,
