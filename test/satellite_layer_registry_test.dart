@@ -20,6 +20,17 @@ void main() {
       expect(result.sourceName, 'Esri World Imagery');
     });
 
+    test('findet den RainViewer-Radar-Layer', () {
+      final result = SatelliteLayerRegistry.findById('rainviewer-radar');
+
+      expect(result, isNotNull);
+      expect(result!.type, SatelliteLayerType.radar);
+      expect(result.sourceName, 'RainViewer');
+      expect(result.dataFormat, SatelliteLayerDataFormat.tile);
+      expect(result.requiresLegend, isTrue);
+      expect(result.requiresTimestamp, isTrue);
+    });
+
     test('liefert null bei unbekannter ID', () {
       final result = SatelliteLayerRegistry.findById('unknown-layer');
 

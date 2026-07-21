@@ -14,6 +14,22 @@ void main() {
       expect(source!.name, 'Esri World Imagery');
     });
 
+    test('findet die RainViewer-Quelle', () {
+      final source = SatelliteSourceRegistry.findById('rainviewer');
+
+      expect(source, isNotNull);
+      expect(source!.name, 'RainViewer');
+    });
+
+    test('liefert den Provider für den Radar-Layer', () {
+      final providers = SatelliteSourceRegistry.findSupportingLayer(
+        'rainviewer-radar',
+      );
+
+      expect(providers, hasLength(1));
+      expect(providers.single.id, 'rainviewer');
+    });
+
     test('liefert den Provider für den Basislayer', () {
       final providers = SatelliteSourceRegistry.findSupportingLayer(
         'esri-world-imagery',

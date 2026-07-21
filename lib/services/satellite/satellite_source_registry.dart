@@ -1,8 +1,12 @@
 import 'esri_satellite_source.dart';
+import 'rainviewer_satellite_source.dart';
 import 'satellite_source.dart';
 
 abstract final class SatelliteSourceRegistry {
-  static final List<SatelliteSource> sources = [EsriSatelliteSource()];
+  static final List<SatelliteSource> sources = [
+    EsriSatelliteSource(),
+    RainViewerSatelliteSource(),
+  ];
 
   static SatelliteSource? findById(String id) {
     for (final source in sources) {

@@ -71,6 +71,19 @@ abstract final class SatelliteLayerRegistry {
         dataFormat: SatelliteLayerDataFormat.image,
       );
 
+  static const SatelliteLayerDefinition rainViewerRadar =
+      SatelliteLayerDefinition(
+        id: 'rainviewer-radar',
+        type: SatelliteLayerType.radar,
+        name: 'Niederschlagsradar',
+        description:
+            'Aktuelle Niederschlagsradarbilder als transparente Kartenebene.',
+        sourceName: 'RainViewer',
+        dataFormat: SatelliteLayerDataFormat.tile,
+        requiresLegend: true,
+        requiresTimestamp: true,
+      );
+
   static const SatelliteLayerDefinition officialWarnings =
       SatelliteLayerDefinition(
         id: 'official-warnings',
@@ -101,6 +114,7 @@ abstract final class SatelliteLayerRegistry {
     eumetsatInfrared,
     eumetsatWaterVapor,
     copernicusVisible,
+    rainViewerRadar,
     officialWarnings,
     orthaRisk,
   ];
