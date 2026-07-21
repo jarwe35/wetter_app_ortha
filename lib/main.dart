@@ -36,6 +36,7 @@ import 'services/weather_service.dart';
 
 import 'widgets/dashboard/ortha_dashboard_header.dart';
 import 'widgets/dashboard/official_warning_header.dart';
+import 'widgets/dashboard/official_warning_summary.dart';
 import 'widgets/dashboard/place_selector.dart';
 import 'widgets/ortha_ui/ortha_section_header.dart';
 import 'widgets/ortha_ui/ortha_responsive.dart';
@@ -1826,47 +1827,7 @@ class OfficialWeatherWarningsCard extends StatelessWidget {
                     ],
                     if (descriptionSummary.isNotEmpty) ...[
                       const SizedBox(height: 14),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: orthaSurfaceElevated,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: orthaBorder.withValues(alpha: 0.72),
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Row(
-                              children: [
-                                Icon(
-                                  Icons.summarize_outlined,
-                                  size: 18,
-                                  color: orthaAccent,
-                                ),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Kurzinfo',
-                                  style: TextStyle(
-                                    color: orthaAccent,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
-                            Text(
-                              descriptionSummary,
-                              style: const TextStyle(
-                                color: orthaPrimaryText,
-                                height: 1.4,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      OfficialWarningSummary(summary: descriptionSummary),
                     ],
                     if (hasExtendedDescription) ...[
                       const SizedBox(height: 10),
