@@ -34,6 +34,7 @@ import 'services/warning_providers/dwd_cap_download_client.dart';
 import 'services/warning_providers/dwd_warning_provider.dart';
 import 'services/weather_service.dart';
 
+import 'widgets/dashboard/ortha_dashboard_header.dart';
 import 'widgets/ortha_ui/ortha_section_header.dart';
 import 'widgets/ortha_ui/ortha_responsive.dart';
 import 'widgets/ortha_ui/ortha_responsive_page.dart';
@@ -973,103 +974,9 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(ui.cardPadding),
-              decoration: BoxDecoration(
-                color: orthaSurface,
-                borderRadius: BorderRadius.circular(ui.cardRadius),
-                border: Border.all(color: orthaBorder.withValues(alpha: 0.85)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.22),
-                    blurRadius: 24,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: ui.sectionIconSize,
-                        height: ui.sectionIconSize,
-                        decoration: BoxDecoration(
-                          color: orthaAccent.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(
-                            ui.cardRadius * 0.6,
-                          ),
-                          border: Border.all(
-                            color: orthaAccent.withValues(alpha: 0.35),
-                          ),
-                        ),
-                        child: Icon(
-                          Icons.cloud_outlined,
-                          color: orthaAccent,
-                          size: ui.iconSize,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'ORTHA METEO Ω',
-                              style: TextStyle(
-                                fontSize: 21,
-                                fontWeight: FontWeight.bold,
-                                color: orthaPrimaryText,
-                              ),
-                            ),
-                            Text(
-                              'Wetter · Warnungen · Risiko',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: orthaSecondaryText,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        tooltip: 'Einheiten',
-                        onPressed: openUnitSettings,
-                        icon: const Icon(Icons.straighten_outlined),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    onPressed: () async {
-                      await Navigator.push<void>(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => LocationsPage(
-                            locations: savedLocations,
-                            selectedLocation: selectedLocation,
-                            onSelect: _selectSavedLocation,
-                            onDelete: deleteSavedLocation,
-                            onReorder: _reorderSavedLocationss,
-                            onRename: _renameSavedLocation,
-                            isUsingCurrentLocation: isUsingCurrentLocation,
-                            isCurrentLocationLoading: isCurrentLocationLoading,
-                            onUseCurrentLocation: useCurrentLocation,
-                          ),
-                        ),
-                      );
-
-                      if (mounted) {
-                        setState(() {});
-                      }
-                    },
-                    icon: const Icon(Icons.location_city_outlined),
-                    label: const Text('Meine Orte'),
-                  ),
-                ],
-              ),
+            OrthaDashboardHeader(
+              onOpenLocations: openLocationsPage,
+              onOpenUnitSettings: openUnitSettings,
             ),
             SizedBox(height: ui.cardSpacing),
             PlaceSelector(
