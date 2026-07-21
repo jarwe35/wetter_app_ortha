@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../models/satellite_layer.dart';
+import '../services/satellite/esri_satellite_source.dart';
+import '../services/satellite/satellite_controller.dart';
+
 class SatellitePage extends StatefulWidget {
   final String place;
   final double? latitude;
@@ -21,13 +25,30 @@ class SatellitePage extends StatefulWidget {
 }
 
 class _SatellitePageState extends State<SatellitePage> {
-  static const String _satelliteUrl =
-      'https://server.arcgisonline.com/ArcGIS/rest/services/'
-      'World_Imagery/MapServer/tile/{z}/{y}/{x}';
-
   final MapController _mapController = MapController();
+  final SatelliteController _satelliteController = SatelliteController();
 
+  SatelliteLayerState? _baseLayerState;
   bool _isRefreshing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBaseLayer();
+  }
+
+  Future<void> _loadBaseLayer() async {
+    final states = await _satelliteController.loadDefault(
+      latitude: widget.latitude ?? 51.2277,
+      longitude: widget.longitude ?? 6.7735,
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      _baseLayerState = states.isEmpty ? null : states.first;
+    });
+  }
 
   LatLng get _center {
     final latitude = widget.latitude;
@@ -49,12 +70,11 @@ class _SatellitePageState extends State<SatellitePage> {
 
     try {
       await widget.onRefresh?.call();
+      await _loadBaseLayer();
 
       if (!mounted) return;
 
       _mapController.move(_center, _mapController.camera.zoom);
-
-      setState(() {});
     } finally {
       if (mounted) {
         setState(() {
@@ -81,6 +101,8 @@ class _SatellitePageState extends State<SatellitePage> {
   @override
   Widget build(BuildContext context) {
     final hasCoordinates = widget.latitude != null && widget.longitude != null;
+    final baseLayerAvailable =
+        _baseLayerState?.availability == SatelliteLayerAvailability.available;
 
     return Scaffold(
       appBar: AppBar(
@@ -113,12 +135,13 @@ class _SatellitePageState extends State<SatellitePage> {
               ),
             ),
             children: [
-              TileLayer(
-                urlTemplate: _satelliteUrl,
-                userAgentPackageName: 'com.example.wetter_app_ortha',
-                maxZoom: 18,
-                tileDisplay: const TileDisplay.fadeIn(),
-              ),
+              if (baseLayerAvailable)
+                TileLayer(
+                  urlTemplate: EsriSatelliteSource.worldImageryUrlTemplate,
+                  userAgentPackageName: 'com.example.wetter_app_ortha',
+                  maxZoom: 18,
+                  tileDisplay: const TileDisplay.fadeIn(),
+                ),
               if (hasCoordinates)
                 MarkerLayer(
                   markers: [
