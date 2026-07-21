@@ -182,8 +182,16 @@ class _SatellitePageState extends State<SatellitePage> {
   @override
   Widget build(BuildContext context) {
     final hasCoordinates = widget.latitude != null && widget.longitude != null;
+    final selectedLayer =
+        SatelliteLayerRegistry.findById(_selectedLayerId) ??
+        SatelliteLayerRegistry.esriWorldImagery;
     final baseLayerAvailable =
         _baseLayerState?.availability == SatelliteLayerAvailability.available;
+    final layerStatusText = _isLoadingBaseLayer
+        ? 'Wird geladen'
+        : _baseLayerError != null
+        ? 'Fehler'
+        : _baseLayerState?.statusMessage ?? 'Nicht verfügbar';
 
     return Scaffold(
       appBar: AppBar(
@@ -298,15 +306,37 @@ class _SatellitePageState extends State<SatellitePage> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
+                            const SizedBox(height: 3),
                             Text(
-                              hasCoordinates
-                                  ? 'Satellitenbild am ausgewählten Standort'
-                                  : 'Keine Standortkoordinaten verfügbar',
+                              selectedLayer.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${selectedLayer.sourceName} · $layerStatusText',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.78),
                                 fontSize: 12,
                               ),
                             ),
+                            if (!hasCoordinates) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                'Keine Standortkoordinaten verfügbar',
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.68),
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),
