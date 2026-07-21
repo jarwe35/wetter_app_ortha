@@ -35,6 +35,7 @@ import 'services/warning_providers/dwd_warning_provider.dart';
 import 'services/weather_service.dart';
 
 import 'widgets/dashboard/ortha_dashboard_header.dart';
+import 'widgets/dashboard/official_warning_header.dart';
 import 'widgets/dashboard/place_selector.dart';
 import 'widgets/ortha_ui/ortha_section_header.dart';
 import 'widgets/ortha_ui/ortha_responsive.dart';
@@ -1769,87 +1770,12 @@ class OfficialWeatherWarningsCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 42,
-                          height: 42,
-                          decoration: BoxDecoration(
-                            color: color.withValues(alpha: 0.16),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: color),
-                          ),
-                          child: Icon(
-                            Icons.warning_amber_rounded,
-                            color: color,
-                            size: 30,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 6,
-                                crossAxisAlignment: WrapCrossAlignment.center,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 9,
-                                      vertical: 5,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: orthaSurfaceElevated,
-                                      borderRadius: BorderRadius.circular(999),
-                                      border: Border.all(
-                                        color: color.withValues(alpha: 0.55),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          sourceIcon(warning),
-                                          size: 15,
-                                          color: color,
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          sourceLabel(warning),
-                                          style: TextStyle(
-                                            color: color,
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Text(
-                                    severityText(warning.severity),
-                                    style: TextStyle(
-                                      color: color,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                warning.title,
-                                style: const TextStyle(
-                                  color: orthaPrimaryText,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                    OfficialWarningHeader(
+                      warning: warning,
+                      color: color,
+                      sourceIcon: sourceIcon(warning),
+                      sourceLabel: sourceLabel(warning),
+                      severityLabel: severityText(warning.severity),
                     ),
                     if (warning.areaDescriptions.isNotEmpty) ...[
                       const SizedBox(height: 12),
