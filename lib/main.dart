@@ -18,6 +18,7 @@ import 'models/official_weather_warning.dart';
 
 import 'models/saved_location.dart';
 import 'pages/locations_page.dart';
+import 'pages/radar_page.dart';
 import 'pages/satellite_page.dart';
 import 'pages/pollen_page.dart';
 import 'pages/nova_page.dart';
@@ -1071,143 +1072,14 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                       ],
                     )
                   : selectedNavigationIndex == 3
-                  ? ListView(
-                      children: [
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: orthaSurface,
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(
-                              color: orthaBorder.withValues(alpha: 0.85),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 48,
-                                height: 48,
-                                decoration: BoxDecoration(
-                                  color: orthaAccent.withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(15),
-                                  border: Border.all(
-                                    color: orthaAccent.withValues(alpha: 0.35),
-                                  ),
-                                ),
-                                child: const Icon(
-                                  Icons.radar_outlined,
-                                  color: orthaAccent,
-                                  size: 27,
-                                ),
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'ORTHA Radar',
-                                      style: TextStyle(
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.bold,
-                                        color: orthaPrimaryText,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Radar- und Niederschlagslage für $selectedPlace',
-                                      style: const TextStyle(
-                                        color: orthaSecondaryText,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              IconButton(
-                                tooltip: 'Wetterdaten aktualisieren',
-                                onPressed: () => loadWeather(selectedPlace),
-                                icon: const Icon(Icons.refresh),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                        CardBox(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Row(
-                                children: [
-                                  Icon(
-                                    Icons.layers_outlined,
-                                    color: orthaAccent,
-                                  ),
-                                  SizedBox(width: 10),
-                                  Expanded(
-                                    child: Text(
-                                      'Niederschlagsradar',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 18),
-                              if (selectedLocation == null)
-                                const SizedBox(
-                                  height: 380,
-                                  child: Center(
-                                    child: Text(
-                                      'Für die Radaransicht werden zunächst '
-                                      'Standortdaten geladen.',
-                                    ),
-                                  ),
-                                )
-                              else
-                                OrthaRadarMap(
-                                  key: ValueKey(
-                                    '${selectedLocation!.latitude},'
-                                    '${selectedLocation!.longitude}',
-                                  ),
-                                  latitude: selectedLocation!.latitude,
-                                  longitude: selectedLocation!.longitude,
-                                  place: selectedLocation!.name,
-                                ),
-                              const SizedBox(height: 16),
-                              const Row(
-                                children: [
-                                  Icon(
-                                    Icons.info_outline,
-                                    size: 18,
-                                    color: orthaSecondaryText,
-                                  ),
-                                  SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      'Radarquelle: RainViewer · '
-                                      'Basiskarte: OpenStreetMap',
-                                      style: TextStyle(
-                                        color: orthaSecondaryText,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                        if (data != null)
-                          WeatherDetailsCard(
-                            data: data,
-                            unitSettings: unitSettings,
-                          ),
-                        const SizedBox(height: 30),
-                      ],
+                  ? RadarPage(
+                      place: selectedPlace,
+                      latitude: selectedLocation?.latitude,
+                      longitude: selectedLocation?.longitude,
+                      onRefresh: () => loadWeather(
+                        selectedPlace,
+                        locationOverride: selectedLocation,
+                      ),
                     )
                   : selectedNavigationIndex == 4
                   ? SatellitePage(
