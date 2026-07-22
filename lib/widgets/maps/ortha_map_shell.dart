@@ -98,16 +98,19 @@ class OrthaMapShell extends StatelessWidget {
               ),
             ),
           if (trailingControls != null)
-            Positioned(
-              right: 16,
-              top: 154,
-              bottom: 170,
+            Positioned.fill(
               child: SafeArea(
-                top: false,
-                bottom: false,
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: trailingControls!,
+                top: safeAreaTop,
+                bottom: safeAreaBottom,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 96,
+                  ),
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: trailingControls!,
+                  ),
                 ),
               ),
             ),

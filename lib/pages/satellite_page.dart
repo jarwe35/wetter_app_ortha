@@ -451,7 +451,6 @@ class _SatellitePageState extends State<SatellitePage> {
             : null,
         mapControls: OrthaMapToolbar(
           compact: true,
-          onLayers: _showLayerSelection,
           onZoomIn: _zoomIn,
           onZoomOut: _zoomOut,
           onCenter: _centerOnLocation,
@@ -493,24 +492,24 @@ class _SatellitePageState extends State<SatellitePage> {
                     markers: [
                       Marker(
                         point: _center,
-                        width: 58,
-                        height: 58,
+                        width: 32,
+                        height: 32,
                         child: Container(
                           decoration: BoxDecoration(
                             color: Colors.blue.withValues(alpha: 0.20),
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2.5),
+                            border: Border.all(color: Colors.white, width: 1.5),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withValues(alpha: 0.35),
-                                blurRadius: 10,
+                                blurRadius: 6,
                               ),
                             ],
                           ),
                           child: const Icon(
                             Icons.my_location,
                             color: Colors.white,
-                            size: 30,
+                            size: 17,
                           ),
                         ),
                       ),
