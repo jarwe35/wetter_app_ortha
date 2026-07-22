@@ -11,6 +11,7 @@ import '../services/satellite/esri_satellite_source.dart';
 import '../services/satellite/rainviewer_satellite_source.dart';
 import '../services/satellite/satellite_controller.dart';
 import '../services/satellite/satellite_layer_registry.dart';
+import '../widgets/maps/ortha_map_header.dart';
 import '../widgets/maps/ortha_map_layout.dart';
 import '../widgets/maps/ortha_map_toolbar.dart';
 import '../widgets/warnings/official_warning_polygon_overlay.dart';
@@ -403,96 +404,20 @@ class _SatellitePageState extends State<SatellitePage> {
         : _baseLayerState?.statusMessage ?? 'Nicht verfügbar';
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Satellitenansicht'),
-        actions: [
-          IconButton(
-            tooltip: 'Satelliten-Layer auswählen',
-            onPressed: _showLayerSelection,
-            icon: const Icon(Icons.layers_outlined),
-          ),
-          IconButton(
-            tooltip: 'Satellitendaten aktualisieren',
-            onPressed: _isRefreshing ? null : _refresh,
-            icon: _isRefreshing
-                ? const SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(strokeWidth: 2.3),
-                  )
-                : const Icon(Icons.refresh),
-          ),
-        ],
-      ),
       body: OrthaMapLayout(
         padding: EdgeInsets.zero,
         borderRadius: 0,
         minimumMapHeight: 0,
         maximumContentWidth: double.infinity,
-        header: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-          child: Card(
-            color: Colors.black.withValues(alpha: 0.82),
-            elevation: 6,
-            margin: EdgeInsets.zero,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                children: [
-                  const Icon(Icons.satellite_alt_outlined, color: Colors.white),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          widget.place,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          selectedLayer.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '${selectedLayer.sourceName} · $layerStatusText',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.78),
-                            fontSize: 12,
-                          ),
-                        ),
-                        if (!hasCoordinates) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            'Keine Standortkoordinaten verfügbar',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.68),
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+        header: OrthaMapHeader(
+          place: widget.place,
+          mode: selectedLayer.name,
+          statusText: '${selectedLayer.sourceName} · $layerStatusText',
+          novaStatus: 'Normal',
+          coordinatesAvailable: hasCoordinates,
+          onLayers: _showLayerSelection,
+          onRefresh: _isRefreshing ? null : _refresh,
+          isRefreshing: _isRefreshing,
         ),
         sectionSpacing: 12,
         footer:
