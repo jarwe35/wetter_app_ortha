@@ -37,12 +37,16 @@ class _RadarPageState extends State<RadarPage> {
 
   RainViewerRadarMetadata? _metadata;
   Timer? _animationTimer;
+  Timer? _rateLimitTimer;
 
   int _selectedFrameIndex = 0;
   bool _isAnimating = false;
   bool _isLoading = true;
   bool _isRefreshing = false;
   String? _errorMessage;
+  String? _lastLoggedRadarTileUrl;
+  DateTime? _radarRateLimitedUntil;
+  bool _radarRateLimited = false;
 
   @override
   void initState() {
@@ -76,6 +80,7 @@ class _RadarPageState extends State<RadarPage> {
   @override
   void dispose() {
     _animationTimer?.cancel();
+    _rateLimitTimer?.cancel();
     _mapController.dispose();
     _httpClient.close();
     super.dispose();
@@ -186,6 +191,10 @@ class _RadarPageState extends State<RadarPage> {
   void _toggleAnimation() {
     final metadata = _metadata;
 
+    if (_isRadarRateLimited) {
+      return;
+    }
+
     if (metadata == null || metadata.frames.length < 2) {
       return;
     }
@@ -204,7 +213,7 @@ class _RadarPageState extends State<RadarPage> {
     });
 
     _animationTimer?.cancel();
-    _animationTimer = Timer.periodic(const Duration(milliseconds: 850), (_) {
+    _animationTimer = Timer.periodic(const Duration(milliseconds: 2500), (_) {
       if (!mounted) {
         _animationTimer?.cancel();
         return;
@@ -225,6 +234,62 @@ class _RadarPageState extends State<RadarPage> {
         }
       });
     });
+  }
+
+  bool get _isRadarRateLimited {
+    final limitedUntil = _radarRateLimitedUntil;
+
+    return limitedUntil != null && DateTime.now().isBefore(limitedUntil);
+  }
+
+  void _handleRadarTileError(Object error) {
+    final message = error.toString();
+
+    if (!message.contains('429')) {
+      return;
+    }
+
+    final nextAllowedAttempt = DateTime.now().add(const Duration(seconds: 60));
+
+    if (_radarRateLimitedUntil != null &&
+        _radarRateLimitedUntil!.isAfter(DateTime.now())) {
+      return;
+    }
+
+    _radarRateLimitedUntil = nextAllowedAttempt;
+    _stopAnimation();
+
+    _rateLimitTimer?.cancel();
+    _rateLimitTimer = Timer(const Duration(seconds: 60), () {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _radarRateLimitedUntil = null;
+        _radarRateLimited = false;
+      });
+    });
+
+    if (!mounted) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _radarRateLimited = true;
+      });
+    });
+
+    debugPrint('');
+    debugPrint('===== ORTHA RADAR RATE LIMIT =====');
+    debugPrint('RainViewer meldet HTTP 429.');
+    debugPrint('Radaranimation für 60 Sekunden angehalten.');
+    debugPrint('==================================');
   }
 
   void _stopAnimation() {
@@ -266,6 +331,19 @@ class _RadarPageState extends State<RadarPage> {
     return '$hour:$minute Uhr';
   }
 
+  void _logRadarTileUrl(String? radarTileUrl) {
+    if (radarTileUrl == null || radarTileUrl == _lastLoggedRadarTileUrl) {
+      return;
+    }
+
+    _lastLoggedRadarTileUrl = radarTileUrl;
+
+    debugPrint('');
+    debugPrint('===== ORTHA RADAR TILE URL =====');
+    debugPrint(radarTileUrl);
+    debugPrint('================================');
+  }
+
   String _relativeRadarTime(DateTime timeUtc) {
     final metadata = _metadata;
 
@@ -291,8 +369,14 @@ class _RadarPageState extends State<RadarPage> {
         ? metadata.tileUrlTemplate(frame: selectedFrame)
         : null;
 
+    _logRadarTileUrl(radarTileUrl);
+
+    final radarRateLimited = _isRadarRateLimited;
+
     final statusText = _isLoading
         ? 'RainViewer · Wird geladen'
+        : radarRateLimited || _radarRateLimited
+        ? 'RainViewer · Server ausgelastet'
         : _errorMessage != null
         ? 'RainViewer · Nicht verfügbar'
         : metadata?.isStale == true
@@ -365,6 +449,23 @@ class _RadarPageState extends State<RadarPage> {
                   maxNativeZoom: 7,
                   maxZoom: 18,
                   tileDisplay: const TileDisplay.fadeIn(),
+                  errorTileCallback: (tile, error, stackTrace) {
+                    _handleRadarTileError(error);
+
+                    if (!error.toString().contains('429')) {
+                      final coordinates = tile.coordinates;
+
+                      debugPrint('');
+                      debugPrint('===== ORTHA RADAR TILE ERROR =====');
+                      debugPrint(
+                        'z=${coordinates.z} '
+                        'x=${coordinates.x} '
+                        'y=${coordinates.y}',
+                      );
+                      debugPrint('Fehler: $error');
+                      debugPrint('==================================');
+                    }
+                  },
                 ),
               if (_hasCoordinates)
                 MarkerLayer(
