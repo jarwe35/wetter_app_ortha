@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wetter_app_ortha/widgets/maps/ortha_map_layout.dart';
+import 'package:wetter_app_ortha/widgets/maps/ortha_map_shell.dart';
 
 void main() {
   Widget createSubject({
@@ -22,56 +23,54 @@ void main() {
     );
   }
 
-  testWidgets('zeigt die Kartenfläche an', (tester) async {
+  testWidgets('verwendet die zentrale ORTHA Map Shell', (tester) async {
     await tester.pumpWidget(createSubject());
 
+    expect(find.byType(OrthaMapLayout), findsOneWidget);
+    expect(find.byType(OrthaMapShell), findsOneWidget);
     expect(find.byKey(const Key('map-surface')), findsOneWidget);
+    expect(find.byKey(const Key('ortha-map-shell-map')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('ordnet Kopf und Fuß außerhalb der Karte an', (tester) async {
+  testWidgets('übersetzt den Kopf in die obere Kartenebene', (tester) async {
     await tester.pumpWidget(
-      createSubject(
-        header: const Text('Karteninformation'),
-        footer: const Text('Zeitleiste'),
-      ),
+      createSubject(header: const Text('Karteninformation')),
     );
 
+    expect(find.byKey(const Key('ortha-map-layout-header')), findsOneWidget);
     expect(find.text('Karteninformation'), findsOneWidget);
-    expect(find.text('Zeitleiste'), findsOneWidget);
-
-    final headerTop = tester.getTopLeft(find.text('Karteninformation')).dy;
-    final mapTop = tester.getTopLeft(find.byKey(const Key('map-surface'))).dy;
-    final mapBottom = tester
-        .getBottomLeft(find.byKey(const Key('map-surface')))
-        .dy;
-    final footerTop = tester.getTopLeft(find.text('Zeitleiste')).dy;
-
-    expect(headerTop, lessThan(mapTop));
-    expect(footerTop, greaterThanOrEqualTo(mapBottom));
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('erlaubt kleine Bedienelemente innerhalb der Karte', (
+  testWidgets('übersetzt den Fuß in die Kartenzeitleiste', (tester) async {
+    await tester.pumpWidget(createSubject(footer: const Text('Zeitleiste')));
+
+    expect(find.byKey(const Key('ortha-map-layout-footer')), findsOneWidget);
+    expect(find.text('Zeitleiste'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('übersetzt Kartenbedienelemente in die Steuerungsebene', (
     tester,
   ) async {
     await tester.pumpWidget(
-      createSubject(
-        controls: const Align(
-          alignment: Alignment.bottomRight,
-          child: Icon(Icons.my_location),
-        ),
-      ),
+      createSubject(controls: const Icon(Icons.my_location)),
     );
 
+    expect(find.byKey(const Key('ortha-map-layout-controls')), findsOneWidget);
     expect(find.byIcon(Icons.my_location), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('funktioniert auch mit fester Kartenproportion', (tester) async {
+  testWidgets('funktioniert weiterhin ohne optionale Ebenen', (tester) async {
     await tester.pumpWidget(createSubject(expandMap: false));
 
-    expect(find.byType(AspectRatio), findsOneWidget);
+    expect(find.byType(OrthaMapShell), findsOneWidget);
+    expect(find.byKey(const Key('map-surface')), findsOneWidget);
+    expect(find.byKey(const Key('ortha-map-layout-header')), findsNothing);
+    expect(find.byKey(const Key('ortha-map-layout-footer')), findsNothing);
+    expect(find.byKey(const Key('ortha-map-layout-controls')), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }

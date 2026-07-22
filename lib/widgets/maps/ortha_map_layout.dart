@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
 
-/// Einheitliches Layout für sämtliche Kartenansichten in ORTHA METEO Ω.
+import 'ortha_map_shell.dart';
+
+/// Übergangsadapter für bestehende Kartenansichten von ORTHA METEO Ω.
 ///
-/// Aufbau:
-/// 1. Informationsbereich oberhalb der Karte
-/// 2. freie Kartenfläche
-/// 3. Zeitsteuerung, Legende oder Detailsteuerung unterhalb der Karte
+/// Neue Kartenmodule sollen unmittelbar [OrthaMapShell] verwenden.
+/// Bestehende Seiten können vorübergehend weiterhin [OrthaMapLayout] nutzen.
 ///
-/// Innerhalb der Karte dürfen nur unmittelbar notwendige Bedienelemente
-/// eingeblendet werden, beispielsweise Zoom, Standort und Layer-Auswahl.
+/// Der Adapter übersetzt:
+///
+/// - [map] in die vollflächige Kartenebene
+/// - [header] in die schwebende obere Informationsleiste
+/// - [footer] in die schwebende Zeit- oder Detailsteuerung
+/// - [mapControls] in die rechte Kartensteuerung
+///
+/// Fachliche Kartenlogik wird hier nicht verarbeitet.
 class OrthaMapLayout extends StatelessWidget {
   const OrthaMapLayout({
     super.key,
@@ -24,18 +30,21 @@ class OrthaMapLayout extends StatelessWidget {
     this.expandMap = true,
   });
 
-  /// Eigentliche Kartenansicht, beispielsweise ein [FlutterMap]-Widget.
+  /// Eigentliche Kartenansicht.
   final Widget map;
 
-  /// Informationsbereich oberhalb der Karte.
+  /// Schwebender Informationsbereich oberhalb der Karte.
   final Widget? header;
 
-  /// Zeitachse, Legende oder Detailsteuerung unterhalb der Karte.
+  /// Schwebende Zeitachse, Legende oder Detailsteuerung.
   final Widget? footer;
 
-  /// Ausschließlich kleine, unmittelbar notwendige Bedienelemente.
+  /// Unmittelbar erforderliche Kartenbedienelemente.
   final Widget? mapControls;
 
+  /// Für die Übergangsphase beibehaltene API-Eigenschaften.
+  ///
+  /// Die vollflächige [OrthaMapShell] verwendet eigene feste Positionierungen.
   final EdgeInsetsGeometry padding;
   final double sectionSpacing;
   final double borderRadius;
@@ -45,48 +54,80 @@ class OrthaMapLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final mapSurface = ClipRRect(
-      borderRadius: BorderRadius.circular(borderRadius),
-      child: Stack(fit: StackFit.expand, children: [map, ?mapControls]),
+    return OrthaMapShell(
+      safeAreaTop: true,
+      safeAreaBottom: true,
+      map: map,
+      topBar: header == null
+          ? null
+          : Padding(
+              key: const Key('ortha-map-layout-header'),
+              padding: _topBarPadding,
+              child: _constrainContent(header!),
+            ),
+      trailingControls: mapControls == null
+          ? null
+          : KeyedSubtree(
+              key: const Key('ortha-map-layout-controls'),
+              child: mapControls!,
+            ),
+      timeline: footer == null
+          ? null
+          : Padding(
+              key: const Key('ortha-map-layout-footer'),
+              padding: _timelinePadding,
+              child: _constrainContent(footer!),
+            ),
     );
+  }
 
-    final mapSection = expandMap
-        ? Expanded(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: minimumMapHeight),
-              child: mapSurface,
-            ),
-          )
-        : Flexible(
-            fit: FlexFit.loose,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: minimumMapHeight),
-              child: AspectRatio(aspectRatio: 4 / 3, child: mapSurface),
-            ),
-          );
+  EdgeInsetsGeometry get _topBarPadding {
+    return EdgeInsets.only(
+      left: _horizontalPadding,
+      top: _verticalPadding,
+      right: _horizontalPadding,
+    );
+  }
 
-    return SafeArea(
-      child: Center(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: maximumContentWidth),
-          child: Padding(
-            padding: padding,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (header != null) ...[
-                  header!,
-                  SizedBox(height: sectionSpacing),
-                ],
-                mapSection,
-                if (footer != null) ...[
-                  SizedBox(height: sectionSpacing),
-                  footer!,
-                ],
-              ],
-            ),
-          ),
-        ),
+  EdgeInsetsGeometry get _timelinePadding {
+    return EdgeInsets.only(
+      left: _horizontalPadding,
+      right: _horizontalPadding,
+      bottom: _verticalPadding,
+    );
+  }
+
+  double get _horizontalPadding {
+    if (padding is EdgeInsets) {
+      final resolvedPadding = padding as EdgeInsets;
+      return resolvedPadding.left > resolvedPadding.right
+          ? resolvedPadding.left
+          : resolvedPadding.right;
+    }
+
+    return 16;
+  }
+
+  double get _verticalPadding {
+    if (padding is EdgeInsets) {
+      final resolvedPadding = padding as EdgeInsets;
+      return resolvedPadding.top > resolvedPadding.bottom
+          ? resolvedPadding.top
+          : resolvedPadding.bottom;
+    }
+
+    return 16;
+  }
+
+  Widget _constrainContent(Widget child) {
+    if (!maximumContentWidth.isFinite) {
+      return child;
+    }
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maximumContentWidth),
+        child: child,
       ),
     );
   }
