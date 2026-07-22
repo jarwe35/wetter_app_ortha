@@ -12,7 +12,7 @@ import '../services/satellite/rainviewer_satellite_source.dart';
 import '../services/satellite/satellite_controller.dart';
 import '../services/satellite/satellite_layer_registry.dart';
 import '../widgets/maps/ortha_map_header.dart';
-import '../widgets/maps/ortha_map_layout.dart';
+import 'maps/ortha_fullscreen_map_page.dart';
 import '../widgets/maps/ortha_map_toolbar.dart';
 import '../widgets/maps/ortha_radar_timeline.dart';
 import '../widgets/warnings/official_warning_polygon_overlay.dart';
@@ -404,207 +404,196 @@ class _SatellitePageState extends State<SatellitePage> {
         ? _selectedLayerState?.statusMessage ?? 'Nicht verfügbar'
         : _baseLayerState?.statusMessage ?? 'Nicht verfügbar';
 
-    return Scaffold(
-      body: OrthaMapLayout(
-        padding: EdgeInsets.zero,
-        borderRadius: 0,
-        minimumMapHeight: 0,
-        maximumContentWidth: double.infinity,
-        header: OrthaMapHeader(
-          place: widget.place,
-          mode: selectedLayer.name,
-          statusText: '${selectedLayer.sourceName} · $layerStatusText',
-          novaStatus: 'Normal',
-          coordinatesAvailable: hasCoordinates,
-          onLayers: _showLayerSelection,
-          onRefresh: _isRefreshing ? null : _refresh,
-          isRefreshing: _isRefreshing,
-        ),
-        sectionSpacing: 12,
-        footer:
-            rainViewerSelected &&
-                rainViewerAvailable &&
-                _rainViewerMetadata!.frames.isNotEmpty
-            ? Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                child: OrthaRadarTimeline(
-                  value: _selectedRadarFrameIndex,
-                  frameCount: _rainViewerMetadata!.frames.length,
-                  currentTimeText: selectedRadarFrame == null
-                      ? 'Radarzeitpunkt'
-                      : _formatRadarTime(selectedRadarFrame.time),
-                  relativeTimeText: selectedRadarFrame == null
-                      ? ''
-                      : _radarRelativeTime(selectedRadarFrame.time),
-                  firstTimeText: _formatRadarTime(
-                    _rainViewerMetadata!.frames.first.time,
-                  ),
-                  lastTimeText: _formatRadarTime(
-                    _rainViewerMetadata!.frames.last.time,
-                  ),
-                  isAnimating: _isRadarAnimating,
-                  onToggleAnimation: _toggleRadarAnimation,
-                  onChangeStart: _stopRadarAnimation,
-                  onChanged: _selectRadarFrame,
+    return OrthaFullscreenMapPage(
+      topBar: OrthaMapHeader(
+        place: widget.place,
+        mode: selectedLayer.name,
+        statusText: '${selectedLayer.sourceName} · $layerStatusText',
+        novaStatus: 'Normal',
+        coordinatesAvailable: hasCoordinates,
+        onLayers: _showLayerSelection,
+        onRefresh: _isRefreshing ? null : _refresh,
+        isRefreshing: _isRefreshing,
+      ),
+      timeline:
+          rainViewerSelected &&
+              rainViewerAvailable &&
+              _rainViewerMetadata!.frames.isNotEmpty
+          ? Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: OrthaRadarTimeline(
+                value: _selectedRadarFrameIndex,
+                frameCount: _rainViewerMetadata!.frames.length,
+                currentTimeText: selectedRadarFrame == null
+                    ? 'Radarzeitpunkt'
+                    : _formatRadarTime(selectedRadarFrame.time),
+                relativeTimeText: selectedRadarFrame == null
+                    ? ''
+                    : _radarRelativeTime(selectedRadarFrame.time),
+                firstTimeText: _formatRadarTime(
+                  _rainViewerMetadata!.frames.first.time,
                 ),
-              )
-            : null,
-        mapControls: OrthaMapToolbar(
-          compact: true,
-          onZoomIn: _zoomIn,
-          onZoomOut: _zoomOut,
-          onCenter: _centerOnLocation,
-        ),
-        map: Stack(
-          children: [
-            FlutterMap(
-              mapController: _mapController,
-              options: MapOptions(
-                initialCenter: _center,
-                initialZoom: hasCoordinates ? 10 : 6,
-                minZoom: 2,
-                maxZoom: 18,
-                interactionOptions: const InteractionOptions(
-                  flags: InteractiveFlag.all,
+                lastTimeText: _formatRadarTime(
+                  _rainViewerMetadata!.frames.last.time,
                 ),
+                isAnimating: _isRadarAnimating,
+                onToggleAnimation: _toggleRadarAnimation,
+                onChangeStart: _stopRadarAnimation,
+                onChanged: _selectRadarFrame,
               ),
-              children: [
-                if (baseLayerAvailable)
-                  TileLayer(
-                    urlTemplate: EsriSatelliteSource.worldImageryUrlTemplate,
-                    userAgentPackageName: 'com.example.wetter_app_ortha',
-                    maxZoom: 18,
-                    tileDisplay: const TileDisplay.fadeIn(),
-                  ),
-                if (rainViewerTileUrl != null)
-                  TileLayer(
-                    urlTemplate: rainViewerTileUrl,
-                    userAgentPackageName: 'com.example.wetter_app_ortha',
-                    minNativeZoom: 0,
-                    maxNativeZoom: 7,
-                    maxZoom: 18,
-                    tileDisplay: const TileDisplay.fadeIn(),
-                  ),
-                if (warningOverlaySelected)
-                  OfficialWarningPolygonOverlay(warnings: widget.warnings),
-                if (hasCoordinates)
-                  MarkerLayer(
-                    markers: [
-                      Marker(
-                        point: _center,
-                        width: 32,
-                        height: 32,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.blue.withValues(alpha: 0.20),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 1.5),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.35),
-                                blurRadius: 6,
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.my_location,
-                            color: Colors.white,
-                            size: 17,
-                          ),
+            )
+          : null,
+      trailingControls: OrthaMapToolbar(
+        compact: true,
+        onZoomIn: _zoomIn,
+        onZoomOut: _zoomOut,
+        onCenter: _centerOnLocation,
+      ),
+      map: Stack(
+        children: [
+          FlutterMap(
+            mapController: _mapController,
+            options: MapOptions(
+              initialCenter: _center,
+              initialZoom: hasCoordinates ? 10 : 6,
+              minZoom: 2,
+              maxZoom: 18,
+              interactionOptions: const InteractionOptions(
+                flags: InteractiveFlag.all,
+              ),
+            ),
+            children: [
+              if (baseLayerAvailable)
+                TileLayer(
+                  urlTemplate: EsriSatelliteSource.worldImageryUrlTemplate,
+                  userAgentPackageName: 'com.example.wetter_app_ortha',
+                  maxZoom: 18,
+                  tileDisplay: const TileDisplay.fadeIn(),
+                ),
+              if (rainViewerTileUrl != null)
+                TileLayer(
+                  urlTemplate: rainViewerTileUrl,
+                  userAgentPackageName: 'com.example.wetter_app_ortha',
+                  minNativeZoom: 0,
+                  maxNativeZoom: 7,
+                  maxZoom: 18,
+                  tileDisplay: const TileDisplay.fadeIn(),
+                ),
+              if (warningOverlaySelected)
+                OfficialWarningPolygonOverlay(warnings: widget.warnings),
+              if (hasCoordinates)
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: _center,
+                      width: 32,
+                      height: 32,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withValues(alpha: 0.20),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 1.5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.35),
+                              blurRadius: 6,
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.my_location,
+                          color: Colors.white,
+                          size: 17,
                         ),
                       ),
-                    ],
-                  ),
-                RichAttributionWidget(
-                  attributions: [
-                    const TextSourceAttribution(
-                      'Esri, Maxar, Earthstar Geographics',
                     ),
-                    if (rainViewerSelected)
-                      const TextSourceAttribution('RainViewer'),
                   ],
                 ),
-              ],
-            ),
-            if (_isLoadingBaseLayer)
-              const Positioned.fill(
-                child: IgnorePointer(
-                  child: ColoredBox(
-                    color: Color(0x33000000),
-                    child: Center(
-                      child: Card(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 22,
-                            vertical: 18,
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              SizedBox(
-                                width: 22,
-                                height: 22,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.4,
-                                ),
+              RichAttributionWidget(
+                attributions: [
+                  const TextSourceAttribution(
+                    'Esri, Maxar, Earthstar Geographics',
+                  ),
+                  if (rainViewerSelected)
+                    const TextSourceAttribution('RainViewer'),
+                ],
+              ),
+            ],
+          ),
+          if (_isLoadingBaseLayer)
+            const Positioned.fill(
+              child: IgnorePointer(
+                child: ColoredBox(
+                  color: Color(0x33000000),
+                  child: Center(
+                    child: Card(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 22,
+                          vertical: 18,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.4,
                               ),
-                              SizedBox(width: 14),
-                              Text('Satellitenbild wird geladen …'),
-                            ],
-                          ),
+                            ),
+                            SizedBox(width: 14),
+                            Text('Satellitenbild wird geladen …'),
+                          ],
                         ),
                       ),
                     ),
                   ),
                 ),
               ),
-            if (!_isLoadingBaseLayer && _baseLayerError != null)
-              Positioned(
-                left: 16,
-                right: 16,
-                bottom: 28,
-                child: SafeArea(
-                  top: false,
-                  child: Card(
-                    color: Theme.of(context).colorScheme.errorContainer,
-                    elevation: 8,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.cloud_off_outlined,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onErrorContainer,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              _baseLayerError!,
-                              style: TextStyle(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onErrorContainer,
-                              ),
+            ),
+          if (!_isLoadingBaseLayer && _baseLayerError != null)
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 28,
+              child: SafeArea(
+                top: false,
+                child: Card(
+                  color: Theme.of(context).colorScheme.errorContainer,
+                  elevation: 8,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.cloud_off_outlined,
+                          color: Theme.of(context).colorScheme.onErrorContainer,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            _baseLayerError!,
+                            style: TextStyle(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onErrorContainer,
                             ),
                           ),
-                          IconButton(
-                            tooltip: 'Erneut versuchen',
-                            onPressed: _loadBaseLayer,
-                            icon: const Icon(Icons.refresh),
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onErrorContainer,
-                          ),
-                        ],
-                      ),
+                        ),
+                        IconButton(
+                          tooltip: 'Erneut versuchen',
+                          onPressed: _loadBaseLayer,
+                          icon: const Icon(Icons.refresh),
+                          color: Theme.of(context).colorScheme.onErrorContainer,
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }
