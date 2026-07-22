@@ -14,6 +14,7 @@ import '../services/satellite/satellite_layer_registry.dart';
 import '../widgets/maps/ortha_map_header.dart';
 import '../widgets/maps/ortha_map_layout.dart';
 import '../widgets/maps/ortha_map_toolbar.dart';
+import '../widgets/maps/ortha_radar_timeline.dart';
 import '../widgets/warnings/official_warning_polygon_overlay.dart';
 
 class SatellitePage extends StatefulWidget {
@@ -426,137 +427,25 @@ class _SatellitePageState extends State<SatellitePage> {
                 _rainViewerMetadata!.frames.isNotEmpty
             ? Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                child: Material(
-                  color: Colors.black.withValues(alpha: 0.82),
-                  elevation: 6,
-                  borderRadius: BorderRadius.circular(18),
-                  clipBehavior: Clip.antiAlias,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 6, 10, 6),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
-                          children: [
-                            SizedBox(
-                              width: 42,
-                              height: 42,
-                              child: IconButton(
-                                padding: EdgeInsets.zero,
-                                tooltip: _isRadarAnimating
-                                    ? 'Radaranimation anhalten'
-                                    : 'Radarverlauf abspielen',
-                                onPressed: _toggleRadarAnimation,
-                                icon: Icon(
-                                  _isRadarAnimating
-                                      ? Icons.pause_rounded
-                                      : Icons.play_arrow_rounded,
-                                  color: Colors.white,
-                                  size: 28,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    selectedRadarFrame == null
-                                        ? 'Radarzeitpunkt'
-                                        : _formatRadarTime(
-                                            selectedRadarFrame.time,
-                                          ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  if (selectedRadarFrame != null)
-                                    Text(
-                                      _radarRelativeTime(
-                                        selectedRadarFrame.time,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.72,
-                                        ),
-                                        fontSize: 11,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              '2 Std.',
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.72),
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(
-                          height: 28,
-                          child: Slider(
-                            value: _selectedRadarFrameIndex
-                                .clamp(
-                                  0,
-                                  _rainViewerMetadata!.frames.length - 1,
-                                )
-                                .toDouble(),
-                            min: 0,
-                            max: (_rainViewerMetadata!.frames.length - 1)
-                                .toDouble(),
-                            divisions: _rainViewerMetadata!.frames.length - 1,
-                            label: selectedRadarFrame == null
-                                ? null
-                                : _formatRadarTime(selectedRadarFrame.time),
-                            onChangeStart: (_) {
-                              _stopRadarAnimation();
-                            },
-                            onChanged: (value) {
-                              _selectRadarFrame(value.round());
-                            },
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                          child: Row(
-                            children: [
-                              Text(
-                                _formatRadarTime(
-                                  _rainViewerMetadata!.frames.first.time,
-                                ),
-                                style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.62),
-                                  fontSize: 9,
-                                ),
-                              ),
-                              const Spacer(),
-                              Text(
-                                _formatRadarTime(
-                                  _rainViewerMetadata!.frames.last.time,
-                                ),
-                                style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.62),
-                                  fontSize: 9,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                child: OrthaRadarTimeline(
+                  value: _selectedRadarFrameIndex,
+                  frameCount: _rainViewerMetadata!.frames.length,
+                  currentTimeText: selectedRadarFrame == null
+                      ? 'Radarzeitpunkt'
+                      : _formatRadarTime(selectedRadarFrame.time),
+                  relativeTimeText: selectedRadarFrame == null
+                      ? ''
+                      : _radarRelativeTime(selectedRadarFrame.time),
+                  firstTimeText: _formatRadarTime(
+                    _rainViewerMetadata!.frames.first.time,
                   ),
+                  lastTimeText: _formatRadarTime(
+                    _rainViewerMetadata!.frames.last.time,
+                  ),
+                  isAnimating: _isRadarAnimating,
+                  onToggleAnimation: _toggleRadarAnimation,
+                  onChangeStart: _stopRadarAnimation,
+                  onChanged: _selectRadarFrame,
                 ),
               )
             : null,
