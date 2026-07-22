@@ -36,6 +36,7 @@ import 'services/weather_service.dart';
 
 import 'widgets/dashboard/ortha_dashboard_header.dart';
 import 'widgets/dashboard/official_warning_header.dart';
+import 'widgets/dashboard/official_warning_instruction.dart';
 import 'widgets/dashboard/official_warning_summary.dart';
 import 'widgets/dashboard/place_selector.dart';
 import 'widgets/ortha_ui/ortha_section_header.dart';
@@ -1873,23 +1874,8 @@ class OfficialWeatherWarningsCard extends StatelessWidget {
                     ],
                     if (cleanedInstruction.isNotEmpty) ...[
                       const SizedBox(height: 12),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: orthaSurfaceElevated,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: orthaBorder.withValues(alpha: 0.72),
-                          ),
-                        ),
-                        child: Text(
-                          'Amtliche Handlungsempfehlung:\n$cleanedInstruction',
-                          style: const TextStyle(
-                            color: orthaPrimaryText,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                      OfficialWarningInstruction(
+                        instruction: cleanedInstruction,
                       ),
                     ],
                     const SizedBox(height: 10),
