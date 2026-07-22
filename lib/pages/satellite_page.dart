@@ -12,6 +12,7 @@ import '../services/satellite/rainviewer_satellite_source.dart';
 import '../services/satellite/satellite_controller.dart';
 import '../services/satellite/satellite_layer_registry.dart';
 import '../widgets/maps/ortha_map_layout.dart';
+import '../widgets/maps/ortha_map_toolbar.dart';
 import '../widgets/warnings/official_warning_polygon_overlay.dart';
 
 class SatellitePage extends StatefulWidget {
@@ -634,33 +635,12 @@ class _SatellitePageState extends State<SatellitePage> {
                 ),
               )
             : null,
-        mapControls: SafeArea(
-          top: false,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              FloatingActionButton.small(
-                heroTag: 'satellite_zoom_in',
-                tooltip: 'Vergrößern',
-                onPressed: _zoomIn,
-                child: const Icon(Icons.add),
-              ),
-              const SizedBox(height: 10),
-              FloatingActionButton.small(
-                heroTag: 'satellite_zoom_out',
-                tooltip: 'Verkleinern',
-                onPressed: _zoomOut,
-                child: const Icon(Icons.remove),
-              ),
-              const SizedBox(height: 10),
-              FloatingActionButton.small(
-                heroTag: 'satellite_center',
-                tooltip: 'Standort zentrieren',
-                onPressed: _centerOnLocation,
-                child: const Icon(Icons.my_location),
-              ),
-            ],
-          ),
+        mapControls: OrthaMapToolbar(
+          compact: true,
+          onLayers: _showLayerSelection,
+          onZoomIn: _zoomIn,
+          onZoomOut: _zoomOut,
+          onCenter: _centerOnLocation,
         ),
         map: Stack(
           children: [
