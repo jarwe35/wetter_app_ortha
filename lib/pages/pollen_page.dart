@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../models/pollen_forecast.dart';
 import '../services/pollen_service.dart';
-import '../widgets/ortha_ui/ortha_card.dart';
+import '../widgets/common/ortha_premium_card.dart';
 import '../widgets/ortha_ui/ortha_section_header.dart';
 
-const Color _orthaSurface = Color(0xFFFFFFFF);
-const Color _orthaPrimaryText = Color(0xFF17324D);
-const Color _orthaSecondaryText = Color(0xFF587080);
-const Color _orthaAccent = Color(0xFFD5A84A);
-const Color _orthaBorder = Color(0xFFD6E2EA);
+const Color _orthaPrimaryText = OrthaDesignColors.navy;
+const Color _orthaSecondaryText = OrthaDesignColors.navySoft;
+const Color _orthaAccent = OrthaDesignColors.gold;
+const Color _orthaBorder = OrthaDesignColors.goldSoft;
 
 class PollenPage extends StatefulWidget {
   final String place;
@@ -119,16 +118,17 @@ class _PollenPageState extends State<PollenPage> {
                 ? const SizedBox(
                     width: 22,
                     height: 22,
-                    child: CircularProgressIndicator(strokeWidth: 2.5),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      color: OrthaDesignColors.gold,
+                    ),
                   )
-                : const Icon(Icons.refresh),
+                : const Icon(Icons.refresh, color: OrthaDesignColors.gold),
           ),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 12),
         if (_isLoading && _forecast == null)
-          const OrthaCard(
-            backgroundColor: _orthaSurface,
-            borderRadius: 24,
+          const OrthaPremiumCard(
             child: Padding(
               padding: EdgeInsets.symmetric(vertical: 34),
               child: Center(
@@ -190,9 +190,7 @@ class _OverviewCard extends StatelessWidget {
     final today = forecast.days.first;
     final strongest = today.strongestValue;
 
-    return OrthaCard(
-      backgroundColor: _orthaSurface,
-      borderRadius: 24,
+    return OrthaPremiumCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -202,7 +200,7 @@ class _OverviewCard extends StatelessWidget {
               SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Aktuelle Pollenlage',
+                  'Pollenbelastung heute',
                   style: TextStyle(
                     color: _orthaPrimaryText,
                     fontSize: 18,
@@ -244,8 +242,8 @@ class _OverviewCard extends StatelessWidget {
           ],
           const SizedBox(height: 16),
           Text(
-            '${forecast.days.length}-Tage-Modellvorhersage · '
-            'Zeitzone ${forecast.timezone}',
+            '${forecast.days.length}-Tage-Vorhersage · '
+            'Lokale Zeitzone: ${forecast.timezone}',
             style: const TextStyle(color: _orthaSecondaryText, fontSize: 12),
           ),
         ],
@@ -261,9 +259,7 @@ class _DailyForecastCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return OrthaCard(
-      backgroundColor: _orthaSurface,
-      borderRadius: 24,
+    return OrthaPremiumCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -276,12 +272,14 @@ class _DailyForecastCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          ...day.values.map(
-            (value) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _PollenRow(value: value),
-            ),
-          ),
+          ...day.values
+              .where((value) => value.type != PollenType.olive)
+              .map(
+                (value) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _PollenRow(value: value),
+                ),
+              ),
         ],
       ),
     );
@@ -359,9 +357,7 @@ class _ErrorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return OrthaCard(
-      backgroundColor: _orthaSurface,
-      borderRadius: 24,
+    return OrthaPremiumCard(
       child: Column(
         children: [
           const Icon(Icons.cloud_off_outlined, color: _orthaAccent, size: 38),
@@ -374,7 +370,7 @@ class _ErrorCard extends StatelessWidget {
           const SizedBox(height: 18),
           FilledButton.icon(
             onPressed: onRetry,
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh, color: OrthaDesignColors.gold),
             label: const Text('Erneut versuchen'),
           ),
         ],
@@ -396,9 +392,7 @@ class _InformationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return OrthaCard(
-      backgroundColor: _orthaSurface,
-      borderRadius: 24,
+    return OrthaPremiumCard(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
