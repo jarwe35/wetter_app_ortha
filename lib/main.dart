@@ -1075,6 +1075,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                       place: selectedPlace,
                       latitude: selectedLocation?.latitude,
                       longitude: selectedLocation?.longitude,
+                      hourlyForecast: data?.hourlyForecast ?? const [],
                       onRefresh: () => loadWeather(
                         selectedPlace,
                         locationOverride: selectedLocation,

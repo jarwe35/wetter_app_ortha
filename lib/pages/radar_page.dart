@@ -6,6 +6,8 @@ import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 
 import '../services/radar/rainviewer_radar_service.dart';
+import '../services/weather_service.dart';
+import '../widgets/maps/ortha_hourly_forecast_chart.dart';
 import '../widgets/maps/ortha_map_header.dart';
 import '../widgets/maps/ortha_map_toolbar.dart';
 import '../widgets/maps/ortha_radar_legend.dart';
@@ -16,6 +18,7 @@ class RadarPage extends StatefulWidget {
   final String place;
   final double? latitude;
   final double? longitude;
+  final List<HourlyForecast> hourlyForecast;
   final Future<void> Function()? onRefresh;
 
   const RadarPage({
@@ -23,6 +26,7 @@ class RadarPage extends StatefulWidget {
     required this.place,
     required this.latitude,
     required this.longitude,
+    this.hourlyForecast = const [],
     this.onRefresh,
   });
 
@@ -557,9 +561,7 @@ class _RadarPageState extends State<RadarPage> {
                         duration: const Duration(milliseconds: 700),
                         curve: Curves.easeInOut,
                         child: TileLayer(
-                          key: ValueKey(
-                            'ortha-radar-primary-$primaryRadarTileUrl',
-                          ),
+                          key: const ValueKey('ortha-radar-primary'),
                           urlTemplate: primaryRadarTileUrl,
                           userAgentPackageName: 'de.ortha.meteo',
                           minNativeZoom: 0,
@@ -576,9 +578,7 @@ class _RadarPageState extends State<RadarPage> {
                         duration: const Duration(milliseconds: 700),
                         curve: Curves.easeInOut,
                         child: TileLayer(
-                          key: ValueKey(
-                            'ortha-radar-secondary-$secondaryRadarTileUrl',
-                          ),
+                          key: const ValueKey('ortha-radar-secondary'),
                           urlTemplate: secondaryRadarTileUrl,
                           userAgentPackageName: 'de.ortha.meteo',
                           minNativeZoom: 0,
@@ -722,6 +722,11 @@ class _RadarPageState extends State<RadarPage> {
             ),
           ),
         ),
+        if (widget.hourlyForecast.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: OrthaHourlyForecastChart(forecast: widget.hourlyForecast),
+          ),
         const Padding(
           padding: EdgeInsets.fromLTRB(16, 12, 16, 14),
           child: OrthaRadarLegend(),
