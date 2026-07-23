@@ -41,20 +41,20 @@ class OrthaRadarTimeline extends StatelessWidget {
 
     return Material(
       key: const Key('ortha-radar-timeline'),
-      color: Colors.black.withValues(alpha: 0.86),
-      elevation: 10,
-      borderRadius: BorderRadius.circular(20),
+      color: Colors.black.withValues(alpha: 0.22),
+      elevation: 0,
+      borderRadius: BorderRadius.circular(15),
       clipBehavior: Clip.antiAlias,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(8, 7, 10, 7),
+        padding: const EdgeInsets.fromLTRB(6, 3, 8, 3),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Row(
               children: [
                 SizedBox(
-                  width: 42,
-                  height: 42,
+                  width: 34,
+                  height: 34,
                   child: IconButton(
                     key: const Key('ortha-radar-timeline-play'),
                     padding: EdgeInsets.zero,
@@ -67,11 +67,11 @@ class OrthaRadarTimeline extends StatelessWidget {
                           ? Icons.pause_rounded
                           : Icons.play_arrow_rounded,
                       color: Colors.white,
-                      size: 28,
+                      size: 23,
                     ),
                   ),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 2),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -84,7 +84,7 @@ class OrthaRadarTimeline extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 15,
+                          fontSize: 13,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -96,19 +96,19 @@ class OrthaRadarTimeline extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.72),
-                            fontSize: 11,
+                            fontSize: 8,
                           ),
                         ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 4),
                 Text(
                   periodText,
                   key: const Key('ortha-radar-timeline-period'),
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.72),
-                    fontSize: 11,
+                    fontSize: 8,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -116,7 +116,7 @@ class OrthaRadarTimeline extends StatelessWidget {
             ),
             if (safeFrameCount > 1)
               SizedBox(
-                height: 28,
+                height: 20,
                 child: Slider(
                   key: const Key('ortha-radar-timeline-slider'),
                   value: safeValue.toDouble(),
@@ -135,7 +135,7 @@ class OrthaRadarTimeline extends StatelessWidget {
             else
               const SizedBox(height: 8),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Row(
                 children: [
                   Text(
@@ -143,7 +143,7 @@ class OrthaRadarTimeline extends StatelessWidget {
                     key: const Key('ortha-radar-timeline-first-time'),
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.62),
-                      fontSize: 9,
+                      fontSize: 8,
                     ),
                   ),
                   const Spacer(),
@@ -152,7 +152,7 @@ class OrthaRadarTimeline extends StatelessWidget {
                     key: const Key('ortha-radar-timeline-last-time'),
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.62),
-                      fontSize: 9,
+                      fontSize: 8,
                     ),
                   ),
                 ],

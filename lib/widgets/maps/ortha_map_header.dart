@@ -37,16 +37,16 @@ class OrthaMapHeader extends StatelessWidget {
 
         return Material(
           key: const Key('ortha-map-header'),
-          color: Colors.black.withValues(alpha: 0.86),
-          elevation: 10,
-          borderRadius: BorderRadius.circular(compact ? 20 : 24),
+          color: Colors.black.withValues(alpha: 0.22),
+          elevation: 0,
+          borderRadius: BorderRadius.circular(compact ? 15 : 18),
           clipBehavior: Clip.antiAlias,
           child: Padding(
             padding: EdgeInsets.fromLTRB(
-              compact ? 10 : 14,
-              compact ? 10 : 12,
-              compact ? 8 : 12,
-              compact ? 10 : 12,
+              compact ? 8 : 10,
+              compact ? 5 : 7,
+              compact ? 6 : 8,
+              compact ? 5 : 7,
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -61,8 +61,8 @@ class OrthaMapHeader extends StatelessWidget {
                   SizedBox(width: compact ? 4 : 8),
                 ] else ...[
                   Container(
-                    width: compact ? 38 : 42,
-                    height: compact ? 38 : 42,
+                    width: compact ? 30 : 34,
+                    height: compact ? 30 : 34,
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.08),
                       shape: BoxShape.circle,
@@ -70,10 +70,10 @@ class OrthaMapHeader extends StatelessWidget {
                     child: const Icon(
                       Icons.public_rounded,
                       color: Colors.white,
-                      size: 22,
+                      size: 18,
                     ),
                   ),
-                  SizedBox(width: compact ? 8 : 12),
+                  SizedBox(width: compact ? 6 : 8),
                 ],
                 Expanded(
                   child: _HeaderInformation(
@@ -155,7 +155,7 @@ class _HeaderInformation extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: compact ? 15 : 17,
+                  fontSize: compact ? 13 : 15,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -164,7 +164,7 @@ class _HeaderInformation extends StatelessWidget {
             _NovaStatusBadge(status: novaStatus, compact: compact),
           ],
         ),
-        const SizedBox(height: 3),
+        const SizedBox(height: 1),
         Text(
           mode,
           key: const Key('ortha-map-header-mode'),
@@ -172,11 +172,11 @@ class _HeaderInformation extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
             color: Colors.white.withValues(alpha: 0.88),
-            fontSize: compact ? 12 : 13,
+            fontSize: compact ? 8 : 9,
             fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 1),
         Text(
           coordinatesAvailable
               ? statusText
@@ -188,7 +188,7 @@ class _HeaderInformation extends StatelessWidget {
             color: coordinatesAvailable
                 ? Colors.white.withValues(alpha: 0.64)
                 : Colors.amber.shade200,
-            fontSize: compact ? 10 : 11,
+            fontSize: compact ? 8 : 9,
           ),
         ),
       ],
@@ -207,8 +207,8 @@ class _NovaStatusBadge extends StatelessWidget {
     return Container(
       key: const Key('ortha-map-header-nova-status'),
       padding: EdgeInsets.symmetric(
-        horizontal: compact ? 6 : 8,
-        vertical: compact ? 3 : 4,
+        horizontal: compact ? 5 : 7,
+        vertical: compact ? 2 : 3,
       ),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.10),
@@ -219,8 +219,8 @@ class _NovaStatusBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: compact ? 6 : 7,
-            height: compact ? 6 : 7,
+            width: compact ? 5 : 6,
+            height: compact ? 5 : 6,
             decoration: const BoxDecoration(
               color: Colors.greenAccent,
               shape: BoxShape.circle,
@@ -231,7 +231,7 @@ class _NovaStatusBadge extends StatelessWidget {
             'NOVA $status',
             style: TextStyle(
               color: Colors.white,
-              fontSize: compact ? 9 : 10,
+              fontSize: compact ? 8 : 9,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -256,13 +256,13 @@ class _HeaderAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 42,
-      height: 42,
+      width: 34,
+      height: 34,
       child: IconButton(
         tooltip: tooltip,
         padding: EdgeInsets.zero,
         onPressed: onPressed,
-        icon: Icon(icon, color: Colors.white, size: 22),
+        icon: Icon(icon, color: Colors.white, size: 19),
       ),
     );
   }

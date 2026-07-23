@@ -37,7 +37,6 @@ class OrthaNavigationDrawer extends StatelessWidget {
             _sectionTitle('WETTER'),
             _entry(context, Icons.home_outlined, 'Übersicht', 0),
             _entry(context, Icons.radar_outlined, 'Live-Radar', 3),
-            _entry(context, Icons.cloud_outlined, 'Satellit', 4),
             _entry(context, Icons.local_florist_outlined, 'Pollen', 5),
 
             _sectionTitle('SICHERHEIT'),

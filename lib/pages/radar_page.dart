@@ -8,6 +8,7 @@ import 'package:latlong2/latlong.dart';
 import '../services/radar/rainviewer_radar_service.dart';
 import '../widgets/maps/ortha_map_header.dart';
 import '../widgets/maps/ortha_map_toolbar.dart';
+import '../widgets/maps/ortha_radar_legend.dart';
 import '../widgets/maps/ortha_radar_timeline.dart';
 import 'maps/ortha_fullscreen_map_page.dart';
 
@@ -37,12 +38,17 @@ class _RadarPageState extends State<RadarPage> {
 
   RainViewerRadarMetadata? _metadata;
   Timer? _animationTimer;
+  Timer? _frameTransitionTimer;
   Timer? _rateLimitTimer;
 
   int _selectedFrameIndex = 0;
+  int _primaryRadarFrameIndex = 0;
+  int _secondaryRadarFrameIndex = 0;
+  bool _showPrimaryRadarLayer = true;
   bool _isAnimating = false;
   bool _isLoading = true;
   bool _isRefreshing = false;
+  bool _isMapInteractionLocked = true;
   String? _errorMessage;
   String? _lastLoggedRadarTileUrl;
   DateTime? _radarRateLimitedUntil;
@@ -80,6 +86,7 @@ class _RadarPageState extends State<RadarPage> {
   @override
   void dispose() {
     _animationTimer?.cancel();
+    _frameTransitionTimer?.cancel();
     _rateLimitTimer?.cancel();
     _mapController.dispose();
     _httpClient.close();
@@ -128,9 +135,15 @@ class _RadarPageState extends State<RadarPage> {
 
       setState(() {
         _metadata = metadata;
-        _selectedFrameIndex = metadata.frames.isEmpty
+
+        final latestIndex = metadata.frames.isEmpty
             ? 0
             : metadata.frames.length - 1;
+
+        _selectedFrameIndex = latestIndex;
+        _primaryRadarFrameIndex = latestIndex;
+        _secondaryRadarFrameIndex = latestIndex;
+        _showPrimaryRadarLayer = true;
       });
     } catch (_) {
       if (!mounted) return;
@@ -183,8 +196,13 @@ class _RadarPageState extends State<RadarPage> {
 
     final safeIndex = index.clamp(0, metadata.frames.length - 1);
 
+    _frameTransitionTimer?.cancel();
+
     setState(() {
       _selectedFrameIndex = safeIndex;
+      _primaryRadarFrameIndex = safeIndex;
+      _secondaryRadarFrameIndex = safeIndex;
+      _showPrimaryRadarLayer = true;
     });
   }
 
@@ -209,29 +227,56 @@ class _RadarPageState extends State<RadarPage> {
 
       if (_selectedFrameIndex >= metadata.frames.length - 1) {
         _selectedFrameIndex = 0;
+        _primaryRadarFrameIndex = 0;
+        _secondaryRadarFrameIndex = 0;
+        _showPrimaryRadarLayer = true;
       }
     });
 
+    _scheduleNextRadarFrame();
+  }
+
+  void _scheduleNextRadarFrame() {
     _animationTimer?.cancel();
-    _animationTimer = Timer.periodic(const Duration(milliseconds: 2500), (_) {
-      if (!mounted) {
-        _animationTimer?.cancel();
+    _frameTransitionTimer?.cancel();
+
+    if (!_isAnimating || !mounted) {
+      return;
+    }
+
+    _animationTimer = Timer(const Duration(milliseconds: 1900), () {
+      if (!mounted || !_isAnimating) {
         return;
       }
 
-      final currentMetadata = _metadata;
+      final metadata = _metadata;
 
-      if (currentMetadata == null || currentMetadata.frames.length < 2) {
+      if (metadata == null || metadata.frames.length < 2) {
         _stopAnimation();
         return;
       }
 
+      final nextIndex = (_selectedFrameIndex + 1) % metadata.frames.length;
+
       setState(() {
-        if (_selectedFrameIndex >= currentMetadata.frames.length - 1) {
-          _selectedFrameIndex = 0;
+        if (_showPrimaryRadarLayer) {
+          _secondaryRadarFrameIndex = nextIndex;
         } else {
-          _selectedFrameIndex++;
+          _primaryRadarFrameIndex = nextIndex;
         }
+      });
+
+      _frameTransitionTimer = Timer(const Duration(milliseconds: 850), () {
+        if (!mounted || !_isAnimating) {
+          return;
+        }
+
+        setState(() {
+          _selectedFrameIndex = nextIndex;
+          _showPrimaryRadarLayer = !_showPrimaryRadarLayer;
+        });
+
+        _scheduleNextRadarFrame();
       });
     });
   }
@@ -294,7 +339,9 @@ class _RadarPageState extends State<RadarPage> {
 
   void _stopAnimation() {
     _animationTimer?.cancel();
+    _frameTransitionTimer?.cancel();
     _animationTimer = null;
+    _frameTransitionTimer = null;
 
     if (_isAnimating && mounted) {
       setState(() {
@@ -303,6 +350,12 @@ class _RadarPageState extends State<RadarPage> {
     } else {
       _isAnimating = false;
     }
+  }
+
+  void _toggleMapInteractionLock() {
+    setState(() {
+      _isMapInteractionLocked = !_isMapInteractionLocked;
+    });
   }
 
   void _zoomIn() {
@@ -369,6 +422,29 @@ class _RadarPageState extends State<RadarPage> {
         ? metadata.tileUrlTemplate(frame: selectedFrame)
         : null;
 
+    final primaryRadarFrame = metadata != null && metadata.frames.isNotEmpty
+        ? metadata.frames[_primaryRadarFrameIndex.clamp(
+            0,
+            metadata.frames.length - 1,
+          )]
+        : null;
+
+    final secondaryRadarFrame = metadata != null && metadata.frames.isNotEmpty
+        ? metadata.frames[_secondaryRadarFrameIndex.clamp(
+            0,
+            metadata.frames.length - 1,
+          )]
+        : null;
+
+    final primaryRadarTileUrl = metadata != null && primaryRadarFrame != null
+        ? metadata.tileUrlTemplate(frame: primaryRadarFrame)
+        : null;
+
+    final secondaryRadarTileUrl =
+        metadata != null && secondaryRadarFrame != null
+        ? metadata.tileUrlTemplate(frame: secondaryRadarFrame)
+        : null;
+
     _logRadarTileUrl(radarTileUrl);
 
     final radarRateLimited = _isRadarRateLimited;
@@ -383,214 +459,274 @@ class _RadarPageState extends State<RadarPage> {
         ? 'RainViewer · Letzter verfügbarer Stand'
         : 'RainViewer · Live';
 
-    return OrthaFullscreenMapPage(
-      topBar: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-        child: OrthaMapHeader(
-          place: widget.place,
-          mode: 'Niederschlagsradar',
-          statusText: statusText,
-          novaStatus: 'Normal',
-          coordinatesAvailable: _hasCoordinates,
-          onRefresh: _isRefreshing ? null : _refresh,
-          isRefreshing: _isRefreshing,
-        ),
-      ),
-      trailingControls: OrthaMapToolbar(
-        compact: true,
-        onZoomIn: _zoomIn,
-        onZoomOut: _zoomOut,
-        onCenter: _centerOnLocation,
-      ),
-      timeline:
-          metadata != null &&
-              metadata.frames.length > 1 &&
-              selectedFrame != null
-          ? OrthaRadarTimeline(
-              value: _selectedFrameIndex,
-              frameCount: metadata.frames.length,
-              currentTimeText: _formatRadarTime(selectedFrame.time),
-              relativeTimeText: _relativeRadarTime(selectedFrame.time),
-              firstTimeText: _formatRadarTime(metadata.frames.first.time),
-              lastTimeText: _formatRadarTime(metadata.frames.last.time),
-              isAnimating: _isAnimating,
-              onToggleAnimation: _toggleAnimation,
-              onChangeStart: _stopAnimation,
-              onChanged: _selectFrame,
-            )
-          : null,
-      map: Stack(
-        fit: StackFit.expand,
-        children: [
-          FlutterMap(
-            mapController: _mapController,
-            options: MapOptions(
-              initialCenter: _center,
-              initialZoom: _hasCoordinates ? 8.5 : 6,
-              minZoom: 2,
-              maxZoom: 18,
-              interactionOptions: const InteractionOptions(
-                flags: InteractiveFlag.all,
+    return ListView(
+      padding: EdgeInsets.zero,
+      children: [
+        SizedBox(
+          height: 560,
+          child: OrthaFullscreenMapPage(
+            topBar: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: OrthaMapHeader(
+                place: widget.place,
+                mode: 'Niederschlagsradar',
+                statusText: statusText,
+                novaStatus: 'Normal',
+                coordinatesAvailable: _hasCoordinates,
+                onRefresh: _isRefreshing ? null : _refresh,
+                isRefreshing: _isRefreshing,
               ),
             ),
-            children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'de.ortha.meteo',
-                maxZoom: 18,
-                tileDisplay: const TileDisplay.fadeIn(),
-              ),
-              if (radarTileUrl != null)
-                TileLayer(
-                  key: ValueKey(radarTileUrl),
-                  urlTemplate: radarTileUrl,
-                  userAgentPackageName: 'de.ortha.meteo',
-                  minNativeZoom: 0,
-                  maxNativeZoom: 7,
-                  maxZoom: 18,
-                  tileDisplay: const TileDisplay.fadeIn(),
-                  errorTileCallback: (tile, error, stackTrace) {
-                    _handleRadarTileError(error);
-
-                    if (!error.toString().contains('429')) {
-                      final coordinates = tile.coordinates;
-
-                      debugPrint('');
-                      debugPrint('===== ORTHA RADAR TILE ERROR =====');
-                      debugPrint(
-                        'z=${coordinates.z} '
-                        'x=${coordinates.x} '
-                        'y=${coordinates.y}',
-                      );
-                      debugPrint('Fehler: $error');
-                      debugPrint('==================================');
-                    }
-                  },
+            trailingControls: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                OrthaMapToolbar(
+                  compact: true,
+                  onZoomIn: _zoomIn,
+                  onZoomOut: _zoomOut,
+                  onCenter: _centerOnLocation,
                 ),
-              if (_hasCoordinates)
-                MarkerLayer(
-                  markers: [
-                    Marker(
-                      point: _center,
-                      width: 32,
-                      height: 32,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.blue.withValues(alpha: 0.20),
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 1.5),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.35),
-                              blurRadius: 6,
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.my_location,
-                          color: Colors.white,
-                          size: 17,
+                const SizedBox(height: 10),
+                Material(
+                  color: const Color(0xE6142F44),
+                  elevation: 5,
+                  shape: const CircleBorder(),
+                  child: IconButton(
+                    tooltip: _isMapInteractionLocked
+                        ? 'Karte entsperren'
+                        : 'Karte sperren',
+                    onPressed: _toggleMapInteractionLock,
+                    icon: Icon(
+                      _isMapInteractionLocked
+                          ? Icons.lock_outline
+                          : Icons.lock_open_outlined,
+                      color: _isMapInteractionLocked
+                          ? const Color(0xFFF2BE57)
+                          : Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            timeline:
+                metadata != null &&
+                    metadata.frames.length > 1 &&
+                    selectedFrame != null
+                ? OrthaRadarTimeline(
+                    value: _selectedFrameIndex,
+                    frameCount: metadata.frames.length,
+                    currentTimeText: _formatRadarTime(selectedFrame.time),
+                    relativeTimeText: _relativeRadarTime(selectedFrame.time),
+                    firstTimeText: _formatRadarTime(metadata.frames.first.time),
+                    lastTimeText: _formatRadarTime(metadata.frames.last.time),
+                    isAnimating: _isAnimating,
+                    onToggleAnimation: _toggleAnimation,
+                    onChangeStart: _stopAnimation,
+                    onChanged: _selectFrame,
+                  )
+                : null,
+            map: Stack(
+              fit: StackFit.expand,
+              children: [
+                FlutterMap(
+                  mapController: _mapController,
+                  options: MapOptions(
+                    initialCenter: _center,
+                    initialZoom: _hasCoordinates ? 8.5 : 6,
+                    minZoom: 2,
+                    maxZoom: 18,
+
+                    interactionOptions: InteractionOptions(
+                      flags: _isMapInteractionLocked
+                          ? InteractiveFlag.pinchZoom |
+                                InteractiveFlag.doubleTapZoom
+                          : InteractiveFlag.all,
+                    ),
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate:
+                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'de.ortha.meteo',
+                      maxZoom: 18,
+                      tileDisplay: const TileDisplay.fadeIn(),
+                    ),
+                    if (primaryRadarTileUrl != null)
+                      AnimatedOpacity(
+                        opacity: _showPrimaryRadarLayer ? 1.0 : 0.0,
+                        duration: const Duration(milliseconds: 700),
+                        curve: Curves.easeInOut,
+                        child: TileLayer(
+                          key: ValueKey(
+                            'ortha-radar-primary-$primaryRadarTileUrl',
+                          ),
+                          urlTemplate: primaryRadarTileUrl,
+                          userAgentPackageName: 'de.ortha.meteo',
+                          minNativeZoom: 0,
+                          maxNativeZoom: 7,
+                          maxZoom: 18,
+                          errorTileCallback: (tile, error, stackTrace) {
+                            _handleRadarTileError(error);
+                          },
                         ),
                       ),
+                    if (secondaryRadarTileUrl != null)
+                      AnimatedOpacity(
+                        opacity: _showPrimaryRadarLayer ? 0.0 : 1.0,
+                        duration: const Duration(milliseconds: 700),
+                        curve: Curves.easeInOut,
+                        child: TileLayer(
+                          key: ValueKey(
+                            'ortha-radar-secondary-$secondaryRadarTileUrl',
+                          ),
+                          urlTemplate: secondaryRadarTileUrl,
+                          userAgentPackageName: 'de.ortha.meteo',
+                          minNativeZoom: 0,
+                          maxNativeZoom: 7,
+                          maxZoom: 18,
+                          errorTileCallback: (tile, error, stackTrace) {
+                            _handleRadarTileError(error);
+                          },
+                        ),
+                      ),
+                    if (_hasCoordinates)
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: _center,
+                            width: 32,
+                            height: 32,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.blue.withValues(alpha: 0.20),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 1.5,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.35),
+                                    blurRadius: 6,
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.my_location,
+                                color: Colors.white,
+                                size: 17,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    const RichAttributionWidget(
+                      attributions: [
+                        TextSourceAttribution('OpenStreetMap contributors'),
+                        TextSourceAttribution('RainViewer'),
+                      ],
                     ),
                   ],
                 ),
-              const RichAttributionWidget(
-                attributions: [
-                  TextSourceAttribution('OpenStreetMap contributors'),
-                  TextSourceAttribution('RainViewer'),
-                ],
-              ),
-            ],
+                if (_isLoading)
+                  const Positioned.fill(
+                    child: ColoredBox(
+                      color: Color(0x99071018),
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            CircularProgressIndicator(),
+                            SizedBox(height: 16),
+                            Text(
+                              'Live-Radardaten werden geladen …',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                if (_errorMessage != null && !_isLoading)
+                  Positioned(
+                    left: 20,
+                    right: 20,
+                    top: 120,
+                    child: Material(
+                      color: Theme.of(context).colorScheme.errorContainer,
+                      elevation: 8,
+                      borderRadius: BorderRadius.circular(18),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(18, 14, 10, 14),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.cloud_off_outlined,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onErrorContainer,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                _errorMessage!,
+                                style: TextStyle(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onErrorContainer,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              tooltip: 'Erneut versuchen',
+                              onPressed: _loadRadar,
+                              icon: const Icon(Icons.refresh),
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onErrorContainer,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                if (metadata?.isStale == true && !_isLoading)
+                  Positioned(
+                    left: 20,
+                    right: 20,
+                    top: 120,
+                    child: Material(
+                      color: Colors.orange.withValues(alpha: 0.92),
+                      elevation: 8,
+                      borderRadius: BorderRadius.circular(18),
+                      child: const Padding(
+                        padding: EdgeInsets.all(14),
+                        child: Row(
+                          children: [
+                            Icon(Icons.history_toggle_off_outlined),
+                            SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Der Radarserver ist derzeit nicht erreichbar. '
+                                'Angezeigt wird der letzte verfügbare Radarstand.',
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
-          if (_isLoading)
-            const Positioned.fill(
-              child: ColoredBox(
-                color: Color(0x99071018),
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CircularProgressIndicator(),
-                      SizedBox(height: 16),
-                      Text(
-                        'Live-Radardaten werden geladen …',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          if (_errorMessage != null && !_isLoading)
-            Positioned(
-              left: 20,
-              right: 20,
-              top: 120,
-              child: Material(
-                color: Theme.of(context).colorScheme.errorContainer,
-                elevation: 8,
-                borderRadius: BorderRadius.circular(18),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(18, 14, 10, 14),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.cloud_off_outlined,
-                        color: Theme.of(context).colorScheme.onErrorContainer,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          _errorMessage!,
-                          style: TextStyle(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onErrorContainer,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        tooltip: 'Erneut versuchen',
-                        onPressed: _loadRadar,
-                        icon: const Icon(Icons.refresh),
-                        color: Theme.of(context).colorScheme.onErrorContainer,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          if (metadata?.isStale == true && !_isLoading)
-            Positioned(
-              left: 20,
-              right: 20,
-              top: 120,
-              child: Material(
-                color: Colors.orange.withValues(alpha: 0.92),
-                elevation: 8,
-                borderRadius: BorderRadius.circular(18),
-                child: const Padding(
-                  padding: EdgeInsets.all(14),
-                  child: Row(
-                    children: [
-                      Icon(Icons.history_toggle_off_outlined),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'Der Radarserver ist derzeit nicht erreichbar. '
-                          'Angezeigt wird der letzte verfügbare Radarstand.',
-                          style: TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
+        ),
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16, 12, 16, 14),
+          child: OrthaRadarLegend(),
+        ),
+      ],
     );
   }
 }

@@ -30,8 +30,8 @@ class OrthaMapToolbar extends StatelessWidget {
 
     return Material(
       key: const Key('ortha-map-toolbar'),
-      color: Colors.black.withValues(alpha: 0.84),
-      elevation: 8,
+      color: Colors.black.withValues(alpha: 0.38),
+      elevation: 4,
       borderRadius: BorderRadius.circular(compact ? 18 : 22),
       clipBehavior: Clip.antiAlias,
       child: Padding(
