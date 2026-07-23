@@ -15,17 +15,28 @@ class PollenServiceException implements Exception {
   String toString() => message;
 }
 
-/// Kompatible Fassade für die neue ORTHA Pollen Engine.
+/// Kompatible Fassade für die ORTHA Pollen Engine.
 ///
-/// PollenPage und vorhandene Aufrufer können diesen Service unverändert
-/// weiterverwenden. Intern arbeitet bereits die Provider-Architektur.
+/// Bestehende Aufrufer können den Service weiterhin ausschließlich mit einem
+/// HTTP-Client erzeugen. Zusätzliche Provider lassen sich kontrolliert vor
+/// Open-Meteo einordnen.
+///
+/// Damit kann beispielsweise der DWD-Provider für Orte verwendet werden, deren
+/// DWD-Pollenregion bereits belastbar bestimmt wurde. Open-Meteo bleibt als
+/// nachgelagerte Datenquelle erhalten.
 class PollenService {
-  PollenService({http.Client? client, PollenFusionEngine? engine})
-    : _engine =
-          engine ??
-          PollenFusionEngine(
-            providers: [OpenMeteoPollenProvider(client: client)],
-          );
+  PollenService({
+    http.Client? client,
+    PollenFusionEngine? engine,
+    List<PollenProvider> preferredProviders = const [],
+  }) : _engine =
+           engine ??
+           PollenFusionEngine(
+             providers: List.unmodifiable([
+               ...preferredProviders,
+               OpenMeteoPollenProvider(client: client),
+             ]),
+           );
 
   static const List<PollenType> supportedTypes =
       OpenMeteoPollenProvider.supportedTypes;
