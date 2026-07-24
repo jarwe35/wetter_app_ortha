@@ -35,6 +35,7 @@ import 'services/warning_providers/dwd_cap_download_client.dart';
 import 'services/warning_providers/dwd_warning_provider.dart';
 import 'services/weather_service.dart';
 
+import 'widgets/home/ortha_widget_service.dart';
 import 'widgets/dashboard/ortha_dashboard_header.dart';
 import 'widgets/dashboard/official_warning_header.dart';
 import 'widgets/dashboard/official_warning_instruction.dart';
@@ -54,6 +55,7 @@ import 'settings/unit_settings_page.dart';
 import 'settings/unit_settings_service.dart';
 import 'utils/official_warning_text_formatter.dart';
 
+import 'services/ortha_background_service.dart';
 part 'widgets/weather/daily_forecast_card.dart';
 part 'widgets/weather/hourly_forecast_card.dart';
 part 'widgets/weather/current_weather_card.dart';
@@ -66,7 +68,10 @@ const Color orthaSecondaryText = Color(0xFF587080);
 const Color orthaAccent = Color(0xFFD5A84A);
 const Color orthaBorder = Color(0xFFD3E2EC);
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await OrthaBackgroundService.initialize();
   runApp(const OrthaWeatherApp());
 }
 
@@ -639,6 +644,14 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
         officialWarningsError = warningsError;
         officialWarningsLoading = false;
       });
+
+      final widgetPlace = savedLocation?.name ?? data.place;
+
+      await OrthaWidgetService.update(
+        weather: data,
+        placeOverride: widgetPlace,
+        hasOfficialWarning: warnings.isNotEmpty,
+      );
 
       await _processOfficialWarningAlert(
         warnings: warnings,

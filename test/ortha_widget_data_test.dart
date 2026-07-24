@@ -1,17 +1,18 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wetter_app_ortha/engine/risk_engine.dart';
 import 'package:wetter_app_ortha/services/weather_service.dart';
 import 'package:wetter_app_ortha/widgets/home/ortha_widget_data.dart';
 
 void main() {
   WeatherData weather({
+    String place = 'Duisburg',
     int weatherCode = 0,
     double temperature = 24.4,
     double apparentTemperature = 25.6,
     String observationTime = '2026-07-16T13:30',
+    List<DailyForecast> dailyForecast = const [],
   }) {
     return WeatherData(
-      place: 'Duisburg',
+      place: place,
       latitude: 51.4344,
       longitude: 6.7623,
       temperature: temperature,
@@ -27,26 +28,15 @@ void main() {
       visibility: 20000,
       observationTime: observationTime,
       hourlyForecast: const [],
-      dailyForecast: const [],
-    );
-  }
-
-  RiskResult risk(RiskLevel level) {
-    return RiskResult(
-      level: level,
-      score: 0,
-      title: '',
-      message: '',
-      factors: const [],
-      forecastWarnings: const [],
-      categories: const [],
+      dailyForecast: dailyForecast,
     );
   }
 
   test('bereitet Ort und Temperaturen kompakt auf', () {
     final data = OrthaWidgetData.fromWeather(
       weather: weather(),
-      risk: risk(RiskLevel.green),
+      placeOverride: 'Duisburg',
+      hasOfficialWarning: false,
     );
 
     expect(data.place, 'Duisburg');
@@ -55,30 +45,33 @@ void main() {
     expect(data.observationTime, '13:30');
   });
 
-  test('ordnet grüne Warnlage korrekt zu', () {
+  test('ordnet fehlende amtliche Warnung grün zu', () {
     final data = OrthaWidgetData.fromWeather(
       weather: weather(),
-      risk: risk(RiskLevel.green),
+      placeOverride: 'Duisburg',
+      hasOfficialWarning: false,
     );
 
-    expect(data.warningLabel, 'Warnlage: Grün');
-    expect(data.warningLevel, RiskLevel.green);
+    expect(data.warningLabel, 'Keine amtliche Warnung');
+    expect(data.warningLevel, 'green');
   });
 
-  test('ordnet rote Warnlage korrekt zu', () {
+  test('ordnet amtliche Warnung rot zu', () {
     final data = OrthaWidgetData.fromWeather(
       weather: weather(),
-      risk: risk(RiskLevel.red),
+      placeOverride: 'Duisburg',
+      hasOfficialWarning: true,
     );
 
-    expect(data.warningLabel, 'Warnlage: Rot');
-    expect(data.warningLevel, RiskLevel.red);
+    expect(data.warningLabel, 'Amtliche Warnung');
+    expect(data.warningLevel, 'red');
   });
 
   test('ordnet Gewittercode einem Gewittersymbol zu', () {
     final data = OrthaWidgetData.fromWeather(
       weather: weather(weatherCode: 95),
-      risk: risk(RiskLevel.orange),
+      placeOverride: 'Duisburg',
+      hasOfficialWarning: false,
     );
 
     expect(data.weatherSymbol, '⛈');
@@ -87,9 +80,117 @@ void main() {
   test('behält unbekannte Beobachtungszeit unverändert bei', () {
     final data = OrthaWidgetData.fromWeather(
       weather: weather(observationTime: 'unbekannt'),
-      risk: risk(RiskLevel.yellow),
+      placeOverride: 'Duisburg',
+      hasOfficialWarning: false,
     );
 
     expect(data.observationTime, 'unbekannt');
+  });
+
+  test('verwendet das Datum der Tagesvorhersage für Wochentage', () {
+    final data = OrthaWidgetData.fromWeather(
+      weather: weather(
+        dailyForecast: const [
+          DailyForecast(
+            date: '2026-07-24',
+            temperatureMin: 14,
+            temperatureMax: 23,
+            weatherCode: 0,
+            precipitationProbability: 5,
+            uvIndex: 4,
+          ),
+          DailyForecast(
+            date: '2026-07-25',
+            temperatureMin: 15,
+            temperatureMax: 24,
+            weatherCode: 1,
+            precipitationProbability: 10,
+            uvIndex: 4,
+          ),
+          DailyForecast(
+            date: '2026-07-26',
+            temperatureMin: 16,
+            temperatureMax: 25,
+            weatherCode: 3,
+            precipitationProbability: 20,
+            uvIndex: 3,
+          ),
+        ],
+      ),
+      placeOverride: 'Duisburg',
+      hasOfficialWarning: false,
+    );
+
+    expect(data.days, hasLength(3));
+
+    expect(data.days[0].label, 'Heute');
+    expect(data.days[0].symbol, '☀');
+    expect(data.days[0].temperature, '23° / 14°');
+
+    expect(data.days[1].label, 'Sa');
+    expect(data.days[1].symbol, '🌤');
+    expect(data.days[1].temperature, '24° / 15°');
+
+    expect(data.days[2].label, 'So');
+    expect(data.days[2].symbol, '☁');
+    expect(data.days[2].temperature, '25° / 16°');
+  });
+
+  test('ergänzt fehlende Prognosetage mit Platzhaltern', () {
+    final data = OrthaWidgetData.fromWeather(
+      weather: weather(
+        dailyForecast: const [
+          DailyForecast(
+            date: '2026-07-24',
+            temperatureMin: 14,
+            temperatureMax: 23,
+            weatherCode: 0,
+            precipitationProbability: 5,
+            uvIndex: 4,
+          ),
+        ],
+      ),
+      placeOverride: 'Duisburg',
+      hasOfficialWarning: false,
+    );
+
+    expect(data.days, hasLength(3));
+    expect(data.days[0].label, 'Heute');
+    expect(data.days[1].label, '–');
+    expect(data.days[1].symbol, '–');
+    expect(data.days[1].temperature, '– / –');
+    expect(data.days[2].label, '–');
+  });
+
+  test('verwendet den ausgewählten Ort statt des WeatherData-Ortes', () {
+    final data = OrthaWidgetData.fromWeather(
+      weather: weather(place: 'Koblenz'),
+      placeOverride: 'Duisburg',
+      hasOfficialWarning: false,
+    );
+
+    expect(data.place, 'Duisburg');
+  });
+
+  test('ersetzt einen leeren Ortsnamen', () {
+    final data = OrthaWidgetData.fromWeather(
+      weather: weather(place: '   '),
+      placeOverride: '',
+      hasOfficialWarning: false,
+    );
+
+    expect(data.place, 'Unbekannter Ort');
+  });
+
+  test('formatiert bekannte Wettercodes für das Widget', () {
+    expect(OrthaWidgetData.symbolForWeatherCode(0), '☀');
+    expect(OrthaWidgetData.symbolForWeatherCode(2), '🌤');
+    expect(OrthaWidgetData.symbolForWeatherCode(3), '☁');
+    expect(OrthaWidgetData.symbolForWeatherCode(45), '🌫');
+    expect(OrthaWidgetData.symbolForWeatherCode(53), '🌦');
+    expect(OrthaWidgetData.symbolForWeatherCode(63), '🌧');
+    expect(OrthaWidgetData.symbolForWeatherCode(75), '❄');
+    expect(OrthaWidgetData.symbolForWeatherCode(95), '⛈');
+    expect(OrthaWidgetData.symbolForWeatherCode(999), '•');
   });
 }
