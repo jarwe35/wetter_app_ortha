@@ -676,9 +676,13 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
           content: TextField(
             controller: controller,
             autofocus: true,
+            style: const TextStyle(color: Colors.white),
+            cursorColor: const Color(0xFFD5A84A),
             decoration: const InputDecoration(
               labelText: 'Ort',
               hintText: 'z. B. Düsseldorf, Dinard, Berlin',
+              labelStyle: TextStyle(color: Color(0xFFD5A84A)),
+              hintStyle: TextStyle(color: Colors.white54),
             ),
             onSubmitted: (_) {
               addPlaceFromDialog(controller, dialogContext);
@@ -927,6 +931,15 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
         context,
         MaterialPageRoute(
           builder: (context) => WarningCenterPage(
+            onHome: () {
+              Navigator.of(context).popUntil((route) => route.isFirst);
+
+              if (mounted && selectedNavigationIndex != 0) {
+                setState(() {
+                  selectedNavigationIndex = 0;
+                });
+              }
+            },
             warnings: officialWarnings,
             isLoading: officialWarningsLoading,
             errorMessage: officialWarningsError,
@@ -966,6 +979,24 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
     });
   }
 
+  OrthaWarningBeaconState _warningBeaconState() {
+    if (officialWarningsLoading || (isLoading && riskResult == null)) {
+      return OrthaWarningBeaconState.loading;
+    }
+
+    final hasActiveOfficialWarning = officialWarnings.any(
+      (warning) => warning.isActive,
+    );
+
+    final hasCriticalOrthaRisk = riskResult?.level == RiskLevel.red;
+
+    if (hasActiveOfficialWarning || hasCriticalOrthaRisk) {
+      return OrthaWarningBeaconState.red;
+    }
+
+    return OrthaWarningBeaconState.green;
+  }
+
   @override
   Widget build(BuildContext context) {
     final data = weatherData;
@@ -979,8 +1010,19 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             OrthaDashboardHeader(
+              onHome: () {
+                if (selectedNavigationIndex == 0) {
+                  return;
+                }
+
+                setState(() {
+                  selectedNavigationIndex = 0;
+                });
+              },
+              onOpenWarnings: () => handleNavigationSelection(11),
               onOpenLocations: openLocationsPage,
               onOpenUnitSettings: openUnitSettings,
+              warningState: _warningBeaconState(),
             ),
             SizedBox(height: ui.cardSpacing),
             PlaceSelector(

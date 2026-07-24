@@ -11,6 +11,7 @@ const Color orthaAccent = Color(0xFFD5A84A);
 const Color orthaBorder = Color(0xFFD6E2EA);
 
 class WarningCenterPage extends StatelessWidget {
+  final VoidCallback? onHome;
   final List<OfficialWeatherWarning> warnings;
   final bool isLoading;
   final String? errorMessage;
@@ -20,6 +21,7 @@ class WarningCenterPage extends StatelessWidget {
 
   const WarningCenterPage({
     super.key,
+    this.onHome,
     required this.warnings,
     required this.isLoading,
     required this.errorMessage,
@@ -51,6 +53,12 @@ class WarningCenterPage extends StatelessWidget {
         backgroundColor: orthaSurface,
         foregroundColor: orthaPrimaryText,
         elevation: 0,
+        automaticallyImplyLeading: false,
+        leading: IconButton(
+          tooltip: 'Zur Übersicht',
+          icon: const Icon(Icons.home_outlined),
+          onPressed: onHome ?? () => Navigator.of(context).pop(),
+        ),
         title: const Text(
           'ORTHA METEO Ω',
           style: TextStyle(fontWeight: FontWeight.bold),

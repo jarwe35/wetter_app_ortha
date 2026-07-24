@@ -42,8 +42,8 @@ class OrthaNavigationDrawer extends StatelessWidget {
             _sectionTitle('SICHERHEIT'),
             _entry(context, Icons.campaign_outlined, 'Warnzentrale', 11),
             _entry(context, Icons.warning_amber_outlined, 'Warnungen', 1),
-            _entry(context, Icons.shield_outlined, 'Risikoanalyse', 2),
 
+            // _entry(context, Icons.shield_outlined, 'Risikoanalyse', 2),
             _sectionTitle('ORTE'),
             _entry(context, Icons.location_on_outlined, 'Meine Orte', 6),
 
