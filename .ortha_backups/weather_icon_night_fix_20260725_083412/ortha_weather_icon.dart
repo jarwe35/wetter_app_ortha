@@ -32,10 +32,11 @@ abstract final class OrthaWeatherCodeMapper {
   }
 }
 
-/// Skalierbares Wettericon mit Semi-3D-Grunddarstellung.
+/// Skalierbares Wettericon mit einer dezenten Semi-3D-Grunddarstellung.
 ///
-/// Die Darstellung berücksichtigt den Tag-/Nachtstatus. Bei klarem oder
-/// teilweise bewölktem Himmel wird nachts kein Sonnensymbol mehr gezeichnet.
+/// Die Komponente verwendet vorerst Flutter-Materialsymbole. Schatten,
+/// Farbverlauf und Glanzfläche bilden die technische Grundlage für die
+/// spätere eigenständige ORTHA-Symbolsprache.
 class OrthaWeatherIcon extends StatelessWidget {
   const OrthaWeatherIcon({
     super.key,
@@ -53,11 +54,11 @@ class OrthaWeatherIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final condition = OrthaWeatherCodeMapper.fromWmoCode(weatherCode);
-    final style = _styleFor(condition, isNight: isNight);
+    final style = _styleFor(condition);
 
     return Semantics(
       image: true,
-      label: semanticLabel ?? _descriptionFor(condition, isNight: isNight),
+      label: semanticLabel ?? _descriptionFor(condition),
       child: SizedBox.square(
         dimension: size,
         child: DecoratedBox(
@@ -93,11 +94,7 @@ class OrthaWeatherIcon extends StatelessWidget {
           child: Stack(
             alignment: Alignment.center,
             children: <Widget>[
-              Icon(
-                style.icon,
-                size: size * style.iconScale,
-                color: style.iconColor,
-              ),
+              Icon(style.icon, size: size * 0.55, color: style.iconColor),
               Positioned(
                 top: size * 0.13,
                 left: size * 0.22,
@@ -115,7 +112,7 @@ class OrthaWeatherIcon extends StatelessWidget {
                   ),
                 ),
               ),
-              if (style.showNightBadge)
+              if (isNight)
                 Positioned(
                   right: size * 0.11,
                   top: size * 0.11,
@@ -132,95 +129,7 @@ class OrthaWeatherIcon extends StatelessWidget {
     );
   }
 
-  static _OrthaWeatherIconStyle _styleFor(
-    OrthaWeatherCondition condition, {
-    required bool isNight,
-  }) {
-    if (isNight) {
-      return switch (condition) {
-        OrthaWeatherCondition.clear => const _OrthaWeatherIconStyle(
-          icon: Icons.nightlight_round,
-          highlight: Color(0xFFDCE8FF),
-          base: Color(0xFF5E74A6),
-          shadow: Color(0xFF24304F),
-          iconColor: Color(0xFFF4F7FF),
-          iconScale: 0.53,
-        ),
-        OrthaWeatherCondition.partlyCloudy => const _OrthaWeatherIconStyle(
-          icon: Icons.nights_stay_rounded,
-          highlight: Color(0xFFD9E5F7),
-          base: Color(0xFF64758F),
-          shadow: Color(0xFF2C394D),
-          iconColor: Color(0xFFF2F5FA),
-          iconScale: 0.53,
-        ),
-        OrthaWeatherCondition.cloudy => const _OrthaWeatherIconStyle(
-          icon: Icons.cloud_rounded,
-          highlight: Color(0xFFD9E1EB),
-          base: Color(0xFF718095),
-          shadow: Color(0xFF303B4C),
-          iconColor: Color(0xFFF2F2F2),
-          showNightBadge: true,
-        ),
-        OrthaWeatherCondition.fog => const _OrthaWeatherIconStyle(
-          icon: Icons.blur_on_rounded,
-          highlight: Color(0xFFDCE6E9),
-          base: Color(0xFF7F9199),
-          shadow: Color(0xFF39494F),
-          iconColor: Color(0xFFF2F2F2),
-          showNightBadge: true,
-        ),
-        OrthaWeatherCondition.drizzle => const _OrthaWeatherIconStyle(
-          icon: Icons.grain_rounded,
-          highlight: Color(0xFFCFE4F2),
-          base: Color(0xFF47779B),
-          shadow: Color(0xFF203B56),
-          iconColor: Color(0xFFF2F2F2),
-          showNightBadge: true,
-        ),
-        OrthaWeatherCondition.rain => const _OrthaWeatherIconStyle(
-          icon: Icons.water_drop_rounded,
-          highlight: Color(0xFFC4DEF0),
-          base: Color(0xFF326F9B),
-          shadow: Color(0xFF17354F),
-          iconColor: Color(0xFFF2F2F2),
-          showNightBadge: true,
-        ),
-        OrthaWeatherCondition.snow => const _OrthaWeatherIconStyle(
-          icon: Icons.ac_unit_rounded,
-          highlight: Color(0xFFF2F2F2),
-          base: Color(0xFFA7C5D9),
-          shadow: Color(0xFF536F85),
-          iconColor: Color(0xFFF2F2F2),
-          showNightBadge: true,
-        ),
-        OrthaWeatherCondition.shower => const _OrthaWeatherIconStyle(
-          icon: Icons.shower_rounded,
-          highlight: Color(0xFFC6E2F0),
-          base: Color(0xFF3C789D),
-          shadow: Color(0xFF1C4058),
-          iconColor: Color(0xFFF2F2F2),
-          showNightBadge: true,
-        ),
-        OrthaWeatherCondition.thunderstorm => const _OrthaWeatherIconStyle(
-          icon: Icons.thunderstorm_rounded,
-          highlight: Color(0xFFDED8F0),
-          base: Color(0xFF5E4A8C),
-          shadow: Color(0xFF2A2045),
-          iconColor: Color(0xFFFFE56B),
-          showNightBadge: true,
-        ),
-        OrthaWeatherCondition.unknown => const _OrthaWeatherIconStyle(
-          icon: Icons.question_mark_rounded,
-          highlight: Color(0xFFD9E0E7),
-          base: Color(0xFF657180),
-          shadow: Color(0xFF303A44),
-          iconColor: Color(0xFFF2F2F2),
-          showNightBadge: true,
-        ),
-      };
-    }
-
+  static _OrthaWeatherIconStyle _styleFor(OrthaWeatherCondition condition) {
     return switch (condition) {
       OrthaWeatherCondition.clear => const _OrthaWeatherIconStyle(
         icon: Icons.wb_sunny_rounded,
@@ -295,14 +204,10 @@ class OrthaWeatherIcon extends StatelessWidget {
     };
   }
 
-  static String _descriptionFor(
-    OrthaWeatherCondition condition, {
-    required bool isNight,
-  }) {
+  static String _descriptionFor(OrthaWeatherCondition condition) {
     return switch (condition) {
-      OrthaWeatherCondition.clear => isNight ? 'Klare Nacht' : 'Klar',
-      OrthaWeatherCondition.partlyCloudy =>
-        isNight ? 'Teilweise bewölkte Nacht' : 'Teilweise bewölkt',
+      OrthaWeatherCondition.clear => 'Klar',
+      OrthaWeatherCondition.partlyCloudy => 'Teilweise bewölkt',
       OrthaWeatherCondition.cloudy => 'Bewölkt',
       OrthaWeatherCondition.fog => 'Nebel',
       OrthaWeatherCondition.drizzle => 'Nieselregen',
@@ -322,8 +227,6 @@ class _OrthaWeatherIconStyle {
     required this.base,
     required this.shadow,
     required this.iconColor,
-    this.iconScale = 0.55,
-    this.showNightBadge = false,
   });
 
   final IconData icon;
@@ -331,6 +234,4 @@ class _OrthaWeatherIconStyle {
   final Color base;
   final Color shadow;
   final Color iconColor;
-  final double iconScale;
-  final bool showNightBadge;
 }

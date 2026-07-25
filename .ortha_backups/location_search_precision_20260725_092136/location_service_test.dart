@@ -187,24 +187,13 @@ void main() {
       final locations = await service.searchLocations('Frankfurt');
 
       expect(locations, hasLength(2));
+      expect(locations[0].name, 'Frankfurt am Main');
+      expect(locations[0].admin1, 'Hessen');
+      expect(locations[0].country, 'Deutschland');
 
-      final frankfurtAmMain = locations.singleWhere(
-        (location) => location.name == 'Frankfurt am Main',
-      );
-
-      final frankfurtOder = locations.singleWhere(
-        (location) => location.name == 'Frankfurt (Oder)',
-      );
-
-      expect(frankfurtAmMain.admin1, 'Hessen');
-      expect(frankfurtAmMain.country, 'Deutschland');
-      expect(frankfurtAmMain.latitude, closeTo(50.1109, 0.0001));
-      expect(frankfurtAmMain.longitude, closeTo(8.6821, 0.0001));
-
-      expect(frankfurtOder.admin1, 'Brandenburg');
-      expect(frankfurtOder.country, 'Deutschland');
-      expect(frankfurtOder.latitude, closeTo(52.3471, 0.0001));
-      expect(frankfurtOder.longitude, closeTo(14.5506, 0.0001));
+      expect(locations[1].name, 'Frankfurt (Oder)');
+      expect(locations[1].admin1, 'Brandenburg');
+      expect(locations[1].country, 'Deutschland');
     });
 
     test('bevorzugt bei mehreren Treffern den exakten Ortsnamen', () async {

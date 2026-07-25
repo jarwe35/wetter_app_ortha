@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../models/saved_location.dart';
-import 'package:flutter/foundation.dart';
 
 class HourlyForecast {
   final String time;
@@ -48,8 +47,8 @@ class DailyForecast {
     required this.weatherCode,
     required this.precipitationProbability,
     required this.uvIndex,
-    this.sunrise = '',
-    this.sunset = '',
+    required this.sunrise,
+    required this.sunset,
   });
 }
 
@@ -174,16 +173,6 @@ class WeatherService {
       'timezone': 'auto',
     });
 
-    if (kDebugMode) {
-      debugPrint('==============================');
-      debugPrint('[ORTHA WEATHER] API-ABFRAGE');
-      debugPrint('Ort: $resolvedName');
-      debugPrint('Latitude: $latitude');
-      debugPrint('Longitude: $longitude');
-      debugPrint('URL: $weatherUrl');
-      debugPrint('==============================');
-    }
-
     final weatherResponse = await _get(
       weatherUrl,
     ).timeout(const Duration(seconds: 15));
@@ -272,27 +261,6 @@ class WeatherService {
     final dailyUvIndices = daily['uv_index_max'] as List;
     final dailySunrises = daily['sunrise'] as List? ?? const [];
     final dailySunsets = daily['sunset'] as List? ?? const [];
-
-    if (kDebugMode) {
-      debugPrint('==============================');
-      debugPrint('[ORTHA WEATHER] ROHE TAGESWERTE');
-      debugPrint('Ort: $resolvedName');
-      debugPrint('Latitude: $latitude');
-      debugPrint('Longitude: $longitude');
-
-      final diagnosticLength = dailyTimes.length < 5 ? dailyTimes.length : 5;
-
-      for (var index = 0; index < diagnosticLength; index++) {
-        debugPrint(
-          'Tag ${dailyTimes[index]} | '
-          'min=${dailyTemperatureMin[index]} °C | '
-          'max=${dailyTemperatureMax[index]} °C | '
-          'code=${dailyWeatherCodes[index]}',
-        );
-      }
-
-      debugPrint('==============================');
-    }
 
     final dailyForecast = List<DailyForecast>.generate(dailyTimes.length, (
       index,

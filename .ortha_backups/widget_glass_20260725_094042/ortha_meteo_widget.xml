@@ -94,7 +94,7 @@
             android:layout_width="34dp"
             android:layout_height="86dp"
             android:layout_marginStart="10dp"
-            android:background="#1210202B"
+            android:background="#2010202B"
             android:gravity="center"
             android:orientation="vertical"
             android:padding="5dp">
@@ -240,7 +240,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
-        android:background="#144F4559"
+        android:background="#244F4559"
         android:gravity="center"
         android:padding="7dp"
         android:text="● Keine amtliche Warnung"

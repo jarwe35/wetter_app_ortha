@@ -440,7 +440,7 @@ class _ForecastPainter extends CustomPainter {
 
       _drawIcon(
         canvas,
-        icon: _weatherIcon(hour.weatherCode, isNight: !hour.isDay),
+        icon: _weatherIcon(hour.weatherCode),
         centerX: x,
         top: _iconY,
       );
@@ -536,13 +536,13 @@ class _ForecastPainter extends CustomPainter {
     return '${dateTime.hour.toString().padLeft(2, '0')}:00';
   }
 
-  static IconData _weatherIcon(int weatherCode, {required bool isNight}) {
+  static IconData _weatherIcon(int weatherCode) {
     if (weatherCode == 0) {
-      return isNight ? Icons.nightlight_round : Icons.wb_sunny_rounded;
+      return Icons.wb_sunny_outlined;
     }
 
     if (weatherCode == 1 || weatherCode == 2) {
-      return isNight ? Icons.nights_stay_rounded : Icons.wb_cloudy_rounded;
+      return Icons.wb_cloudy_outlined;
     }
 
     if (weatherCode == 3 || weatherCode == 45 || weatherCode == 48) {

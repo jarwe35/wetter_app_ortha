@@ -99,130 +99,21 @@ class LocationService {
       );
     }
 
-    _sortLocationsBySearchQuality(locations, searchText: cleanedPlace);
-
     return List<SavedLocation>.unmodifiable(locations);
   }
 
   Future<SavedLocation> resolveLocation(String place) async {
     final cleanedPlace = place.trim();
     final locations = await searchLocations(cleanedPlace);
+    final normalizedSearch = cleanedPlace.toLowerCase();
 
-    final normalizedSearch = _normalizeLocationText(cleanedPlace);
-
-    // 1. Exakte Namensübereinstimmung
     for (final location in locations) {
-      if (_normalizeLocationText(location.name) == normalizedSearch) {
+      if (location.name.trim().toLowerCase() == normalizedSearch) {
         return location;
       }
     }
 
-    // 2. Vollständige Beschriftung enthält Suchbegriff
-    for (final location in locations) {
-      if (_normalizeLocationText(
-        location.displayLabel,
-      ).contains(normalizedSearch)) {
-        return location;
-      }
-    }
-
-    // 3. Fallback = erster API-Treffer
     return locations.first;
-  }
-
-  void _sortLocationsBySearchQuality(
-    List<SavedLocation> locations, {
-    required String searchText,
-  }) {
-    final normalizedSearch = _normalizeLocationText(searchText);
-    final searchTokens = _locationTokens(normalizedSearch);
-
-    locations.sort((left, right) {
-      final leftScore = _locationMatchScore(
-        left,
-        normalizedSearch: normalizedSearch,
-        searchTokens: searchTokens,
-      );
-
-      final rightScore = _locationMatchScore(
-        right,
-        normalizedSearch: normalizedSearch,
-        searchTokens: searchTokens,
-      );
-
-      final scoreComparison = rightScore.compareTo(leftScore);
-
-      if (scoreComparison != 0) {
-        return scoreComparison;
-      }
-
-      return left.displayLabel.toLowerCase().compareTo(
-        right.displayLabel.toLowerCase(),
-      );
-    });
-  }
-
-  int _locationMatchScore(
-    SavedLocation location, {
-    required String normalizedSearch,
-    required List<String> searchTokens,
-  }) {
-    final normalizedName = _normalizeLocationText(location.name);
-    final normalizedLabel = _normalizeLocationText(location.displayLabel);
-
-    var score = 0;
-
-    // Exakte Ortsnamen haben immer Vorrang.
-    if (normalizedName == normalizedSearch) {
-      score += 10000;
-    }
-
-    // Danach folgen Treffer, deren vollständige Beschriftung exakt passt.
-    if (normalizedLabel == normalizedSearch) {
-      score += 8000;
-    }
-
-    // "New York" soll vor "York" erscheinen.
-    if (normalizedName.startsWith(normalizedSearch)) {
-      score += 5000;
-    } else if (normalizedName.contains(normalizedSearch)) {
-      score += 3500;
-    }
-
-    // Alle eingegebenen Wörter müssen möglichst im Treffer enthalten sein.
-    final matchingTokens = searchTokens.where(normalizedLabel.contains).length;
-
-    score += matchingTokens * 600;
-
-    if (searchTokens.isNotEmpty && matchingTokens == searchTokens.length) {
-      score += 2500;
-    }
-
-    // Kürzere Abweichungen werden gegenüber weit entfernten
-    // unscharfen Treffern bevorzugt.
-    final lengthDifference = (normalizedName.length - normalizedSearch.length)
-        .abs();
-
-    score -= lengthDifference.clamp(0, 500);
-
-    return score;
-  }
-
-  List<String> _locationTokens(String value) {
-    return value
-        .split(' ')
-        .map((token) => token.trim())
-        .where((token) => token.isNotEmpty)
-        .toList(growable: false);
-  }
-
-  String _normalizeLocationText(String value) {
-    return value
-        .trim()
-        .toLowerCase()
-        .replaceAll(RegExp(r'[^\p{L}\p{N}]+', unicode: true), ' ')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
   }
 
   SavedLocation? _savedLocationFromResult(Map<String, dynamic> result) {

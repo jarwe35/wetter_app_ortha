@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../models/saved_location.dart';
-import 'package:flutter/foundation.dart';
 
 class HourlyForecast {
   final String time;
@@ -38,8 +37,6 @@ class DailyForecast {
   final int weatherCode;
   final int precipitationProbability;
   final double uvIndex;
-  final String sunrise;
-  final String sunset;
 
   const DailyForecast({
     required this.date,
@@ -48,8 +45,6 @@ class DailyForecast {
     required this.weatherCode,
     required this.precipitationProbability,
     required this.uvIndex,
-    this.sunrise = '',
-    this.sunset = '',
   });
 }
 
@@ -169,20 +164,10 @@ class WeatherService {
           'precipitation_probability,visibility',
       'daily':
           'weather_code,temperature_2m_max,temperature_2m_min,'
-          'precipitation_probability_max,uv_index_max,sunrise,sunset',
+          'precipitation_probability_max,uv_index_max',
       'forecast_days': '14',
       'timezone': 'auto',
     });
-
-    if (kDebugMode) {
-      debugPrint('==============================');
-      debugPrint('[ORTHA WEATHER] API-ABFRAGE');
-      debugPrint('Ort: $resolvedName');
-      debugPrint('Latitude: $latitude');
-      debugPrint('Longitude: $longitude');
-      debugPrint('URL: $weatherUrl');
-      debugPrint('==============================');
-    }
 
     final weatherResponse = await _get(
       weatherUrl,
@@ -270,29 +255,6 @@ class WeatherService {
     final dailyPrecipitationProbabilities =
         daily['precipitation_probability_max'] as List;
     final dailyUvIndices = daily['uv_index_max'] as List;
-    final dailySunrises = daily['sunrise'] as List? ?? const [];
-    final dailySunsets = daily['sunset'] as List? ?? const [];
-
-    if (kDebugMode) {
-      debugPrint('==============================');
-      debugPrint('[ORTHA WEATHER] ROHE TAGESWERTE');
-      debugPrint('Ort: $resolvedName');
-      debugPrint('Latitude: $latitude');
-      debugPrint('Longitude: $longitude');
-
-      final diagnosticLength = dailyTimes.length < 5 ? dailyTimes.length : 5;
-
-      for (var index = 0; index < diagnosticLength; index++) {
-        debugPrint(
-          'Tag ${dailyTimes[index]} | '
-          'min=${dailyTemperatureMin[index]} °C | '
-          'max=${dailyTemperatureMax[index]} °C | '
-          'code=${dailyWeatherCodes[index]}',
-        );
-      }
-
-      debugPrint('==============================');
-    }
 
     final dailyForecast = List<DailyForecast>.generate(dailyTimes.length, (
       index,
@@ -305,12 +267,6 @@ class WeatherService {
         precipitationProbability:
             (dailyPrecipitationProbabilities[index] as num).round(),
         uvIndex: (dailyUvIndices[index] as num).toDouble(),
-        sunrise: index < dailySunrises.length
-            ? dailySunrises[index].toString()
-            : '',
-        sunset: index < dailySunsets.length
-            ? dailySunsets[index].toString()
-            : '',
       );
     });
 

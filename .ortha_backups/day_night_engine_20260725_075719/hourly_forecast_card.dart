@@ -59,7 +59,6 @@ class HourlyForecastCard extends StatelessWidget {
                           ),
                           OrthaWeatherIcon(
                             weatherCode: item.weatherCode,
-                            isNight: !item.isDay,
                             size: iconSize,
                             semanticLabel: weatherText(item.weatherCode),
                           ),

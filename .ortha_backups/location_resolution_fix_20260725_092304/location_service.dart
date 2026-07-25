@@ -107,26 +107,14 @@ class LocationService {
   Future<SavedLocation> resolveLocation(String place) async {
     final cleanedPlace = place.trim();
     final locations = await searchLocations(cleanedPlace);
+    final normalizedSearch = cleanedPlace.toLowerCase();
 
-    final normalizedSearch = _normalizeLocationText(cleanedPlace);
-
-    // 1. Exakte Namensübereinstimmung
     for (final location in locations) {
-      if (_normalizeLocationText(location.name) == normalizedSearch) {
+      if (location.name.trim().toLowerCase() == normalizedSearch) {
         return location;
       }
     }
 
-    // 2. Vollständige Beschriftung enthält Suchbegriff
-    for (final location in locations) {
-      if (_normalizeLocationText(
-        location.displayLabel,
-      ).contains(normalizedSearch)) {
-        return location;
-      }
-    }
-
-    // 3. Fallback = erster API-Treffer
     return locations.first;
   }
 

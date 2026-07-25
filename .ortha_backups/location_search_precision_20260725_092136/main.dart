@@ -767,7 +767,9 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
     }
 
     final existingLocation = savedLocations.cast<SavedLocation?>().firstWhere(
-      (location) => location?.hasSameCoordinatesAs(resolvedLocation) ?? false,
+      (location) =>
+          location?.name.trim().toLowerCase() ==
+          resolvedLocation.name.trim().toLowerCase(),
       orElse: () => null,
     );
 
@@ -798,10 +800,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
       Navigator.pop(dialogContext);
     }
 
-    await loadWeather(
-      locationToSelect.name,
-      locationOverride: locationToSelect,
-    );
+    await loadWeather(locationToSelect.name);
   }
 
   Future<void> _selectSavedLocation(SavedLocation location) async {
@@ -816,7 +815,8 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
 
     await locationStorageService.saveSelectedLocation(location.name);
     await locationStorageService.saveSelectedSavedLocationName(location.name);
-    await loadWeather(location.name, locationOverride: location);
+
+    await loadWeather(location.name);
   }
 
   Future<void> deleteSavedLocation(SavedLocation location) async {
