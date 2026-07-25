@@ -1,134 +1,133 @@
 import 'package:flutter/material.dart';
 
-/// Fachlich normalisierte Wetterzustände für die ORTHA-Icon-Darstellung.
+/// Einheitliche, klar erkennbare Wetterzustände für ORTHA METEO Ω.
 enum OrthaWeatherCondition {
   clear,
+  mainlyClear,
   partlyCloudy,
   cloudy,
   fog,
   drizzle,
+  freezingDrizzle,
   rain,
+  freezingRain,
   snow,
-  shower,
+  snowGrains,
+  rainShower,
+  snowShower,
   thunderstorm,
+  thunderstormWithHail,
   unknown,
 }
 
-/// Zentrale Zuordnung von WMO-Wettercodes zu ORTHA-Wetterzuständen.
+/// Ordnet die Wettercodes von Open-Meteo nach dem WMO-Standard zu.
 abstract final class OrthaWeatherCodeMapper {
-  static OrthaWeatherCondition fromWmoCode(int weatherCode) {
+  static OrthaWeatherCondition fromWmoCode(int? weatherCode) {
     return switch (weatherCode) {
       0 => OrthaWeatherCondition.clear,
-      1 || 2 => OrthaWeatherCondition.partlyCloudy,
+      1 => OrthaWeatherCondition.mainlyClear,
+      2 => OrthaWeatherCondition.partlyCloudy,
       3 => OrthaWeatherCondition.cloudy,
       45 || 48 => OrthaWeatherCondition.fog,
-      51 || 53 || 55 || 56 || 57 => OrthaWeatherCondition.drizzle,
-      61 || 63 || 65 || 66 || 67 => OrthaWeatherCondition.rain,
-      71 || 73 || 75 || 77 => OrthaWeatherCondition.snow,
-      80 || 81 || 82 || 85 || 86 => OrthaWeatherCondition.shower,
-      95 || 96 || 99 => OrthaWeatherCondition.thunderstorm,
+      51 || 53 || 55 => OrthaWeatherCondition.drizzle,
+      56 || 57 => OrthaWeatherCondition.freezingDrizzle,
+      61 || 63 || 65 => OrthaWeatherCondition.rain,
+      66 || 67 => OrthaWeatherCondition.freezingRain,
+      71 || 73 || 75 => OrthaWeatherCondition.snow,
+      77 => OrthaWeatherCondition.snowGrains,
+      80 || 81 || 82 => OrthaWeatherCondition.rainShower,
+      85 || 86 => OrthaWeatherCondition.snowShower,
+      95 => OrthaWeatherCondition.thunderstorm,
+      96 || 99 => OrthaWeatherCondition.thunderstormWithHail,
       _ => OrthaWeatherCondition.unknown,
     };
   }
 }
 
-/// Skalierbares Wettericon mit Semi-3D-Grunddarstellung.
+/// Abwärtskompatible Hilfsfunktion für bestehende Aufrufe und Tests.
+OrthaWeatherCondition orthaConditionFromWmoCode(int? weatherCode) {
+  return OrthaWeatherCodeMapper.fromWmoCode(weatherCode);
+}
+
+/// Klares und skalierbares ORTHA-Wettersymbol.
 ///
-/// Die Darstellung berücksichtigt den Tag-/Nachtstatus. Bei klarem oder
-/// teilweise bewölktem Himmel wird nachts kein Sonnensymbol mehr gezeichnet.
+/// Die Komponente verwendet bewusst eindeutig erkennbare Material-Symbole,
+/// statt mehrdeutiger, übereinandergelegter Symbolkonstruktionen.
 class OrthaWeatherIcon extends StatelessWidget {
   const OrthaWeatherIcon({
     super.key,
-    required this.weatherCode,
-    this.size = 64,
+    this.weatherCode,
+    this.condition,
     this.isNight = false,
+    this.size = 48,
     this.semanticLabel,
-  });
+  }) : assert(
+         weatherCode != null || condition != null,
+         'Entweder weatherCode oder condition muss angegeben werden.',
+       );
 
-  final int weatherCode;
-  final double size;
+  factory OrthaWeatherIcon.fromWmoCode({
+    Key? key,
+    required int? weatherCode,
+    bool isNight = false,
+    double size = 48,
+    String? semanticLabel,
+  }) {
+    return OrthaWeatherIcon(
+      key: key,
+      weatherCode: weatherCode,
+      isNight: isNight,
+      size: size,
+      semanticLabel: semanticLabel,
+    );
+  }
+
+  final int? weatherCode;
+  final OrthaWeatherCondition? condition;
   final bool isNight;
+  final double size;
   final String? semanticLabel;
 
   @override
   Widget build(BuildContext context) {
-    final condition = OrthaWeatherCodeMapper.fromWmoCode(weatherCode);
-    final style = _styleFor(condition, isNight: isNight);
+    final resolvedCondition =
+        condition ?? OrthaWeatherCodeMapper.fromWmoCode(weatherCode);
+    final style = _styleFor(resolvedCondition, isNight: isNight);
+
+    final icon = Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: style.backgroundColors,
+        ),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.32),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: style.shadowColor.withValues(alpha: 0.35),
+            blurRadius: size * 0.18,
+            offset: Offset(0, size * 0.07),
+          ),
+        ],
+      ),
+      child: Icon(style.icon, size: size * 0.57, color: style.iconColor),
+    );
+
+    if (semanticLabel == null || semanticLabel!.trim().isEmpty) {
+      return ExcludeSemantics(child: icon);
+    }
 
     return Semantics(
+      label: semanticLabel,
       image: true,
-      label: semanticLabel ?? _descriptionFor(condition, isNight: isNight),
-      child: SizedBox.square(
-        dimension: size,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: RadialGradient(
-              center: const Alignment(-0.35, -0.4),
-              radius: 0.95,
-              colors: <Color>[
-                Color.lerp(style.highlight, Colors.black, 0.05)!,
-                Color.lerp(style.base, Colors.black, 0.05)!,
-                Color.lerp(style.shadow, Colors.black, 0.05)!,
-              ],
-              stops: const <double>[0, 0.58, 1],
-            ),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.18),
-              width: size * 0.018,
-            ),
-            boxShadow: <BoxShadow>[
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.28),
-                blurRadius: size * 0.16,
-                offset: Offset(0, size * 0.09),
-              ),
-              BoxShadow(
-                color: style.base.withValues(alpha: 0.2),
-                blurRadius: size * 0.12,
-                spreadRadius: size * 0.015,
-              ),
-            ],
-          ),
-          child: Stack(
-            alignment: Alignment.center,
-            children: <Widget>[
-              Icon(
-                style.icon,
-                size: size * style.iconScale,
-                color: style.iconColor,
-              ),
-              Positioned(
-                top: size * 0.13,
-                left: size * 0.22,
-                child: Container(
-                  width: size * 0.28,
-                  height: size * 0.11,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(size),
-                    gradient: LinearGradient(
-                      colors: <Color>[
-                        Colors.white.withValues(alpha: 0.42),
-                        Colors.white.withValues(alpha: 0),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              if (style.showNightBadge)
-                Positioned(
-                  right: size * 0.11,
-                  top: size * 0.11,
-                  child: Icon(
-                    Icons.nightlight_round,
-                    size: size * 0.24,
-                    color: const Color(0xFFEAF1FF),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
+      child: ExcludeSemantics(child: icon),
     );
   }
 
@@ -137,180 +136,149 @@ class OrthaWeatherIcon extends StatelessWidget {
     required bool isNight,
   }) {
     if (isNight) {
-      return switch (condition) {
-        OrthaWeatherCondition.clear => const _OrthaWeatherIconStyle(
-          icon: Icons.nightlight_round,
-          highlight: Color(0xFFDCE8FF),
-          base: Color(0xFF5E74A6),
-          shadow: Color(0xFF24304F),
-          iconColor: Color(0xFFF4F7FF),
-          iconScale: 0.53,
-        ),
-        OrthaWeatherCondition.partlyCloudy => const _OrthaWeatherIconStyle(
-          icon: Icons.nights_stay_rounded,
-          highlight: Color(0xFFD9E5F7),
-          base: Color(0xFF64758F),
-          shadow: Color(0xFF2C394D),
-          iconColor: Color(0xFFF2F5FA),
-          iconScale: 0.53,
-        ),
-        OrthaWeatherCondition.cloudy => const _OrthaWeatherIconStyle(
-          icon: Icons.cloud_rounded,
-          highlight: Color(0xFFD9E1EB),
-          base: Color(0xFF718095),
-          shadow: Color(0xFF303B4C),
-          iconColor: Color(0xFFF2F2F2),
-          showNightBadge: true,
-        ),
-        OrthaWeatherCondition.fog => const _OrthaWeatherIconStyle(
-          icon: Icons.blur_on_rounded,
-          highlight: Color(0xFFDCE6E9),
-          base: Color(0xFF7F9199),
-          shadow: Color(0xFF39494F),
-          iconColor: Color(0xFFF2F2F2),
-          showNightBadge: true,
-        ),
-        OrthaWeatherCondition.drizzle => const _OrthaWeatherIconStyle(
-          icon: Icons.grain_rounded,
-          highlight: Color(0xFFCFE4F2),
-          base: Color(0xFF47779B),
-          shadow: Color(0xFF203B56),
-          iconColor: Color(0xFFF2F2F2),
-          showNightBadge: true,
-        ),
-        OrthaWeatherCondition.rain => const _OrthaWeatherIconStyle(
-          icon: Icons.water_drop_rounded,
-          highlight: Color(0xFFC4DEF0),
-          base: Color(0xFF326F9B),
-          shadow: Color(0xFF17354F),
-          iconColor: Color(0xFFF2F2F2),
-          showNightBadge: true,
-        ),
-        OrthaWeatherCondition.snow => const _OrthaWeatherIconStyle(
-          icon: Icons.ac_unit_rounded,
-          highlight: Color(0xFFF2F2F2),
-          base: Color(0xFFA7C5D9),
-          shadow: Color(0xFF536F85),
-          iconColor: Color(0xFFF2F2F2),
-          showNightBadge: true,
-        ),
-        OrthaWeatherCondition.shower => const _OrthaWeatherIconStyle(
-          icon: Icons.shower_rounded,
-          highlight: Color(0xFFC6E2F0),
-          base: Color(0xFF3C789D),
-          shadow: Color(0xFF1C4058),
-          iconColor: Color(0xFFF2F2F2),
-          showNightBadge: true,
-        ),
-        OrthaWeatherCondition.thunderstorm => const _OrthaWeatherIconStyle(
-          icon: Icons.thunderstorm_rounded,
-          highlight: Color(0xFFDED8F0),
-          base: Color(0xFF5E4A8C),
-          shadow: Color(0xFF2A2045),
-          iconColor: Color(0xFFFFE56B),
-          showNightBadge: true,
-        ),
-        OrthaWeatherCondition.unknown => const _OrthaWeatherIconStyle(
-          icon: Icons.question_mark_rounded,
-          highlight: Color(0xFFD9E0E7),
-          base: Color(0xFF657180),
-          shadow: Color(0xFF303A44),
-          iconColor: Color(0xFFF2F2F2),
-          showNightBadge: true,
-        ),
-      };
+      return _nightStyle(condition);
     }
 
     return switch (condition) {
       OrthaWeatherCondition.clear => const _OrthaWeatherIconStyle(
         icon: Icons.wb_sunny_rounded,
-        highlight: Color(0xFFFFF2A6),
-        base: Color(0xFFFFC940),
-        shadow: Color(0xFFCF7A00),
-        iconColor: Color(0xFFFFF8D5),
+        iconColor: Color(0xFFFFD45A),
+        backgroundColors: [Color(0xFF4E93C8), Color(0xFF17649E)],
+        shadowColor: Color(0xFFFFD45A),
+      ),
+      OrthaWeatherCondition.mainlyClear => const _OrthaWeatherIconStyle(
+        icon: Icons.wb_sunny_outlined,
+        iconColor: Color(0xFFFFD45A),
+        backgroundColors: [Color(0xFF69B7E5), Color(0xFF287AAE)],
+        shadowColor: Color(0xFFFFD45A),
       ),
       OrthaWeatherCondition.partlyCloudy => const _OrthaWeatherIconStyle(
         icon: Icons.wb_cloudy_rounded,
-        highlight: Color(0xFFDFF3FF),
-        base: Color(0xFF79BFE8),
-        shadow: Color(0xFF315D83),
-        iconColor: Color(0xFFF2F2F2),
+        iconColor: Colors.white,
+        backgroundColors: [Color(0xFF76B9DD), Color(0xFF397AAB)],
+        shadowColor: Color(0xFF5A94BC),
       ),
       OrthaWeatherCondition.cloudy => const _OrthaWeatherIconStyle(
         icon: Icons.cloud_rounded,
-        highlight: Color(0xFFE5EDF4),
-        base: Color(0xFF90A4B7),
-        shadow: Color(0xFF46596C),
-        iconColor: Color(0xFFF2F2F2),
+        iconColor: Colors.white,
+        backgroundColors: [Color(0xFF9EB3C4), Color(0xFF60788E)],
+        shadowColor: Color(0xFF60788E),
       ),
       OrthaWeatherCondition.fog => const _OrthaWeatherIconStyle(
-        icon: Icons.blur_on_rounded,
-        highlight: Color(0xFFE8F0F2),
-        base: Color(0xFFA7BAC0),
-        shadow: Color(0xFF52666D),
-        iconColor: Color(0xFFF2F2F2),
+        icon: Icons.foggy,
+        iconColor: Colors.white,
+        backgroundColors: [Color(0xFFAEB9C2), Color(0xFF6E7C89)],
+        shadowColor: Color(0xFF6E7C89),
       ),
       OrthaWeatherCondition.drizzle => const _OrthaWeatherIconStyle(
-        icon: Icons.grain_rounded,
-        highlight: Color(0xFFD9F2FF),
-        base: Color(0xFF5FA8D3),
-        shadow: Color(0xFF245578),
-        iconColor: Color(0xFFF2F2F2),
+        icon: Icons.cloudy_snowing,
+        iconColor: Colors.white,
+        backgroundColors: [Color(0xFF61B6D8), Color(0xFF287DA8)],
+        shadowColor: Color(0xFF287DA8),
+      ),
+      OrthaWeatherCondition.freezingDrizzle => const _OrthaWeatherIconStyle(
+        icon: Icons.severe_cold_rounded,
+        iconColor: Colors.white,
+        backgroundColors: [Color(0xFF78C7DF), Color(0xFF327FA5)],
+        shadowColor: Color(0xFF327FA5),
       ),
       OrthaWeatherCondition.rain => const _OrthaWeatherIconStyle(
         icon: Icons.water_drop_rounded,
-        highlight: Color(0xFFCBEAFF),
-        base: Color(0xFF3389C8),
-        shadow: Color(0xFF17436A),
-        iconColor: Color(0xFFF2F2F2),
+        iconColor: Color(0xFFDDF5FF),
+        backgroundColors: [Color(0xFF398BB8), Color(0xFF174E78)],
+        shadowColor: Color(0xFF174E78),
       ),
-      OrthaWeatherCondition.snow => const _OrthaWeatherIconStyle(
+      OrthaWeatherCondition.freezingRain => const _OrthaWeatherIconStyle(
         icon: Icons.ac_unit_rounded,
-        highlight: Color(0xFFF2F2F2),
-        base: Color(0xFFB8DDF2),
-        shadow: Color(0xFF628CA8),
-        iconColor: Color(0xFFF2F2F2),
+        iconColor: Colors.white,
+        backgroundColors: [Color(0xFF549FBE), Color(0xFF244F73)],
+        shadowColor: Color(0xFF244F73),
       ),
-      OrthaWeatherCondition.shower => const _OrthaWeatherIconStyle(
-        icon: Icons.shower_rounded,
-        highlight: Color(0xFFCDEEFF),
-        base: Color(0xFF4B9AC8),
-        shadow: Color(0xFF1F4F70),
-        iconColor: Color(0xFFF2F2F2),
+      OrthaWeatherCondition.snow ||
+      OrthaWeatherCondition.snowGrains ||
+      OrthaWeatherCondition.snowShower => const _OrthaWeatherIconStyle(
+        icon: Icons.ac_unit_rounded,
+        iconColor: Colors.white,
+        backgroundColors: [Color(0xFF65B8DB), Color(0xFF367CA4)],
+        shadowColor: Color(0xFF367CA4),
       ),
-      OrthaWeatherCondition.thunderstorm => const _OrthaWeatherIconStyle(
-        icon: Icons.thunderstorm_rounded,
-        highlight: Color(0xFFE9E1FF),
-        base: Color(0xFF7257B5),
-        shadow: Color(0xFF31205F),
-        iconColor: Color(0xFFFFE56B),
+      OrthaWeatherCondition.rainShower => const _OrthaWeatherIconStyle(
+        icon: Icons.umbrella_rounded,
+        iconColor: Colors.white,
+        backgroundColors: [Color(0xFF438EB7), Color(0xFF234E73)],
+        shadowColor: Color(0xFF234E73),
       ),
+      OrthaWeatherCondition.thunderstorm ||
+      OrthaWeatherCondition.thunderstormWithHail =>
+        const _OrthaWeatherIconStyle(
+          icon: Icons.thunderstorm_rounded,
+          iconColor: Color(0xFFFFD45A),
+          backgroundColors: [Color(0xFF5D6678), Color(0xFF252D3B)],
+          shadowColor: Color(0xFFFFD45A),
+        ),
       OrthaWeatherCondition.unknown => const _OrthaWeatherIconStyle(
-        icon: Icons.question_mark_rounded,
-        highlight: Color(0xFFE2E8EE),
-        base: Color(0xFF778899),
-        shadow: Color(0xFF354452),
-        iconColor: Color(0xFFF2F2F2),
+        icon: Icons.help_outline_rounded,
+        iconColor: Colors.white,
+        backgroundColors: [Color(0xFF8495A4), Color(0xFF526271)],
+        shadowColor: Color(0xFF526271),
       ),
     };
   }
 
-  static String _descriptionFor(
-    OrthaWeatherCondition condition, {
-    required bool isNight,
-  }) {
+  static _OrthaWeatherIconStyle _nightStyle(OrthaWeatherCondition condition) {
     return switch (condition) {
-      OrthaWeatherCondition.clear => isNight ? 'Klare Nacht' : 'Klar',
-      OrthaWeatherCondition.partlyCloudy =>
-        isNight ? 'Teilweise bewölkte Nacht' : 'Teilweise bewölkt',
-      OrthaWeatherCondition.cloudy => 'Bewölkt',
-      OrthaWeatherCondition.fog => 'Nebel',
-      OrthaWeatherCondition.drizzle => 'Nieselregen',
-      OrthaWeatherCondition.rain => 'Regen',
-      OrthaWeatherCondition.snow => 'Schnee',
-      OrthaWeatherCondition.shower => 'Schauer',
-      OrthaWeatherCondition.thunderstorm => 'Gewitter',
-      OrthaWeatherCondition.unknown => 'Unbekannter Wetterzustand',
+      OrthaWeatherCondition.clear ||
+      OrthaWeatherCondition.mainlyClear => const _OrthaWeatherIconStyle(
+        icon: Icons.nightlight_round,
+        iconColor: Color(0xFFFFE8A3),
+        backgroundColors: [Color(0xFF344A70), Color(0xFF101B35)],
+        shadowColor: Color(0xFFFFE8A3),
+      ),
+      OrthaWeatherCondition.partlyCloudy ||
+      OrthaWeatherCondition.cloudy => const _OrthaWeatherIconStyle(
+        icon: Icons.cloud_rounded,
+        iconColor: Colors.white,
+        backgroundColors: [Color(0xFF4D6584), Color(0xFF1D2E49)],
+        shadowColor: Color(0xFF334C6D),
+      ),
+      OrthaWeatherCondition.fog => const _OrthaWeatherIconStyle(
+        icon: Icons.foggy,
+        iconColor: Colors.white,
+        backgroundColors: [Color(0xFF59697A), Color(0xFF253448)],
+        shadowColor: Color(0xFF253448),
+      ),
+      OrthaWeatherCondition.drizzle ||
+      OrthaWeatherCondition.freezingDrizzle ||
+      OrthaWeatherCondition.rain ||
+      OrthaWeatherCondition.freezingRain ||
+      OrthaWeatherCondition.rainShower => const _OrthaWeatherIconStyle(
+        icon: Icons.water_drop_rounded,
+        iconColor: Color(0xFFDDF5FF),
+        backgroundColors: [Color(0xFF315B7D), Color(0xFF152A46)],
+        shadowColor: Color(0xFF152A46),
+      ),
+      OrthaWeatherCondition.snow ||
+      OrthaWeatherCondition.snowGrains ||
+      OrthaWeatherCondition.snowShower => const _OrthaWeatherIconStyle(
+        icon: Icons.ac_unit_rounded,
+        iconColor: Colors.white,
+        backgroundColors: [Color(0xFF456B8D), Color(0xFF1A304D)],
+        shadowColor: Color(0xFF1A304D),
+      ),
+      OrthaWeatherCondition.thunderstorm ||
+      OrthaWeatherCondition.thunderstormWithHail =>
+        const _OrthaWeatherIconStyle(
+          icon: Icons.thunderstorm_rounded,
+          iconColor: Color(0xFFFFD45A),
+          backgroundColors: [Color(0xFF43495C), Color(0xFF171C2A)],
+          shadowColor: Color(0xFFFFD45A),
+        ),
+      OrthaWeatherCondition.unknown => const _OrthaWeatherIconStyle(
+        icon: Icons.help_outline_rounded,
+        iconColor: Colors.white,
+        backgroundColors: [Color(0xFF4E6074), Color(0xFF233247)],
+        shadowColor: Color(0xFF233247),
+      ),
     };
   }
 }
@@ -318,19 +286,13 @@ class OrthaWeatherIcon extends StatelessWidget {
 class _OrthaWeatherIconStyle {
   const _OrthaWeatherIconStyle({
     required this.icon,
-    required this.highlight,
-    required this.base,
-    required this.shadow,
     required this.iconColor,
-    this.iconScale = 0.55,
-    this.showNightBadge = false,
+    required this.backgroundColors,
+    required this.shadowColor,
   });
 
   final IconData icon;
-  final Color highlight;
-  final Color base;
-  final Color shadow;
   final Color iconColor;
-  final double iconScale;
-  final bool showNightBadge;
+  final List<Color> backgroundColors;
+  final Color shadowColor;
 }

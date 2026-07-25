@@ -377,7 +377,15 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
             children: [
               Icon(Icons.my_location_outlined),
               SizedBox(width: 12),
-              Expanded(child: Text('Standort verwenden?')),
+              Expanded(
+                child: Text(
+                  'Standort verwenden?',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
             ],
           ),
           content: const Text(
@@ -385,6 +393,12 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
             'verwenden, um Wetterdaten, amtliche Warnungen und Risiken '
             'für Deinen Aufenthaltsort anzuzeigen.\n\n'
             'Dein Standort wird dabei nicht als persönlicher Ort gespeichert.',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              height: 1.45,
+            ),
           ),
           actions: [
             TextButton(

@@ -11,11 +11,19 @@ void main() {
       );
     });
 
+    test('ordnet überwiegend klare Wetterlage korrekt zu', () {
+      expect(
+        OrthaWeatherCodeMapper.fromWmoCode(1),
+        OrthaWeatherCondition.mainlyClear,
+      );
+    });
+
     test('ordnet Bewölkung korrekt zu', () {
       expect(
         OrthaWeatherCodeMapper.fromWmoCode(2),
         OrthaWeatherCondition.partlyCloudy,
       );
+
       expect(
         OrthaWeatherCodeMapper.fromWmoCode(3),
         OrthaWeatherCondition.cloudy,
@@ -24,7 +32,20 @@ void main() {
 
     test('ordnet Nebel korrekt zu', () {
       expect(OrthaWeatherCodeMapper.fromWmoCode(45), OrthaWeatherCondition.fog);
+
       expect(OrthaWeatherCodeMapper.fromWmoCode(48), OrthaWeatherCondition.fog);
+    });
+
+    test('ordnet Nieselregen korrekt zu', () {
+      expect(
+        OrthaWeatherCodeMapper.fromWmoCode(53),
+        OrthaWeatherCondition.drizzle,
+      );
+
+      expect(
+        OrthaWeatherCodeMapper.fromWmoCode(57),
+        OrthaWeatherCondition.freezingDrizzle,
+      );
     });
 
     test('ordnet Regen und Schauer korrekt zu', () {
@@ -32,9 +53,15 @@ void main() {
         OrthaWeatherCodeMapper.fromWmoCode(63),
         OrthaWeatherCondition.rain,
       );
+
+      expect(
+        OrthaWeatherCodeMapper.fromWmoCode(67),
+        OrthaWeatherCondition.freezingRain,
+      );
+
       expect(
         OrthaWeatherCodeMapper.fromWmoCode(82),
-        OrthaWeatherCondition.shower,
+        OrthaWeatherCondition.rainShower,
       );
     });
 
@@ -43,6 +70,16 @@ void main() {
         OrthaWeatherCodeMapper.fromWmoCode(75),
         OrthaWeatherCondition.snow,
       );
+
+      expect(
+        OrthaWeatherCodeMapper.fromWmoCode(77),
+        OrthaWeatherCondition.snowGrains,
+      );
+
+      expect(
+        OrthaWeatherCodeMapper.fromWmoCode(86),
+        OrthaWeatherCondition.snowShower,
+      );
     });
 
     test('ordnet Gewitter korrekt zu', () {
@@ -50,9 +87,10 @@ void main() {
         OrthaWeatherCodeMapper.fromWmoCode(95),
         OrthaWeatherCondition.thunderstorm,
       );
+
       expect(
         OrthaWeatherCodeMapper.fromWmoCode(99),
-        OrthaWeatherCondition.thunderstorm,
+        OrthaWeatherCondition.thunderstormWithHail,
       );
     });
 
@@ -61,30 +99,32 @@ void main() {
         OrthaWeatherCodeMapper.fromWmoCode(999),
         OrthaWeatherCondition.unknown,
       );
+
+      expect(
+        OrthaWeatherCodeMapper.fromWmoCode(null),
+        OrthaWeatherCondition.unknown,
+      );
     });
   });
 
   group('OrthaWeatherIcon', () {
-    testWidgets('wird mit vorgegebener Größe dargestellt', (tester) async {
+    testWidgets('übernimmt die vorgegebene Größe', (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(body: OrthaWeatherIcon(weatherCode: 0, size: 80)),
         ),
       );
 
-      final sizedBox = tester.widget<SizedBox>(
-        find.byWidgetPredicate(
-          (widget) =>
-              widget is SizedBox && widget.width == 80 && widget.height == 80,
-        ),
+      final widget = tester.widget<OrthaWeatherIcon>(
+        find.byType(OrthaWeatherIcon),
       );
 
-      expect(sizedBox.width, 80);
-      expect(sizedBox.height, 80);
+      expect(widget.size, 80);
+      expect(widget.weatherCode, 0);
       expect(find.byIcon(Icons.wb_sunny_rounded), findsOneWidget);
     });
 
-    testWidgets('zeigt nachts zusätzlich ein Mondsymbol', (tester) async {
+    testWidgets('zeigt nachts ein Mondsymbol', (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(body: OrthaWeatherIcon(weatherCode: 0, isNight: true)),
@@ -103,7 +143,7 @@ void main() {
         ),
       );
 
-      expect(find.byIcon(Icons.question_mark_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.help_outline_rounded), findsOneWidget);
     });
   });
 }
