@@ -20,11 +20,11 @@ class OrthaDashboardHeader extends StatelessWidget {
     this.warningState = OrthaWarningBeaconState.green,
   });
 
-  static const Color _surface = Color(0xFFFFFFFF);
-  static const Color _primaryText = Color(0xFF163247);
-  static const Color _secondaryText = Color(0xFF587080);
-  static const Color _accent = Color(0xFFD5A84A);
-  static const Color _border = Color(0xFFD3E2EC);
+  static const Color _surface = Color(0xE6112230);
+  static const Color _primaryText = Color(0xFFF4F7FA);
+  static const Color _secondaryText = Color(0xFFADB9C7);
+  static const Color _accent = Color(0xFFFFB536);
+  static const Color _border = Color(0x668497A9);
 
   @override
   Widget build(BuildContext context) {
@@ -39,9 +39,9 @@ class OrthaDashboardHeader extends StatelessWidget {
         border: Border.all(color: _border.withValues(alpha: 0.85)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.22),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
+            color: Colors.black.withValues(alpha: 0.48),
+            blurRadius: 30,
+            offset: const Offset(0, 14),
           ),
         ],
       ),
@@ -160,7 +160,7 @@ class _HeaderActionButton extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: const Color(0xFFF4F8FB),
+        color: const Color(0xD9142634),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
           side: BorderSide(
@@ -280,7 +280,7 @@ class _OrthaWarningBeaconState extends State<OrthaWarningBeacon>
         button: true,
         label: _tooltip,
         child: Material(
-          color: const Color(0xFFF4F8FB),
+          color: const Color(0xD9142634),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
             side: BorderSide(color: _color.withValues(alpha: 0.55)),

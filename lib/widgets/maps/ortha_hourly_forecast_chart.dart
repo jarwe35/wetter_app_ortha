@@ -46,7 +46,7 @@ class OrthaHourlyForecastChart extends StatelessWidget {
                 return ClipRRect(
                   borderRadius: BorderRadius.circular(17),
                   child: Container(
-                    color: OrthaDesignColors.creamSoft,
+                    color: Color(0xCC10212E),
                     child: SingleChildScrollView(
                       key: const Key('ortha-hourly-forecast-chart-scroll'),
                       scrollDirection: Axis.horizontal,
@@ -107,7 +107,7 @@ class _ChartHeader extends StatelessWidget {
               Text(
                 'Wetterverlauf heute',
                 style: TextStyle(
-                  color: OrthaDesignColors.navy,
+                  color: Color(0xFFF4F7FA),
                   fontSize: 17,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.2,
@@ -117,7 +117,7 @@ class _ChartHeader extends StatelessWidget {
               Text(
                 'Temperatur und Niederschlagswahrscheinlichkeit',
                 style: TextStyle(
-                  color: OrthaDesignColors.navySoft,
+                  color: Color(0xFFADB9C7),
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
                 ),
@@ -128,7 +128,7 @@ class _ChartHeader extends StatelessWidget {
         Text(
           '24 Std.',
           style: TextStyle(
-            color: OrthaDesignColors.greyDark,
+            color: Color(0xFF9BA9B7),
             fontSize: 10,
             fontWeight: FontWeight.w700,
           ),
@@ -187,7 +187,7 @@ class _ChartLegendItem extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              color: OrthaDesignColors.greyDark,
+              color: Color(0xFF9BA9B7),
               fontSize: 11,
               fontWeight: FontWeight.w500,
             ),
@@ -259,7 +259,7 @@ class _ForecastPainter extends CustomPainter {
 
   void _drawGuides(Canvas canvas) {
     final verticalPaint = Paint()
-      ..color = OrthaDesignColors.grey.withValues(alpha: 0.20)
+      ..color = const Color(0xFF748493).withValues(alpha: 0.20)
       ..strokeWidth = 1;
 
     for (var index = 0; index < forecast.length; index++) {
@@ -276,7 +276,7 @@ class _ForecastPainter extends CustomPainter {
       const Offset(0, _rainTop - 9),
       Offset(forecast.length * hourWidth, _rainTop - 9),
       Paint()
-        ..color = OrthaDesignColors.grey.withValues(alpha: 0.30)
+        ..color = const Color(0xFF748493).withValues(alpha: 0.30)
         ..strokeWidth = 1,
     );
   }
@@ -308,7 +308,7 @@ class _ForecastPainter extends CustomPainter {
 
       canvas.drawRRect(
         track,
-        Paint()..color = OrthaDesignColors.white.withValues(alpha: 0.72),
+        Paint()..color = const Color(0xFF8293A6).withValues(alpha: 0.36),
       );
 
       final height = (_rainBottom - _rainTop) * probability / 100;
@@ -384,7 +384,7 @@ class _ForecastPainter extends CustomPainter {
     canvas.drawPath(
       path,
       Paint()
-        ..color = Colors.black.withValues(alpha: 0.10)
+        ..color = Colors.white.withValues(alpha: 0.10)
         ..strokeWidth = 6
         ..strokeCap = StrokeCap.round
         ..strokeJoin = StrokeJoin.round
@@ -433,7 +433,7 @@ class _ForecastPainter extends CustomPainter {
         text: _formatHour(hour.time),
         centerX: x,
         top: _timeY,
-        color: index == 0 ? OrthaDesignColors.navy : OrthaDesignColors.greyDark,
+        color: index == 0 ? const Color(0xFFF4F7FA) : const Color(0xFF9BA9B7),
         size: 9,
         weight: index == 0 ? FontWeight.w800 : FontWeight.w600,
       );
@@ -450,7 +450,7 @@ class _ForecastPainter extends CustomPainter {
         text: '${hour.temperature.round()}°',
         centerX: x,
         top: math.max(_temperatureTop - 1, temperatureY - 21),
-        color: OrthaDesignColors.navy,
+        color: Color(0xFFF4F7FA),
         size: 10,
         weight: FontWeight.w800,
       );
@@ -459,7 +459,7 @@ class _ForecastPainter extends CustomPainter {
           ? OrthaDesignColors.red
           : hour.precipitationProbability >= 50
           ? OrthaDesignColors.blueDark
-          : OrthaDesignColors.greyDark;
+          : const Color(0xFF9BA9B7);
 
       _drawText(
         canvas,
@@ -483,7 +483,7 @@ class _ForecastPainter extends CustomPainter {
       text: TextSpan(
         text: String.fromCharCode(icon.codePoint),
         style: TextStyle(
-          color: OrthaDesignColors.grey,
+          color: Color(0xFF748493),
           fontSize: 21,
           fontFamily: icon.fontFamily,
           package: icon.fontPackage,

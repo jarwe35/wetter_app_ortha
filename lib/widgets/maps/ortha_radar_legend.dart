@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../common/ortha_premium_card.dart';
 
-/// Radarlegende im hellen ORTHA-Premiumdesign.
+/// Radarlegende im dunklen ORTHA-Premiumdesign.
 class OrthaRadarLegend extends StatelessWidget {
   const OrthaRadarLegend({super.key});
 
@@ -34,7 +34,7 @@ class OrthaRadarLegend extends StatelessWidget {
                 child: Text(
                   'Niederschlagsintensität',
                   style: TextStyle(
-                    color: OrthaDesignColors.navy,
+                    color: Color(0xFFF4F7FA),
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.2,
@@ -66,7 +66,7 @@ class OrthaRadarLegend extends StatelessWidget {
             'Die Farben kennzeichnen die relative Intensität der '
             'Radarechos und keine exakte Niederschlagsmenge.',
             style: TextStyle(
-              color: OrthaDesignColors.greyDark,
+              color: Color(0xFF9BA9B7),
               fontSize: 11,
               height: 1.4,
               fontWeight: FontWeight.w400,
@@ -100,10 +100,10 @@ class _LegendItem extends StatelessWidget {
           decoration: BoxDecoration(
             color: data.color,
             borderRadius: BorderRadius.circular(5),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.9)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.24)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.08),
+                color: Colors.black.withValues(alpha: 0.44),
                 blurRadius: 5,
                 offset: const Offset(0, 2),
               ),
@@ -117,7 +117,7 @@ class _LegendItem extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              color: OrthaDesignColors.black,
+              color: Color(0xFFF4F7FA),
               fontSize: 13,
               fontWeight: FontWeight.w500,
             ),

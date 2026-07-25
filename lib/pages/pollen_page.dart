@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../models/pollen_forecast.dart';
 import '../services/pollen_service.dart';
+import '../theme/ortha_colors.dart';
 import '../widgets/common/ortha_premium_card.dart';
 import '../widgets/ortha_ui/ortha_section_header.dart';
 
-const Color _orthaPrimaryText = OrthaDesignColors.navy;
-const Color _orthaSecondaryText = OrthaDesignColors.navySoft;
-const Color _orthaAccent = OrthaDesignColors.gold;
-const Color _orthaBorder = OrthaDesignColors.goldSoft;
+const Color _orthaPrimaryText = OrthaColors.primaryText;
+const Color _orthaSecondaryText = OrthaColors.secondaryText;
+const Color _orthaAccent = OrthaColors.accent;
 
 class PollenPage extends StatefulWidget {
   final String place;
@@ -120,10 +120,10 @@ class _PollenPageState extends State<PollenPage> {
                     height: 22,
                     child: CircularProgressIndicator(
                       strokeWidth: 2.5,
-                      color: OrthaDesignColors.gold,
+                      color: OrthaColors.accent,
                     ),
                   )
-                : const Icon(Icons.refresh, color: OrthaDesignColors.gold),
+                : const Icon(Icons.refresh, color: OrthaColors.accent),
           ),
         ),
         const SizedBox(height: 12),
@@ -338,9 +338,9 @@ class _PollenRow extends StatelessWidget {
         ClipRRect(
           borderRadius: BorderRadius.circular(20),
           child: LinearProgressIndicator(
-            minHeight: 7,
+            minHeight: 8,
             value: progress,
-            backgroundColor: _orthaBorder.withValues(alpha: 0.6),
+            backgroundColor: OrthaColors.border.withValues(alpha: 0.42),
             valueColor: AlwaysStoppedAnimation<Color>(_levelColor(value.level)),
           ),
         ),
@@ -370,7 +370,7 @@ class _ErrorCard extends StatelessWidget {
           const SizedBox(height: 18),
           FilledButton.icon(
             onPressed: onRetry,
-            icon: const Icon(Icons.refresh, color: OrthaDesignColors.gold),
+            icon: const Icon(Icons.refresh, color: OrthaColors.accent),
             label: const Text('Erneut versuchen'),
           ),
         ],

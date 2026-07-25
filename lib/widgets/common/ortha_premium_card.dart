@@ -1,34 +1,40 @@
 import 'package:flutter/material.dart';
 
-/// Verbindliche Farbwelt der hellen ORTHA-Tageskarten.
+import '../../theme/ortha_colors.dart';
+
+/// Kompatibilitätspalette für bereits bestehende ORTHA-Komponenten.
+///
+/// Neue Oberflächen sollen bevorzugt direkt [OrthaColors] verwenden.
+/// Die Bezeichnungen bleiben vorerst bestehen, damit ältere Widgets
+/// schrittweise und ohne Funktionsverlust migriert werden können.
 abstract final class OrthaDesignColors {
-  static const Color cream = Color(0xFFFFFBF3);
-  static const Color creamSoft = Color(0xFFFFF4DC);
-  static const Color creamDeep = Color(0xFFF4E3BC);
+  static const Color cream = OrthaColors.surface;
+  static const Color creamSoft = OrthaColors.surfaceElevated;
+  static const Color creamDeep = OrthaColors.informationBackground;
 
-  static const Color navy = Color(0xFF17374E);
-  static const Color navySoft = Color(0xFF597080);
+  static const Color navy = OrthaColors.primaryText;
+  static const Color navySoft = OrthaColors.secondaryText;
 
-  static const Color gold = Color(0xFFD7A330);
-  static const Color goldSoft = Color(0xFFE9C978);
+  static const Color gold = OrthaColors.accent;
+  static const Color goldSoft = Color(0xFFB8913C);
 
-  static const Color blue = Color(0xFF65A9D2);
-  static const Color blueDark = Color(0xFF327EA9);
+  static const Color blue = Color(0xFF66B7E8);
+  static const Color blueDark = Color(0xFF3B91C8);
 
-  static const Color red = Color(0xFFD75952);
+  static const Color red = Color(0xFFFF6B64);
 
-  static const Color greyLight = Color(0xFFD9D9D6);
-  static const Color grey = Color(0xFF999B9D);
-  static const Color greyDark = Color(0xFF636A70);
+  static const Color greyLight = Color(0xFFB8C3CD);
+  static const Color grey = Color(0xFF81909D);
+  static const Color greyDark = OrthaColors.secondaryText;
 
-  static const Color white = Colors.white;
-  static const Color black = Color(0xFF202326);
+  static const Color white = OrthaColors.primaryText;
+  static const Color black = OrthaColors.primaryText;
 }
 
-/// Gemeinsame helle ORTHA-Karte.
+/// Zentrale dunkle ORTHA-Glass-Card.
 ///
-/// Sie definiert Hintergrund, Rand, Radius und Schatten zentral, damit
-/// Wetterstatistik, Legenden und weitere Module dieselbe Designsprache nutzen.
+/// Hintergrund, Rand, Radius und Schatten werden hier einheitlich definiert.
+/// Dadurch verwenden Wetter, Radar, Pollen und Warnungen dieselbe Designsprache.
 class OrthaPremiumCard extends StatelessWidget {
   const OrthaPremiumCard({
     super.key,
@@ -45,17 +51,24 @@ class OrthaPremiumCard extends StatelessWidget {
       width: double.infinity,
       padding: padding,
       decoration: BoxDecoration(
-        color: OrthaDesignColors.cream,
+        color: OrthaColors.surfaceElevated,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: OrthaDesignColors.goldSoft.withValues(alpha: 0.58),
+          color: OrthaColors.accent.withValues(alpha: 0.42),
+          width: 0.9,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.09),
-            blurRadius: 20,
+            color: OrthaColors.shadow.withValues(alpha: 0.55),
+            blurRadius: 24,
             spreadRadius: 0,
-            offset: const Offset(0, 9),
+            offset: const Offset(0, 10),
+          ),
+          BoxShadow(
+            color: OrthaColors.accent.withValues(alpha: 0.045),
+            blurRadius: 18,
+            spreadRadius: 0,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
