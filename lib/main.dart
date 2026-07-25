@@ -56,6 +56,7 @@ import 'settings/unit_settings_service.dart';
 import 'utils/official_warning_text_formatter.dart';
 
 import 'services/ortha_background_service.dart';
+import 'package:wetter_app_ortha/widgets/layout/ortha_meteo_background.dart';
 part 'widgets/weather/daily_forecast_card.dart';
 part 'widgets/weather/hourly_forecast_card.dart';
 part 'widgets/weather/current_weather_card.dart';
@@ -81,6 +82,18 @@ class OrthaWeatherApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      builder: (context, child) {
+        return OrthaMeteoBackground(
+          child: Theme(
+            data: Theme.of(context).copyWith(
+              scaffoldBackgroundColor: Colors.transparent,
+              canvasColor: Colors.transparent,
+            ),
+            child: child ?? const SizedBox.shrink(),
+          ),
+        );
+      },
+
       title: 'ORTHA Wetter',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
