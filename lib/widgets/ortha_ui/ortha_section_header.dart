@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../design/ortha_light_engine.dart';
+import '../design/ortha_glow_icon.dart';
 
 class OrthaSectionHeader extends StatelessWidget {
   const OrthaSectionHeader({
@@ -12,7 +14,6 @@ class OrthaSectionHeader extends StatelessWidget {
   final String title;
   final String? subtitle;
 
-  static const Color _gold = Color(0xFFFFB536);
   static const Color _primaryText = Color(0xFFF4F7FA);
   static const Color _secondaryText = Color(0xFFADB9C7);
 
@@ -45,7 +46,13 @@ class OrthaSectionHeader extends StatelessWidget {
               ),
             ],
           ),
-          child: Icon(icon, color: _gold, size: 27),
+          child: OrthaGlowIcon(
+            icon: icon,
+            size: 27,
+            style: OrthaGlowIconStyle.gold,
+            glow: OrthaLightEngine.hero,
+            intensity: 0.92,
+          ),
         ),
         const SizedBox(width: 15),
         Expanded(

@@ -18,10 +18,12 @@ class WeatherCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(
-                Icons.location_on_outlined,
+              const OrthaGlowIcon(
+                icon: Icons.location_on_outlined,
                 size: 20,
-                color: orthaAccent,
+                style: OrthaGlowIconStyle.gold,
+                glow: OrthaLightEngine.strong,
+                intensity: 0.88,
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -240,7 +242,14 @@ class _SolarTimeItem extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(icon, size: 24, color: iconColor),
+        OrthaGlowIcon(
+          icon: icon,
+          size: 24,
+          color: iconColor,
+          style: OrthaGlowIconStyle.silver,
+          glow: OrthaLightEngine.normal,
+          intensity: 0.78,
+        ),
         const SizedBox(width: 8),
         Flexible(
           child: Column(
