@@ -4,16 +4,15 @@ import '../../design/ortha_light_engine.dart';
 
 enum OrthaGlowIconStyle { gold, white, silver }
 
+/// Scharfes ORTHA-Leuchtsymbol.
+///
+/// Der Effekt besteht bewusst nur aus:
+/// 1. einem sehr dezenten äußeren Halo,
+/// 2. einer engen farbigen Lichtkante,
+/// 3. einem klaren und scharfen Symbolkern.
+///
+/// Dadurch entsteht sichtbares Licht, ohne dass das Symbol verschwimmt.
 class OrthaGlowIcon extends StatelessWidget {
-  final IconData icon;
-  final double size;
-  final OrthaGlowIconStyle style;
-  final OrthaGlowLevel glow;
-  final double intensity;
-  final bool enabled;
-  final Color? color;
-  final String? semanticLabel;
-
   const OrthaGlowIcon({
     super.key,
     required this.icon,
@@ -26,6 +25,15 @@ class OrthaGlowIcon extends StatelessWidget {
     this.semanticLabel,
   }) : assert(size > 0),
        assert(intensity >= 0);
+
+  final IconData icon;
+  final double size;
+  final OrthaGlowIconStyle style;
+  final OrthaGlowLevel glow;
+  final double intensity;
+  final bool enabled;
+  final Color? color;
+  final String? semanticLabel;
 
   Color get _mainColor {
     if (!enabled) {
@@ -43,11 +51,27 @@ class OrthaGlowIcon extends StatelessWidget {
     };
   }
 
-  Color get _highlightColor {
+  Color get _coreColor {
+    if (!enabled) {
+      return OrthaLightEngine.inactive;
+    }
+
     return switch (style) {
       OrthaGlowIconStyle.gold => OrthaLightEngine.goldHighlight,
-      OrthaGlowIconStyle.white => OrthaLightEngine.whiteHighlight,
+      OrthaGlowIconStyle.white => Colors.white,
       OrthaGlowIconStyle.silver => OrthaLightEngine.white,
+    };
+  }
+
+  Color get _edgeColor {
+    if (!enabled) {
+      return OrthaLightEngine.inactive;
+    }
+
+    return switch (style) {
+      OrthaGlowIconStyle.gold => OrthaLightEngine.gold,
+      OrthaGlowIconStyle.white => OrthaLightEngine.white,
+      OrthaGlowIconStyle.silver => OrthaLightEngine.silver,
     };
   }
 
@@ -58,6 +82,8 @@ class OrthaGlowIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mainColor = _mainColor;
+    final coreColor = _coreColor;
+    final edgeColor = _edgeColor;
 
     if (!enabled || intensity == 0) {
       return Icon(
@@ -67,61 +93,65 @@ class OrthaGlowIcon extends StatelessWidget {
         semanticLabel: semanticLabel,
       );
     }
-    return SizedBox(
-      width: size,
-      height: size,
 
+    return SizedBox.square(
+      dimension: size,
       child: Stack(
         alignment: Alignment.center,
         clipBehavior: Clip.none,
         children: [
-          // Ebene 1: großflächiger, diffuser Lichtschein.
+          // Sehr kleiner äußerer Halo.
+          //
+          // Er bleibt bewusst eng am Symbol und darf nicht wie Nebel wirken.
           Icon(
             icon,
-            size: size * glow.scale,
-            color: mainColor.withValues(
-              alpha: _opacity(glow.outerOpacity * 0.48),
-            ),
-            shadows: [
-              Shadow(
-                color: mainColor.withValues(alpha: _opacity(glow.outerOpacity)),
-                blurRadius: glow.outerBlur,
-              ),
-            ],
-          ),
-
-          // Ebene 2: konzentrierter Lichtkörper.
-          Icon(
-            icon,
-            size: size * 1.035,
-            color: mainColor.withValues(
-              alpha: _opacity(glow.middleOpacity * 0.55),
-            ),
+            size: size * 1.015,
+            color: Colors.transparent,
             shadows: [
               Shadow(
                 color: mainColor.withValues(
-                  alpha: _opacity(glow.middleOpacity),
+                  alpha: _opacity(glow.outerOpacity * 0.42),
                 ),
-                blurRadius: glow.middleBlur,
+                blurRadius: size * 0.16,
               ),
             ],
           ),
 
-          // Ebene 3: scharfer und klarer Symbolkern.
+          // Enge farbige Lichtkante direkt am Symbol.
+          Icon(
+            icon,
+            size: size * 1.01,
+            color: edgeColor.withValues(alpha: _opacity(0.82)),
+            shadows: [
+              Shadow(
+                color: edgeColor.withValues(alpha: _opacity(0.72)),
+                blurRadius: size * 0.075,
+              ),
+            ],
+          ),
+
+          // Klarer Symbolkern.
+          //
+          // Nur kleine Schattenradien, damit die Kontur scharf bleibt.
           Icon(
             icon,
             size: size,
-            color: mainColor,
+            color: coreColor,
             semanticLabel: semanticLabel,
             shadows: [
               Shadow(
-                color: mainColor.withValues(alpha: _opacity(glow.coreOpacity)),
-                blurRadius: glow.coreBlur,
+                color: mainColor.withValues(alpha: _opacity(0.78)),
+                blurRadius: size * 0.045,
               ),
               Shadow(
-                color: _highlightColor.withValues(alpha: _opacity(0.48)),
-                blurRadius: 2.4,
-                offset: const Offset(0, -0.7),
+                color: Colors.white.withValues(alpha: _opacity(0.34)),
+                blurRadius: 0.9,
+                offset: const Offset(0, -0.45),
+              ),
+              Shadow(
+                color: Colors.black.withValues(alpha: 0.34),
+                blurRadius: 0.8,
+                offset: const Offset(0, 0.7),
               ),
             ],
           ),

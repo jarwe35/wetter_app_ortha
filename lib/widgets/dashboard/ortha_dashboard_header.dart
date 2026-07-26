@@ -5,140 +5,152 @@ import '../ortha_ui/ortha_responsive.dart';
 enum OrthaWarningBeaconState { loading, green, yellow, red }
 
 class OrthaDashboardHeader extends StatelessWidget {
-  final VoidCallback? onHome;
-  final VoidCallback? onOpenWarnings;
-  final VoidCallback onOpenLocations;
-  final VoidCallback onOpenUnitSettings;
-  final OrthaWarningBeaconState warningState;
-
   const OrthaDashboardHeader({
     super.key,
     this.onHome,
     this.onOpenWarnings,
-    required this.onOpenLocations,
-    required this.onOpenUnitSettings,
     this.warningState = OrthaWarningBeaconState.green,
   });
+
+  final VoidCallback? onHome;
+  final VoidCallback? onOpenWarnings;
+  final OrthaWarningBeaconState warningState;
 
   static const Color _surface = Color(0xE6112230);
   static const Color _primaryText = Color(0xFFF4F7FA);
   static const Color _secondaryText = Color(0xFFADB9C7);
-  static const Color _accent = Color(0xFFFFB536);
   static const Color _border = Color(0x668497A9);
+
+  String get _statusTitle {
+    switch (warningState) {
+      case OrthaWarningBeaconState.loading:
+        return 'Warnlage wird geprüft';
+
+      case OrthaWarningBeaconState.green:
+        return 'Keine Warnungen';
+
+      case OrthaWarningBeaconState.yellow:
+        return 'Amtliche Warnung';
+
+      case OrthaWarningBeaconState.red:
+        return 'Akute Warnlage';
+    }
+  }
+
+  String get _statusDescription {
+    switch (warningState) {
+      case OrthaWarningBeaconState.loading:
+        return 'Die amtlichen Warnquellen werden aktuell abgefragt.';
+
+      case OrthaWarningBeaconState.green:
+        return 'Für Ihren Standort liegen aktuell keine amtlichen '
+            'Warnungen vor.';
+
+      case OrthaWarningBeaconState.yellow:
+        return 'Für Ihren Standort liegt mindestens eine amtliche '
+            'Warnung vor. Bitte beachten Sie die Warnzentrale.';
+
+      case OrthaWarningBeaconState.red:
+        return 'Für Ihren Standort besteht eine erhebliche oder akute '
+            'Warnlage. Bitte beachten Sie umgehend die amtlichen Hinweise.';
+    }
+  }
+
+  Color get _statusColor {
+    switch (warningState) {
+      case OrthaWarningBeaconState.loading:
+        return const Color(0xFF78909C);
+
+      case OrthaWarningBeaconState.green:
+        return const Color(0xFF42B96B);
+
+      case OrthaWarningBeaconState.yellow:
+        return const Color(0xFFE0B04B);
+
+      case OrthaWarningBeaconState.red:
+        return const Color(0xFFE25555);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final ui = OrthaResponsive.of(context);
+    final responsive = OrthaResponsive.of(context);
+    final statusColor = _statusColor;
 
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(ui.cardPadding),
+      padding: EdgeInsets.symmetric(
+        horizontal: responsive.cardPadding,
+        vertical: 14,
+      ),
       decoration: BoxDecoration(
         color: _surface,
-        borderRadius: BorderRadius.circular(ui.cardRadius),
-        border: Border.all(color: _border.withValues(alpha: 0.85)),
+        borderRadius: BorderRadius.circular(responsive.cardRadius),
+        border: Border.all(color: statusColor.withValues(alpha: 0.34)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.48),
-            blurRadius: 30,
-            offset: const Offset(0, 14),
+            color: Colors.black.withValues(alpha: 0.46),
+            blurRadius: 26,
+            offset: const Offset(0, 12),
           ),
+          BoxShadow(color: statusColor.withValues(alpha: 0.08), blurRadius: 20),
         ],
       ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final compact = constraints.maxWidth < 520;
-
-          final identity = Row(
-            children: [
-              Container(
-                width: ui.sectionIconSize,
-                height: ui.sectionIconSize,
-                decoration: BoxDecoration(
-                  color: _accent.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(ui.cardRadius * 0.6),
-                  border: Border.all(color: _accent.withValues(alpha: 0.35)),
-                ),
-                child: Icon(
-                  Icons.cloud_outlined,
-                  color: _accent,
-                  size: ui.iconSize,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'ORTHA METEO Ω',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 21,
-                        fontWeight: FontWeight.bold,
-                        color: _primaryText,
-                      ),
-                    ),
-                    Text(
-                      'Wetter · Warnungen · Risiko',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 12, color: _secondaryText),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          );
-
-          final controls = Wrap(
-            alignment: WrapAlignment.end,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 8,
-            runSpacing: 8,
+      child: Column(
+        children: [
+          Row(
             children: [
               _HeaderActionButton(
                 tooltip: 'Zur Übersicht',
                 icon: Icons.home_outlined,
                 onPressed: onHome ?? () {},
               ),
+              const Spacer(),
               OrthaWarningBeacon(
                 state: warningState,
                 onPressed: onOpenWarnings ?? () {},
               ),
-              _HeaderActionButton(
-                tooltip: 'Einheiten',
-                icon: Icons.straighten_outlined,
-                onPressed: onOpenUnitSettings,
-              ),
-              OutlinedButton.icon(
-                onPressed: onOpenLocations,
-                icon: const Icon(Icons.location_city_outlined),
-                label: const Text('Meine Orte'),
-              ),
             ],
-          );
-
-          if (compact) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                identity,
-                const SizedBox(height: 12),
-                Align(alignment: Alignment.centerLeft, child: controls),
-              ],
-            );
-          }
-
-          return Row(
-            children: [
-              Expanded(child: identity),
-              const SizedBox(width: 16),
-              Flexible(child: controls),
-            ],
-          );
-        },
+          ),
+          const SizedBox(height: 10),
+          Semantics(
+            button: onOpenWarnings != null,
+            label: '$_statusTitle. $_statusDescription',
+            child: InkWell(
+              key: const ValueKey('nova-status-area'),
+              onTap: onOpenWarnings,
+              borderRadius: BorderRadius.circular(14),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(8, 2, 8, 4),
+                child: Column(
+                  children: [
+                    Text(
+                      _statusTitle,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: statusColor,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.1,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _statusDescription,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: _secondaryText,
+                        fontSize: 13,
+                        height: 1.35,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

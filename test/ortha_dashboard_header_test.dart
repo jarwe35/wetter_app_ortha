@@ -5,9 +5,10 @@ import 'package:wetter_app_ortha/widgets/dashboard/ortha_dashboard_header.dart';
 void main() {
   Future<void> pumpHeader(
     WidgetTester tester, {
-    required Size size,
-    required VoidCallback onOpenLocations,
-    required VoidCallback onOpenUnitSettings,
+    Size size = const Size(390, 844),
+    OrthaWarningBeaconState warningState = OrthaWarningBeaconState.green,
+    VoidCallback? onHome,
+    VoidCallback? onOpenWarnings,
   }) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = size;
@@ -23,72 +24,111 @@ void main() {
           body: SizedBox(
             width: size.width,
             child: OrthaDashboardHeader(
-              onOpenLocations: onOpenLocations,
-              onOpenUnitSettings: onOpenUnitSettings,
+              warningState: warningState,
+              onHome: onHome,
+              onOpenWarnings: onOpenWarnings,
             ),
           ),
         ),
       ),
     );
 
-    await tester.pumpAndSettle();
+    await tester.pump();
   }
 
-  testWidgets('zeigt alle wesentlichen Header-Inhalte auf kleinem Display', (
-    tester,
-  ) async {
-    await pumpHeader(
-      tester,
-      size: const Size(360, 800),
-      onOpenLocations: () {},
-      onOpenUnitSettings: () {},
+  testWidgets('zeigt den reduzierten grünen Statusheader', (tester) async {
+    await pumpHeader(tester);
+
+    expect(find.byIcon(Icons.home_outlined), findsOneWidget);
+
+    expect(find.text('Keine Warnungen'), findsOneWidget);
+
+    expect(
+      find.text(
+        'Für Ihren Standort liegen aktuell keine amtlichen '
+        'Warnungen vor.',
+      ),
+      findsOneWidget,
     );
 
-    expect(find.text('ORTHA METEO Ω'), findsOneWidget);
-    expect(find.text('Wetter · Warnungen · Risiko'), findsOneWidget);
-    expect(find.text('Meine Orte'), findsOneWidget);
-    expect(find.byIcon(Icons.cloud_outlined), findsOneWidget);
-    expect(find.byIcon(Icons.straighten_outlined), findsOneWidget);
+    expect(find.text('ORTHA METEO Ω'), findsNothing);
+    expect(find.text('Meine Orte'), findsNothing);
+
+    expect(find.byIcon(Icons.straighten_outlined), findsNothing);
+
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('zeigt alle wesentlichen Header-Inhalte auf breitem Display', (
-    tester,
-  ) async {
-    await pumpHeader(
-      tester,
-      size: const Size(1000, 800),
-      onOpenLocations: () {},
-      onOpenUnitSettings: () {},
+  testWidgets('zeigt den Ladezustand', (tester) async {
+    await pumpHeader(tester, warningState: OrthaWarningBeaconState.loading);
+
+    expect(find.text('Warnlage wird geprüft'), findsOneWidget);
+
+    expect(
+      find.text('Die amtlichen Warnquellen werden aktuell abgefragt.'),
+      findsOneWidget,
     );
 
-    expect(find.text('ORTHA METEO Ω'), findsOneWidget);
-    expect(find.text('Meine Orte'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('führt beide Header-Aktionen aus', (tester) async {
-    var locationsOpened = false;
-    var settingsOpened = false;
+  testWidgets('zeigt die gelbe amtliche Warnung', (tester) async {
+    await pumpHeader(tester, warningState: OrthaWarningBeaconState.yellow);
+
+    expect(find.text('Amtliche Warnung'), findsOneWidget);
+
+    expect(
+      find.textContaining('mindestens eine amtliche Warnung'),
+      findsOneWidget,
+    );
+
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('zeigt die rote akute Warnlage', (tester) async {
+    await pumpHeader(tester, warningState: OrthaWarningBeaconState.red);
+
+    expect(find.text('Akute Warnlage'), findsOneWidget);
+
+    expect(
+      find.textContaining('erhebliche oder akute Warnlage'),
+      findsOneWidget,
+    );
+
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('führt Home- und Warnzentrale-Aktion aus', (tester) async {
+    var homeOpened = false;
+    var warningsOpened = false;
 
     await pumpHeader(
       tester,
-      size: const Size(390, 844),
-      onOpenLocations: () {
-        locationsOpened = true;
+      onHome: () {
+        homeOpened = true;
       },
-      onOpenUnitSettings: () {
-        settingsOpened = true;
+      onOpenWarnings: () {
+        warningsOpened = true;
       },
     );
 
-    await tester.tap(find.text('Meine Orte'));
+    await tester.tap(find.byIcon(Icons.home_outlined));
     await tester.pump();
 
-    await tester.tap(find.byTooltip('Einheiten'));
+    expect(homeOpened, isTrue);
+
+    await tester.tap(find.byKey(const ValueKey('nova-status-area')));
     await tester.pump();
 
-    expect(locationsOpened, isTrue);
-    expect(settingsOpened, isTrue);
+    expect(warningsOpened, isTrue);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('bleibt auf kleinem Display ohne Ausnahme', (tester) async {
+    await pumpHeader(tester, size: const Size(320, 700));
+
+    expect(find.text('Keine Warnungen'), findsOneWidget);
+
+    expect(tester.takeException(), isNull);
   });
 }

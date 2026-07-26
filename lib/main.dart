@@ -1063,8 +1063,6 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                 });
               },
               onOpenWarnings: () => handleNavigationSelection(11),
-              onOpenLocations: openLocationsPage,
-              onOpenUnitSettings: openUnitSettings,
               warningState: _warningBeaconState(),
             ),
             SizedBox(height: ui.cardSpacing),
