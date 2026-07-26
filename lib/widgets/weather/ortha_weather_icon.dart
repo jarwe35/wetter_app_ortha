@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../design/ortha_light_engine.dart';
+
 /// Einheitliche, klar erkennbare Wetterzustände für ORTHA METEO Ω.
 enum OrthaWeatherCondition {
   clear,
@@ -111,13 +113,44 @@ class OrthaWeatherIcon extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: style.shadowColor.withValues(alpha: 0.35),
+            color: style.shadowColor.withValues(
+              alpha: OrthaLightEngine.normal.outerOpacity,
+            ),
+            blurRadius: OrthaLightEngine.normal.outerBlur,
+            spreadRadius: -size * 0.10,
+          ),
+          BoxShadow(
+            color: style.shadowColor.withValues(
+              alpha: OrthaLightEngine.normal.middleOpacity * 0.55,
+            ),
+            blurRadius: OrthaLightEngine.normal.middleBlur,
+            spreadRadius: -size * 0.14,
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.32),
             blurRadius: size * 0.18,
             offset: Offset(0, size * 0.07),
           ),
         ],
       ),
-      child: Icon(style.icon, size: size * 0.57, color: style.iconColor),
+      child: Icon(
+        style.icon,
+        size: size * 0.57,
+        color: style.iconColor,
+        shadows: [
+          Shadow(
+            color: style.shadowColor.withValues(
+              alpha: OrthaLightEngine.normal.coreOpacity,
+            ),
+            blurRadius: OrthaLightEngine.normal.coreBlur,
+          ),
+          Shadow(
+            color: Colors.white.withValues(alpha: 0.24),
+            blurRadius: 2.2,
+            offset: const Offset(0, -0.8),
+          ),
+        ],
+      ),
     );
 
     if (semanticLabel == null || semanticLabel!.trim().isEmpty) {
