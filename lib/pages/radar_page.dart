@@ -6,6 +6,8 @@ import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 
 import '../services/radar/rainviewer_radar_service.dart';
+import '../weather_engine/radar/integration/radar_playback_view_controller.dart';
+import '../weather_engine/radar/integration/rainviewer_radar_playback_source.dart';
 import '../services/weather_service.dart';
 import '../widgets/maps/ortha_hourly_forecast_chart.dart';
 import '../widgets/maps/ortha_map_header.dart';
@@ -37,6 +39,9 @@ class RadarPage extends StatefulWidget {
 class _RadarPageState extends State<RadarPage> {
   late final http.Client _httpClient;
   late final RainViewerRadarService _radarService;
+  late final RainViewerRadarPlaybackSource _playbackSource;
+  late final RadarPlaybackViewController<RainViewerRadarFrame>
+  _playbackController;
 
   final MapController _mapController = MapController();
 
@@ -64,6 +69,14 @@ class _RadarPageState extends State<RadarPage> {
 
     _httpClient = http.Client();
     _radarService = RainViewerRadarService(httpClient: _httpClient);
+    _playbackSource = RainViewerRadarPlaybackSource(
+      radarService: _radarService,
+    );
+    _playbackController = RadarPlaybackViewController<RainViewerRadarFrame>(
+      source: _playbackSource,
+      disposeSource: true,
+    );
+    _playbackController.addListener(_handlePlaybackSourceChanged);
 
     _loadRadar();
   }
@@ -87,11 +100,29 @@ class _RadarPageState extends State<RadarPage> {
     });
   }
 
+  void _handlePlaybackSourceChanged() {
+    if (!mounted) {
+      return;
+    }
+
+    final metadata = _playbackSource.metadata;
+
+    if (metadata == null || identical(_metadata, metadata)) {
+      return;
+    }
+
+    setState(() {
+      _metadata = metadata;
+    });
+  }
+
   @override
   void dispose() {
     _animationTimer?.cancel();
     _frameTransitionTimer?.cancel();
     _rateLimitTimer?.cancel();
+    _playbackController.removeListener(_handlePlaybackSourceChanged);
+    _playbackController.dispose();
     _mapController.dispose();
     _httpClient.close();
     super.dispose();
@@ -131,11 +162,21 @@ class _RadarPageState extends State<RadarPage> {
     }
 
     try {
-      final metadata = await _radarService.fetchMetadata(
-        forceRefresh: forceRefresh,
-      );
+      if (forceRefresh) {
+        await _playbackController.refresh();
+      } else {
+        await _playbackController.initialize();
+      }
 
       if (!mounted) return;
+
+      final metadata = _playbackSource.metadata;
+
+      if (metadata == null) {
+        throw const RainViewerRadarException(
+          'Die Playback-Quelle hat keine Radar-Metadaten geliefert.',
+        );
+      }
 
       setState(() {
         _metadata = metadata;
