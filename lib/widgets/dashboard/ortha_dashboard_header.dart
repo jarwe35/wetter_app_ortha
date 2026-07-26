@@ -124,6 +124,26 @@ class OrthaDashboardHeader extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(8, 2, 8, 4),
                 child: Column(
                   children: [
+                    Semantics(
+                      label: 'ORTHA METEO',
+                      image: true,
+                      child: Image.asset(
+                        'assets/branding/ortha_meteo_master.png',
+                        key: const ValueKey('dashboard-warning-master-logo'),
+                        height: 87,
+                        fit: BoxFit.contain,
+                        filterQuality: FilterQuality.high,
+                        errorBuilder:
+                            (
+                              BuildContext context,
+                              Object error,
+                              StackTrace? stackTrace,
+                            ) {
+                              return const SizedBox.shrink();
+                            },
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     Text(
                       _statusTitle,
                       textAlign: TextAlign.center,
