@@ -60,6 +60,7 @@ import 'package:wetter_app_ortha/widgets/layout/ortha_meteo_background.dart';
 import 'package:wetter_app_ortha/theme/ortha_design_system.dart';
 import 'design/ortha_light_engine.dart';
 import 'widgets/design/ortha_glow_icon.dart';
+import 'settings/ortha_control_center_page.dart';
 part 'widgets/weather/daily_forecast_card.dart';
 part 'widgets/weather/hourly_forecast_card.dart';
 part 'widgets/weather/current_weather_card.dart';
@@ -953,6 +954,13 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
   }
 
   void handleNavigationSelection(int index) {
+    if (index == 8) {
+      Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(builder: (_) => const OrthaControlCenterPage()),
+      );
+      return;
+    }
+
     if (index == 11) {
       Navigator.push<void>(
         context,

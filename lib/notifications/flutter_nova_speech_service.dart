@@ -1,18 +1,23 @@
 import 'package:flutter_tts/flutter_tts.dart';
 
+import '../settings/nova_speech_settings.dart';
+import '../settings/nova_speech_settings_store.dart';
 import 'nova_speech_service.dart';
 import 'nova_speech_voice.dart';
 
 class FlutterNovaSpeechService implements NovaSpeechService {
   FlutterNovaSpeechService({
     FlutterTts? flutterTts,
+    NovaSpeechSettingsStore? settingsStore,
     this.language = 'de-DE',
     this.speechRate = 0.48,
     this.volume = 1.0,
-    this.pitch = 1.00,
-  }) : _flutterTts = flutterTts ?? FlutterTts();
+    this.pitch = 1.0,
+  }) : _flutterTts = flutterTts ?? FlutterTts(),
+       _settingsStore = settingsStore ?? NovaSpeechSettingsStore();
 
   final FlutterTts _flutterTts;
+  final NovaSpeechSettingsStore _settingsStore;
 
   final String language;
   final double speechRate;
@@ -21,6 +26,9 @@ class FlutterNovaSpeechService implements NovaSpeechService {
 
   bool _initialized = false;
   NovaSpeechVoice? _selectedVoice;
+  NovaSpeechSettings? _activeSettings;
+
+  NovaSpeechSettings? get activeSettings => _activeSettings;
 
   @override
   Future<void> initialize() async {
@@ -28,10 +36,33 @@ class FlutterNovaSpeechService implements NovaSpeechService {
       return;
     }
 
-    await _flutterTts.setLanguage(language);
-    await _flutterTts.setSpeechRate(speechRate);
-    await _flutterTts.setVolume(volume);
-    await _flutterTts.setPitch(pitch);
+    await applyStoredSettings();
+  }
+
+  Future<NovaSpeechSettings> applyStoredSettings() async {
+    NovaSpeechSettings settings;
+
+    try {
+      settings = await _settingsStore.load();
+    } catch (_) {
+      settings = NovaSpeechSettings(
+        language: language,
+        speechRate: speechRate,
+        pitch: pitch,
+        volume: volume,
+      );
+    }
+
+    await applySettings(settings);
+
+    return settings;
+  }
+
+  Future<void> applySettings(NovaSpeechSettings settings) async {
+    await _flutterTts.setLanguage(settings.language);
+    await _flutterTts.setSpeechRate(settings.speechRate);
+    await _flutterTts.setPitch(settings.pitch);
+    await _flutterTts.setVolume(settings.volume);
     await _flutterTts.awaitSpeakCompletion(true);
 
     final selectedVoice = _selectedVoice;
@@ -40,6 +71,7 @@ class FlutterNovaSpeechService implements NovaSpeechService {
       await _applyVoice(selectedVoice);
     }
 
+    _activeSettings = settings;
     _initialized = true;
   }
 
@@ -72,10 +104,6 @@ class FlutterNovaSpeechService implements NovaSpeechService {
         continue;
       }
 
-      if (!locale.toLowerCase().startsWith('de')) {
-        continue;
-      }
-
       voices.add(NovaSpeechVoice(name: name, locale: locale));
     }
 
@@ -98,7 +126,8 @@ class FlutterNovaSpeechService implements NovaSpeechService {
     _selectedVoice = voice;
 
     if (voice == null) {
-      await _flutterTts.setLanguage(language);
+      await _flutterTts.setLanguage(_activeSettings?.language ?? language);
+
       return;
     }
 
@@ -107,6 +136,7 @@ class FlutterNovaSpeechService implements NovaSpeechService {
 
   Future<void> _applyVoice(NovaSpeechVoice voice) async {
     await _flutterTts.setLanguage(voice.locale);
+
     await _flutterTts.setVoice({'name': voice.name, 'locale': voice.locale});
   }
 
@@ -118,9 +148,22 @@ class FlutterNovaSpeechService implements NovaSpeechService {
       return;
     }
 
-    await initialize();
+    await applyStoredSettings();
     await _flutterTts.stop();
     await _flutterTts.speak(normalizedMessage);
+  }
+
+  Future<void> speakTestMessage() async {
+    final settings = await applyStoredSettings();
+
+    final message = settings.language.toLowerCase().startsWith('en')
+        ? 'NOVA voice output is active. '
+              'Your selected speech settings have been applied.'
+        : 'NOVA Sprachausgabe ist aktiv. '
+              'Die gewählten Spracheinstellungen wurden übernommen.';
+
+    await _flutterTts.stop();
+    await _flutterTts.speak(message);
   }
 
   @override
