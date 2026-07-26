@@ -1,18 +1,16 @@
 import 'package:flutter/material.dart';
 
-import '../theme/ortha_colors.dart';
-
 import '../notifications/nova_signal_level.dart';
 import '../notifications/nova_signal_settings.dart';
 import '../notifications/nova_signal_settings_provider.dart';
 import '../notifications/nova_speech_service.dart';
 
-const Color _orthaSurface = OrthaColors.surface;
-const Color _orthaSurfaceElevated = OrthaColors.surfaceElevated;
-const Color _orthaPrimaryText = OrthaColors.primaryText;
-const Color _orthaSecondaryText = OrthaColors.secondaryText;
-const Color _orthaAccent = OrthaColors.accent;
-const Color _orthaBorder = OrthaColors.border;
+const Color _orthaSurface = Color(0xFFFFFFFF);
+const Color _orthaSurfaceElevated = Color(0xFFF5FAFE);
+const Color _orthaPrimaryText = Color(0xFF163247);
+const Color _orthaSecondaryText = Color(0xFF587080);
+const Color _orthaAccent = Color(0xFFD5A84A);
+const Color _orthaBorder = Color(0xFFD3E2EC);
 
 class NovaPage extends StatefulWidget {
   const NovaPage({
@@ -617,7 +615,7 @@ class _NovaPageState extends State<NovaPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xCC35171F),
+        color: const Color(0xFFFFF3F0),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: const Color(0xFFB94A48).withValues(alpha: 0.45),

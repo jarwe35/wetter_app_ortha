@@ -62,13 +62,13 @@ part 'widgets/weather/daily_forecast_card.dart';
 part 'widgets/weather/hourly_forecast_card.dart';
 part 'widgets/weather/current_weather_card.dart';
 
-const Color orthaBackground = Color(0xFF020A12);
-const Color orthaSurface = Color(0xD9142432);
-const Color orthaSurfaceElevated = Color(0xE6192B3A);
-const Color orthaPrimaryText = Color(0xFFF4F7FA);
-const Color orthaSecondaryText = Color(0xFFADB9C7);
-const Color orthaAccent = Color(0xFFFFB536);
-const Color orthaBorder = Color(0x668497A9);
+const Color orthaBackground = Color(0xFFEAF4FB);
+const Color orthaSurface = Color(0xFFFFFFFF);
+const Color orthaSurfaceElevated = Color(0xFFF5FAFE);
+const Color orthaPrimaryText = Color(0xFF163247);
+const Color orthaSecondaryText = Color(0xFF587080);
+const Color orthaAccent = Color(0xFFD5A84A);
+const Color orthaBorder = Color(0xFFD3E2EC);
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -86,6 +86,7 @@ class OrthaWeatherApp extends StatelessWidget {
       theme: OrthaDesignSystem.theme,
       darkTheme: OrthaDesignSystem.theme,
       themeMode: ThemeMode.dark,
+
       builder: (context, child) {
         return OrthaMeteoBackground(
           child: Theme(
@@ -100,6 +101,25 @@ class OrthaWeatherApp extends StatelessWidget {
 
       title: 'ORTHA Wetter',
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: orthaBackground,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: orthaAccent,
+          brightness: Brightness.dark,
+          surface: orthaSurface,
+        ),
+        textTheme: const TextTheme(
+          bodyLarge: TextStyle(color: orthaPrimaryText),
+          bodyMedium: TextStyle(color: orthaPrimaryText),
+          bodySmall: TextStyle(color: orthaSecondaryText),
+          titleLarge: TextStyle(color: orthaPrimaryText),
+          titleMedium: TextStyle(color: orthaPrimaryText),
+          titleSmall: TextStyle(color: orthaPrimaryText),
+        ),
+        iconTheme: const IconThemeData(color: orthaPrimaryText),
+        useMaterial3: true,
+      ),
       home: const WeatherHomePage(),
     );
   }
@@ -1005,29 +1025,21 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
   }
 
   OrthaWarningBeaconState _warningBeaconState() {
-    if (officialWarningsLoading) {
+    if (officialWarningsLoading || (isLoading && riskResult == null)) {
       return OrthaWarningBeaconState.loading;
     }
 
-    final activeWarnings = officialWarnings
-        .where((warning) => warning.isActive)
-        .toList(growable: false);
-
-    if (activeWarnings.isEmpty) {
-      return OrthaWarningBeaconState.green;
-    }
-
-    final hasSevereWarning = activeWarnings.any(
-      (warning) =>
-          warning.severity == OfficialWarningSeverity.severe ||
-          warning.severity == OfficialWarningSeverity.extreme,
+    final hasActiveOfficialWarning = officialWarnings.any(
+      (warning) => warning.isActive,
     );
 
-    if (hasSevereWarning) {
+    final hasCriticalOrthaRisk = riskResult?.level == RiskLevel.red;
+
+    if (hasActiveOfficialWarning || hasCriticalOrthaRisk) {
       return OrthaWarningBeaconState.red;
     }
 
-    return OrthaWarningBeaconState.yellow;
+    return OrthaWarningBeaconState.green;
   }
 
   @override
@@ -2047,7 +2059,7 @@ String formatPrecipitation(double millimeters, UnitSettings settings) {
     return '${inches.toStringAsFixed(2)} in';
   }
 
-  return '${millimeters.toStringAsFixed(1)} l/m²';
+  return '${millimeters.toStringAsFixed(1)} mm';
 }
 
 String weatherText(int code) {

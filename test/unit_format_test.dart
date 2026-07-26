@@ -46,7 +46,7 @@ void main() {
       expect(formatTemperature(20, settings), '20.0 °C');
       expect(formatWindSpeed(36, settings), '36.0 km/h');
       expect(formatVisibility(10000, settings), '10.0 km');
-      expect(formatPrecipitation(5, settings), '5.0 mm');
+      expect(formatPrecipitation(5, settings), '5.0 l/m²');
     });
   });
 }

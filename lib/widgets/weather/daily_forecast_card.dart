@@ -136,7 +136,9 @@ class _DailyForecastTile extends StatelessWidget {
           vertical: 13,
         ),
         decoration: BoxDecoration(
-          color: isToday ? const Color(0xFFFFF8E8) : orthaSurfaceElevated,
+          color: isToday
+              ? orthaAccent.withValues(alpha: 0.14)
+              : orthaSurfaceElevated,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: isToday

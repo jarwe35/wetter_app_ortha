@@ -1,0 +1,234 @@
+import 'dart:convert';
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'package:wetter_app_ortha/services/location_service.dart';
+
+void main() {
+  group('ORTHA Smart Location Engine', () {
+    test('entfernt deutsche Verwaltungszusätze', () {
+      final service = LocationService(
+        httpClient: MockClient((_) async => http.Response('{}', 200)),
+      );
+
+      expect(service.normalizeQuery('Gemeinde Windeck'), 'Windeck');
+      expect(service.normalizeQuery('Stadt Jüterbog'), 'Jüterbog');
+      expect(
+        service.normalizeQuery('Gemeindeverwaltung Mörfelden-Walldorf'),
+        'Mörfelden-Walldorf',
+      );
+      expect(service.normalizeQuery('  Stadt   Bremervörde  '), 'Bremervörde');
+    });
+
+    test(
+      'verwendet Nominatim wenn Open-Meteo keinen deutschen Exakttreffer hat',
+      () async {
+        var openMeteoCalled = false;
+        var nominatimCalled = false;
+
+        final client = MockClient((request) async {
+          if (request.url.host == 'geocoding-api.open-meteo.com') {
+            openMeteoCalled = true;
+
+            expect(request.url.queryParameters['name'], 'Windeck');
+
+            return http.Response(
+              jsonEncode({
+                'results': [
+                  {
+                    'name': 'Windeck',
+                    'latitude': 47.89701,
+                    'longitude': 8.07735,
+                    'country': 'Deutschland',
+                    'admin1': 'Baden-Württemberg',
+                    'feature_code': 'MT',
+                  },
+                  {
+                    'name': 'Windeck',
+                    'latitude': 46.8631,
+                    'longitude': 11.90253,
+                    'country': 'Italien',
+                  },
+                ],
+              }),
+              200,
+              headers: const {
+                'content-type': 'application/json; charset=utf-8',
+              },
+            );
+          }
+
+          if (request.url.host == 'nominatim.openstreetmap.org') {
+            nominatimCalled = true;
+
+            expect(request.url.queryParameters['q'], 'Windeck');
+            expect(request.url.queryParameters['countrycodes'], 'de');
+
+            return http.Response(
+              jsonEncode([
+                {
+                  'lat': '50.8000',
+                  'lon': '7.5700',
+                  'display_name':
+                      'Windeck, Rhein-Sieg-Kreis, Nordrhein-Westfalen, Deutschland',
+                  'name': 'Windeck',
+                  'type': 'administrative',
+                  'address': {
+                    'municipality': 'Windeck',
+                    'county': 'Rhein-Sieg-Kreis',
+                    'state': 'Nordrhein-Westfalen',
+                    'country': 'Deutschland',
+                    'country_code': 'de',
+                  },
+                  'namedetails': {'name': 'Windeck', 'name:de': 'Windeck'},
+                },
+              ]),
+              200,
+              headers: const {
+                'content-type': 'application/json; charset=utf-8',
+              },
+            );
+          }
+
+          return http.Response('Nicht gefunden', 404);
+        });
+
+        final service = LocationService(httpClient: client);
+
+        final results = await service.searchLocations('Gemeinde Windeck');
+
+        expect(openMeteoCalled, isTrue);
+        expect(nominatimCalled, isTrue);
+        expect(results, isNotEmpty);
+
+        final first = results.first;
+
+        expect(first.name, 'Windeck');
+        expect(first.admin1, 'Nordrhein-Westfalen');
+        expect(first.country, 'Deutschland');
+        expect(first.timezone, 'Europe/Berlin');
+        expect(first.latitude, closeTo(50.8, 0.0001));
+        expect(first.longitude, closeTo(7.57, 0.0001));
+      },
+    );
+
+    test(
+      'behält Open-Meteo wenn ein überzeugender Treffer existiert',
+      () async {
+        var nominatimCalled = false;
+
+        final client = MockClient((request) async {
+          if (request.url.host == 'geocoding-api.open-meteo.com') {
+            return http.Response(
+              jsonEncode({
+                'results': [
+                  {
+                    'name': 'Duisburg',
+                    'latitude': 51.4344,
+                    'longitude': 6.7623,
+                    'country': 'Deutschland',
+                    'admin1': 'Nordrhein-Westfalen',
+                    'timezone': 'Europe/Berlin',
+                  },
+                ],
+              }),
+              200,
+            );
+          }
+
+          nominatimCalled = true;
+
+          return http.Response('[]', 200);
+        });
+
+        final service = LocationService(httpClient: client);
+        final results = await service.searchLocations('Duisburg');
+
+        expect(nominatimCalled, isFalse);
+        expect(results.single.name, 'Duisburg');
+        expect(results.single.admin1, 'Nordrhein-Westfalen');
+      },
+    );
+
+    test(
+      'deutscher Exakttreffer steht vor gleichnamigem Auslandsort',
+      () async {
+        final client = MockClient((request) async {
+          if (request.url.host == 'geocoding-api.open-meteo.com') {
+            return http.Response(
+              jsonEncode({
+                'results': [
+                  {
+                    'name': 'Windeck',
+                    'latitude': 46.8631,
+                    'longitude': 11.90253,
+                    'country': 'Italien',
+                  },
+                ],
+              }),
+              200,
+            );
+          }
+
+          return http.Response(
+            jsonEncode([
+              {
+                'lat': '50.8000',
+                'lon': '7.5700',
+                'display_name': 'Windeck, Nordrhein-Westfalen, Deutschland',
+                'address': {
+                  'municipality': 'Windeck',
+                  'state': 'Nordrhein-Westfalen',
+                  'country': 'Deutschland',
+                  'country_code': 'de',
+                },
+                'namedetails': {'name': 'Windeck'},
+              },
+            ]),
+            200,
+          );
+        });
+
+        final service = LocationService(httpClient: client);
+        final results = await service.searchLocations('Windeck');
+
+        expect(results.first.country, 'Deutschland');
+        expect(results.first.admin1, 'Nordrhein-Westfalen');
+        expect(results.last.country, 'Italien');
+      },
+    );
+
+    test(
+      'Nominatim-Ausfall zerstört vorhandene Open-Meteo-Treffer nicht',
+      () async {
+        final client = MockClient((request) async {
+          if (request.url.host == 'geocoding-api.open-meteo.com') {
+            return http.Response(
+              jsonEncode({
+                'results': [
+                  {
+                    'name': 'Windeck',
+                    'latitude': 47.89701,
+                    'longitude': 8.07735,
+                    'country': 'Deutschland',
+                    'admin1': 'Baden-Württemberg',
+                  },
+                ],
+              }),
+              200,
+            );
+          }
+
+          return http.Response('Serverfehler', 503);
+        });
+
+        final service = LocationService(httpClient: client);
+        final results = await service.searchLocations('Windeck');
+
+        expect(results, hasLength(1));
+        expect(results.single.admin1, 'Baden-Württemberg');
+      },
+    );
+  });
+}

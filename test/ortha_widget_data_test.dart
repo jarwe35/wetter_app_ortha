@@ -23,6 +23,7 @@ void main() {
       windGusts: 20,
       pressure: 1015,
       cloudCover: 10,
+      isDay: true,
       weatherCode: weatherCode,
       uvIndex: 4,
       visibility: 20000,

@@ -49,7 +49,6 @@ class WeatherCard extends StatelessWidget {
 
               final weatherIconWidget = OrthaWeatherIcon(
                 weatherCode: data.weatherCode,
-                isNight: !data.isDay,
                 size: iconSize,
                 semanticLabel: weatherText(data.weatherCode),
               );
@@ -139,12 +138,6 @@ class WeatherCard extends StatelessWidget {
                     icon: Icons.air,
                     label:
                         'Wind ${formatWindSpeed(data.windSpeed, unitSettings)}',
-                  ),
-                  _WeatherMetaItem(
-                    icon: Icons.water_outlined,
-                    label:
-                        'Niederschlag 24 h '
-                        '${formatPrecipitation(data.precipitationNext24Hours, unitSettings)}',
                   ),
                 ];
 

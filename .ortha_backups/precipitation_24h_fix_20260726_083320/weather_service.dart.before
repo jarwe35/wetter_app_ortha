@@ -15,10 +15,6 @@ class HourlyForecast {
   final int weatherCode;
   final bool isDay;
   final int precipitationProbability;
-
-  /// Erwartete Niederschlagsmenge dieser Stunde in Millimetern.
-  final double precipitation;
-
   final double visibility;
 
   const HourlyForecast({
@@ -31,7 +27,6 @@ class HourlyForecast {
     required this.weatherCode,
     this.isDay = true,
     required this.precipitationProbability,
-    this.precipitation = 0.0,
     required this.visibility,
   });
 }
@@ -71,7 +66,6 @@ class WeatherData {
   final double pressure;
   final int cloudCover;
   final int weatherCode;
-  final bool isDay;
   final double uvIndex;
   final double visibility;
   final String observationTime;
@@ -91,34 +85,12 @@ class WeatherData {
     required this.pressure,
     required this.cloudCover,
     required this.weatherCode,
-    required this.isDay,
     required this.uvIndex,
     required this.visibility,
     required this.observationTime,
     required this.hourlyForecast,
     required this.dailyForecast,
   });
-
-  /// Prognostizierte Gesamtniederschlagsmenge der nächsten 24 Stunden.
-  ///
-  /// Die Stundenprognose beginnt bereits mit der aktuellen beziehungsweise
-  /// nächsten verfügbaren Prognosestunde. Deshalb können hier unmittelbar
-  /// die ersten maximal 24 Einträge summiert werden.
-  double get precipitationNext24Hours {
-    final hourCount = hourlyForecast.length < 24 ? hourlyForecast.length : 24;
-
-    var total = 0.0;
-
-    for (var index = 0; index < hourCount; index++) {
-      final precipitation = hourlyForecast[index].precipitation;
-
-      if (precipitation.isFinite && precipitation > 0) {
-        total += precipitation;
-      }
-    }
-
-    return total;
-  }
 }
 
 class WeatherService {
@@ -189,12 +161,12 @@ class WeatherService {
       'longitude': longitude.toString(),
       'current':
           'temperature_2m,relative_humidity_2m,apparent_temperature,'
-          'precipitation,weather_code,is_day,cloud_cover,surface_pressure,'
+          'precipitation,weather_code,cloud_cover,surface_pressure,'
           'wind_speed_10m,wind_gusts_10m',
       'hourly':
           'temperature_2m,apparent_temperature,relative_humidity_2m,'
           'wind_gusts_10m,uv_index,weather_code,is_day,'
-          'precipitation_probability,precipitation,visibility',
+          'precipitation_probability,visibility',
       'daily':
           'weather_code,temperature_2m_max,temperature_2m_min,'
           'precipitation_probability_max,uv_index_max,sunrise,sunset',
@@ -249,11 +221,6 @@ class WeatherService {
         : List<dynamic>.filled(hourlyTimes.length, 1);
     final hourlyPrecipitationProbabilities =
         hourly['precipitation_probability'] as List;
-
-    final hourlyPrecipitations = hourly['precipitation'] is List
-        ? hourly['precipitation'] as List
-        : List<dynamic>.filled(hourlyTimes.length, 0.0);
-
     final hourlyVisibilities = hourly['visibility'] as List;
 
     var currentHourIndex = hourlyTimes.indexWhere(
@@ -271,7 +238,6 @@ class WeatherService {
           hourlyApparentTemperatures.length,
           hourlyWeatherCodes.length,
           hourlyPrecipitationProbabilities.length,
-          hourlyPrecipitations.length,
           hourlyVisibilities.length,
         ].reduce((a, b) => a < b ? a : b) -
         currentHourIndex;
@@ -293,7 +259,6 @@ class WeatherService {
         isDay: (hourlyIsDay[sourceIndex] as num).round() == 1,
         precipitationProbability:
             (hourlyPrecipitationProbabilities[sourceIndex] as num).round(),
-        precipitation: (hourlyPrecipitations[sourceIndex] as num).toDouble(),
         visibility: (hourlyVisibilities[sourceIndex] as num).toDouble(),
       );
     });
@@ -365,7 +330,6 @@ class WeatherService {
       pressure: (current['surface_pressure'] as num).toDouble(),
       cloudCover: (current['cloud_cover'] as num).round(),
       weatherCode: (current['weather_code'] as num).round(),
-      isDay: ((current['is_day'] as num?)?.round() ?? 1) == 1,
       uvIndex: (dailyUvIndices.first as num).toDouble(),
       visibility: currentVisibility,
       observationTime: currentTime,

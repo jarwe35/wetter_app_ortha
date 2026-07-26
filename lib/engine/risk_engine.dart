@@ -309,7 +309,7 @@ class RiskEngine {
       totalScore,
       message,
       displayValue: data.precipitation > 0
-          ? '${data.precipitation.toStringAsFixed(1)} mm aktuell'
+          ? '${data.precipitation.toStringAsFixed(1)} l/m² aktuell'
           : 'aktuell kein messbarer Niederschlag',
       forecastDisplayValue: peakProbability == null || peakTime == null
           ? 'keine relevante Niederschlagslage erkannt'

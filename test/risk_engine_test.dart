@@ -26,6 +26,7 @@ void main() {
       windGusts: windGusts,
       pressure: 1013,
       cloudCover: 0,
+      isDay: true,
       weatherCode: weatherCode,
       uvIndex: uvIndex,
       visibility: visibility,
@@ -315,7 +316,7 @@ void main() {
     expect(uv.level, RiskLevel.yellow);
   });
 
-  test('Niederschlagsgrenzwert 0.0 mm bleibt ohne Warnung', () {
+  test('Niederschlagsgrenzwert 0.0 l/m² bleibt ohne Warnung', () {
     final result = engine.evaluate(
       createWeatherData(precipitation: 0.0, weatherCode: 0),
     );
@@ -326,17 +327,20 @@ void main() {
     expect(rain.level, RiskLevel.green);
   });
 
-  test('Niederschlagsgrenzwert 0.1 mm aktiviert leichte Niederschlagslage', () {
-    final result = engine.evaluate(
-      createWeatherData(precipitation: 0.1, weatherCode: 0),
-    );
+  test(
+    'Niederschlagsgrenzwert 0.1 l/m² aktiviert leichte Niederschlagslage',
+    () {
+      final result = engine.evaluate(
+        createWeatherData(precipitation: 0.1, weatherCode: 0),
+      );
 
-    final rain = categoryByName(result, 'Niederschlag');
+      final rain = categoryByName(result, 'Niederschlag');
 
-    expect(rain.currentScore, 25);
-    expect(rain.level, RiskLevel.yellow);
-    expect(rain.displayValue, contains('0.1 mm'));
-  });
+      expect(rain.currentScore, 25);
+      expect(rain.level, RiskLevel.yellow);
+      expect(rain.displayValue, contains('0.1 l/m²'));
+    },
+  );
 
   test(
     'Niederschlagswahrscheinlichkeit 39 Prozent bleibt unter Prognoseschwelle',
@@ -444,7 +448,7 @@ void main() {
     expect(wind.level, RiskLevel.orange);
   });
 
-  test('Niederschlagsgrenzwert 4.9 mm bleibt unter starkem Niederschlag', () {
+  test('Niederschlagsgrenzwert 4.9 l/m² bleibt unter starkem Niederschlag', () {
     final result = engine.evaluate(
       createWeatherData(precipitation: 4.9, weatherCode: 0),
     );
@@ -455,7 +459,7 @@ void main() {
     expect(rain.level, RiskLevel.yellow);
   });
 
-  test('Niederschlagsgrenzwert 5.0 mm aktiviert starken Niederschlag', () {
+  test('Niederschlagsgrenzwert 5.0 l/m² aktiviert starken Niederschlag', () {
     final result = engine.evaluate(
       createWeatherData(precipitation: 5.0, weatherCode: 0),
     );
@@ -467,7 +471,7 @@ void main() {
   });
 
   test(
-    'Niederschlagsgrenzwert 14.9 mm bleibt unter sehr starkem Niederschlag',
+    'Niederschlagsgrenzwert 14.9 l/m² bleibt unter sehr starkem Niederschlag',
     () {
       final result = engine.evaluate(
         createWeatherData(precipitation: 14.9, weatherCode: 0),
@@ -481,7 +485,7 @@ void main() {
   );
 
   test(
-    'Niederschlagsgrenzwert 15.0 mm aktiviert sehr starken Niederschlag',
+    'Niederschlagsgrenzwert 15.0 l/m² aktiviert sehr starken Niederschlag',
     () {
       final result = engine.evaluate(
         createWeatherData(precipitation: 15.0, weatherCode: 0),
