@@ -49,9 +49,13 @@ class WeatherCard extends StatelessWidget {
               final iconSize = compact ? 78.0 : 92.0;
               final temperatureSize = compact ? 46.0 : 54.0;
 
+              final heroCondition = data.weatherCode == 0 && data.isDay
+                  ? OrthaWeatherCondition.mainlyClear
+                  : OrthaWeatherCodeMapper.fromWmoCode(data.weatherCode);
+
               final weatherIconWidget = OrthaWeatherIcon(
-                weatherCode: data.weatherCode,
-                isNight: !data.isDay,
+                condition: heroCondition,
+                isNight: data.isDay == false,
                 size: iconSize,
                 semanticLabel: weatherText(data.weatherCode),
               );
