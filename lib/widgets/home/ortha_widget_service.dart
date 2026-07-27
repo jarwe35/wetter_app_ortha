@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:home_widget/home_widget.dart';
 
 import '../../services/weather_service.dart';
+import '../../settings/ortha_widget_settings_store.dart';
 import 'ortha_widget_data.dart';
 
 class OrthaWidgetService {
@@ -91,6 +92,9 @@ class OrthaWidgetService {
         'widget_data_version',
         widgetDataVersion,
       );
+
+      const settingsStore = OrthaWidgetSettingsStore();
+      await settingsStore.syncCurrentSettingsToHomeWidget();
 
       await HomeWidget.updateWidget(androidName: androidProviderName);
     } catch (error, stackTrace) {
