@@ -53,7 +53,7 @@ class WeatherCard extends StatelessWidget {
                   ? OrthaWeatherCondition.mainlyClear
                   : OrthaWeatherCodeMapper.fromWmoCode(data.weatherCode);
 
-              final weatherIconWidget = OrthaWeatherIcon(
+              final weatherIconWidget = _WidgetWeatherSymbol(
                 condition: heroCondition,
                 isNight: data.isDay == false,
                 size: iconSize,
@@ -327,6 +327,125 @@ class _WeatherMetaItem extends StatelessWidget {
           style: const TextStyle(color: orthaSecondaryText, fontSize: 13),
         ),
       ],
+    );
+  }
+}
+
+class _WidgetWeatherSymbol extends StatelessWidget {
+  const _WidgetWeatherSymbol({
+    required this.condition,
+    this.isNight = false,
+    this.size = 64,
+    this.semanticLabel,
+  });
+
+  final Object condition;
+  final bool isNight;
+  final double size;
+  final String? semanticLabel;
+
+  String get _normalizedCondition {
+    return condition.toString().split('.').last.trim().toLowerCase();
+  }
+
+  String get _symbol {
+    final value = _normalizedCondition;
+
+    if (value.contains('thunder') ||
+        value.contains('storm') ||
+        value.contains('gewitter')) {
+      return '⛈';
+    }
+
+    if (value.contains('snow') ||
+        value.contains('sleet') ||
+        value.contains('schnee')) {
+      return '❄';
+    }
+
+    if (value.contains('drizzle') ||
+        value.contains('niesel') ||
+        value.contains('sprühregen')) {
+      return '🌦';
+    }
+
+    if (value.contains('rain') ||
+        value.contains('shower') ||
+        value.contains('regen') ||
+        value.contains('schauer')) {
+      return '🌧';
+    }
+
+    if (value.contains('fog') ||
+        value.contains('mist') ||
+        value.contains('nebel') ||
+        value.contains('dunst')) {
+      return '🌫';
+    }
+
+    if (value.contains('partlycloudy') ||
+        value.contains('partly_cloudy') ||
+        value.contains('partly-cloudy') ||
+        value.contains('mostlycloudy') ||
+        value.contains('mostly_cloudy') ||
+        value.contains('wolkig') ||
+        value.contains('leichtbewölkt') ||
+        value.contains('leicht_bewölkt')) {
+      return isNight ? '☁' : '🌤';
+    }
+
+    if (value.contains('cloudy') ||
+        value.contains('overcast') ||
+        value.contains('bedeckt') ||
+        value.contains('bewölkt')) {
+      return '☁';
+    }
+
+    if (value.contains('clear') ||
+        value.contains('sunny') ||
+        value.contains('klar') ||
+        value.contains('sonnig')) {
+      return isNight ? '🌙' : '☀';
+    }
+
+    return isNight ? '☁' : '🌤';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: semanticLabel ?? 'Aktuelle Wetterlage',
+      image: true,
+      child: ExcludeSemantics(
+        child: SizedBox(
+          width: size * 1.35,
+          height: size * 1.15,
+          child: FittedBox(
+            fit: BoxFit.contain,
+            alignment: Alignment.center,
+            child: Text(
+              _symbol,
+              key: ValueKey<String>(
+                'current-weather-widget-symbol-$_normalizedCondition',
+              ),
+              maxLines: 1,
+              softWrap: false,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                height: 1,
+                fontWeight: FontWeight.normal,
+                shadows: [
+                  Shadow(
+                    color: Color(0x66000000),
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

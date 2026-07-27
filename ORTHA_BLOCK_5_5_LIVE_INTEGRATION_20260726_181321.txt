@@ -1,0 +1,1662 @@
+ORTHA METEO Ω
+Block 5.5 – Live-Integrationsgrundlage
+Erzeugt: So 26 Jul 2026 18:13:21 CEST
+
+Ziel:
+Kontrollierte Verbindung von:
+
+- lib/pages/radar_page.dart
+- RainViewerRadarService
+- RadarPlaybackSource
+- RadarPlaybackViewController
+- RadarPlaybackView
+- RadarPlaybackStatusView
+
+Die bestehende FlutterMap und das Masterdesign bleiben erhalten.
+
+======================================================
+1. RADAR PLAYBACK SOURCE
+======================================================
+
+import 'package:flutter/foundation.dart';
+
+import '../playback/radar_playback_snapshot.dart';
+
+/// Abstrakte Schnittstelle zwischen einer Flutter-Oberfläche und der
+/// Radar-Playback-Orchestrierung.
+///
+/// Dadurch bleibt die Radaroberfläche unabhängig von der konkreten
+/// Implementierung der Playback Engine.
+abstract interface class RadarPlaybackSource<TOutput> implements Listenable {
+  RadarPlaybackSnapshot<TOutput> get snapshot;
+
+  Future<void> initialize();
+
+  Future<void> refresh();
+
+  void dispose();
+}
+
+======================================================
+2. RADAR PLAYBACK VIEW CONTROLLER
+======================================================
+
+import 'package:flutter/foundation.dart';
+
+import '../playback/radar_playback_snapshot.dart';
+import 'radar_playback_source.dart';
+
+/// UI-Lebenszykluscontroller für die Radar-Playback-Integration.
+///
+/// Eine Flutter-Seite kann diesen Controller in `initState` initialisieren,
+/// über einen `ListenableBuilder` oder `AnimatedBuilder` beobachten und in
+/// `dispose` wieder freigeben.
+///
+/// Die bestehende Kartenansicht muss dadurch weder Provider- noch
+/// Render-Details der Weather Engine kennen.
+class RadarPlaybackViewController<TOutput> extends ChangeNotifier {
+  RadarPlaybackViewController({
+    required this._source,
+    this.disposeSource = false,
+  }) {
+    _source.addListener(_handleSourceChanged);
+  }
+
+  final RadarPlaybackSource<TOutput> _source;
+
+  /// Gibt an, ob der Controller beim eigenen Dispose auch die angebundene
+  /// Radarquelle freigeben soll.
+  ///
+  /// Bleibt der Besitz bei einem übergeordneten Controller oder Service,
+  /// muss dieser Wert `false` bleiben.
+  final bool disposeSource;
+
+  bool _initialized = false;
+  bool _initializing = false;
+  bool _disposed = false;
+
+  Future<void>? _initializationOperation;
+
+  RadarPlaybackSnapshot<TOutput> get snapshot => _source.snapshot;
+
+  bool get isInitialized => _initialized;
+
+  bool get isInitializing => _initializing;
+
+  bool get isDisposed => _disposed;
+
+  RadarPlaybackSource<TOutput> get source => _source;
+
+  /// Initialisiert die Radarquelle höchstens einmal.
+  ///
+  /// Gleichzeitige Aufrufe erhalten dieselbe laufende Future. Dadurch werden
+  /// doppelte Timeline-Anfragen beim Aufbau eines Widgets verhindert.
+  Future<void> initialize() {
+    _ensureActive();
+
+    if (_initialized) {
+      return Future<void>.value();
+    }
+
+    final runningOperation = _initializationOperation;
+
+    if (runningOperation != null) {
+      return runningOperation;
+    }
+
+    final operation = _runInitialization();
+    _initializationOperation = operation;
+
+    return operation;
+  }
+
+  Future<void> _runInitialization() async {
+    _initializing = true;
+    notifyListeners();
+
+    try {
+      await _source.initialize();
+      _initialized = true;
+    } finally {
+      _initializing = false;
+      _initializationOperation = null;
+
+      if (!_disposed) {
+        notifyListeners();
+      }
+    }
+  }
+
+  /// Fordert eine neue Radar-Timeline über die angebundene Quelle an.
+  Future<void> refresh() {
+    _ensureActive();
+    return _source.refresh();
+  }
+
+  void _handleSourceChanged() {
+    if (_disposed) {
+      return;
+    }
+
+    notifyListeners();
+  }
+
+  void _ensureActive() {
+    if (_disposed) {
+      throw StateError(
+        'RadarPlaybackViewController wurde bereits freigegeben.',
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    if (_disposed) {
+      return;
+    }
+
+    _disposed = true;
+    _source.removeListener(_handleSourceChanged);
+
+    if (disposeSource) {
+      _source.dispose();
+    }
+
+    super.dispose();
+  }
+}
+
+======================================================
+3. RADAR PLAYBACK VIEW
+======================================================
+
+import 'package:flutter/widgets.dart';
+
+import '../playback/radar_playback_snapshot.dart';
+import 'radar_playback_view_controller.dart';
+
+typedef RadarPlaybackViewBuilder<TOutput> =
+    Widget Function(
+      BuildContext context,
+      RadarPlaybackSnapshot<TOutput> snapshot,
+      RadarPlaybackViewController<TOutput> controller,
+    );
+
+/// Lebenszyklusfähige Flutter-Anbindung der Radar-Playback-Engine.
+///
+/// Das Widget:
+///
+/// - startet die Initialisierung genau einmal,
+/// - beobachtet den [RadarPlaybackViewController],
+/// - übergibt jeden neuen Snapshot an den Builder,
+/// - übernimmt optional das Dispose des Controllers.
+///
+/// Das bestehende Kartendesign bleibt vollständig beim aufrufenden Widget.
+class RadarPlaybackView<TOutput> extends StatefulWidget {
+  const RadarPlaybackView({
+    required this.controller,
+    required this.builder,
+    this.initializeOnMount = true,
+    this.disposeController = false,
+    this.initializationErrorBuilder,
+    super.key,
+  });
+
+  final RadarPlaybackViewController<TOutput> controller;
+  final RadarPlaybackViewBuilder<TOutput> builder;
+
+  /// Startet die Radarquelle nach dem ersten Aufbau des Widgets.
+  final bool initializeOnMount;
+
+  /// Gibt an, ob das Widget beim Entfernen auch den Controller freigibt.
+  final bool disposeController;
+
+  /// Optionaler Builder für Fehler, die bereits beim Aufruf von
+  /// [RadarPlaybackViewController.initialize] entstehen.
+  final Widget Function(
+    BuildContext context,
+    Object error,
+    StackTrace stackTrace,
+  )?
+  initializationErrorBuilder;
+
+  @override
+  State<RadarPlaybackView<TOutput>> createState() =>
+      _RadarPlaybackViewState<TOutput>();
+}
+
+class _RadarPlaybackViewState<TOutput>
+    extends State<RadarPlaybackView<TOutput>> {
+  Object? _initializationError;
+  StackTrace? _initializationStackTrace;
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (widget.initializeOnMount) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _initialize());
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant RadarPlaybackView<TOutput> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (identical(oldWidget.controller, widget.controller)) {
+      return;
+    }
+
+    if (oldWidget.disposeController) {
+      oldWidget.controller.dispose();
+    }
+
+    _initializationError = null;
+    _initializationStackTrace = null;
+
+    if (widget.initializeOnMount) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _initialize());
+    }
+  }
+
+  Future<void> _initialize() async {
+    if (!mounted) {
+      return;
+    }
+
+    try {
+      await widget.controller.initialize();
+    } catch (error, stackTrace) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _initializationError = error;
+        _initializationStackTrace = stackTrace;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final error = _initializationError;
+    final stackTrace = _initializationStackTrace;
+
+    if (error != null &&
+        stackTrace != null &&
+        widget.initializationErrorBuilder != null) {
+      return widget.initializationErrorBuilder!(context, error, stackTrace);
+    }
+
+    return AnimatedBuilder(
+      animation: widget.controller,
+      builder: (context, _) {
+        return widget.builder(
+          context,
+          widget.controller.snapshot,
+          widget.controller,
+        );
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    if (widget.disposeController) {
+      widget.controller.dispose();
+    }
+
+    super.dispose();
+  }
+}
+
+======================================================
+4. RADAR PLAYBACK STATUS VIEW
+======================================================
+
+import 'package:flutter/material.dart';
+
+import '../playback/radar_playback_snapshot.dart';
+import '../playback/radar_playback_status.dart';
+import 'radar_playback_view_controller.dart';
+
+typedef RadarPlaybackContentBuilder<TOutput> =
+    Widget Function(
+      BuildContext context,
+      TOutput output,
+      RadarPlaybackSnapshot<TOutput> snapshot,
+    );
+
+/// Standardisierte Statusdarstellung für Radar-Playback-Snapshots.
+///
+/// Dieses Widget ist bewusst visuell neutral gehalten. Die bestehende
+/// Radaroberfläche kann Farben, Kartenlayout und Bedienelemente weiterhin
+/// vollständig selbst definieren.
+class RadarPlaybackStatusView<TOutput> extends StatelessWidget {
+  const RadarPlaybackStatusView({
+    required this.snapshot,
+    required this.controller,
+    required this.contentBuilder,
+    this.loadingBuilder,
+    this.emptyBuilder,
+    this.errorBuilder,
+    super.key,
+  });
+
+  final RadarPlaybackSnapshot<TOutput> snapshot;
+  final RadarPlaybackViewController<TOutput> controller;
+  final RadarPlaybackContentBuilder<TOutput> contentBuilder;
+
+  final WidgetBuilder? loadingBuilder;
+  final WidgetBuilder? emptyBuilder;
+
+  final Widget Function(
+    BuildContext context,
+    Object error,
+    Future<void> Function() retry,
+  )?
+  errorBuilder;
+
+  @override
+  Widget build(BuildContext context) {
+    final output = snapshot.currentOutput;
+
+    if (output != null) {
+      return contentBuilder(context, output, snapshot);
+    }
+
+    switch (snapshot.status) {
+      case RadarPlaybackStatus.idle:
+      case RadarPlaybackStatus.loadingTimeline:
+      case RadarPlaybackStatus.preloading:
+      case RadarPlaybackStatus.rendering:
+        return loadingBuilder?.call(context) ??
+            const Center(child: CircularProgressIndicator());
+
+      case RadarPlaybackStatus.failed:
+        final error = snapshot.error;
+
+        if (error != null && errorBuilder != null) {
+          return errorBuilder!(context, error, controller.refresh);
+        }
+
+        return Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Radardaten konnten nicht geladen werden.',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              FilledButton.tonalIcon(
+                onPressed: controller.refresh,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Erneut laden'),
+              ),
+            ],
+          ),
+        );
+
+      case RadarPlaybackStatus.ready:
+      case RadarPlaybackStatus.playing:
+      case RadarPlaybackStatus.paused:
+      case RadarPlaybackStatus.completed:
+        return emptyBuilder?.call(context) ??
+            const Center(child: Text('Noch kein Radarbild verfügbar.'));
+
+      case RadarPlaybackStatus.disposed:
+        return emptyBuilder?.call(context) ?? const SizedBox.shrink();
+    }
+  }
+}
+
+======================================================
+5. RADAR PLAYBACK SNAPSHOT
+======================================================
+
+import 'package:flutter/foundation.dart';
+
+import '../../models/weather_frame.dart';
+import 'radar_playback_status.dart';
+
+/// Unveränderlicher Zustandsabzug der Radar-Wiedergabe.
+@immutable
+class RadarPlaybackSnapshot<TOutput> {
+  const RadarPlaybackSnapshot({
+    required this.status,
+    this.frames = const <WeatherFrame>[],
+    this.currentIndex = 0,
+    this.currentOutput,
+    this.error,
+    this.stackTrace,
+    this.isPreloading = false,
+    this.preloadedFrameCount = 0,
+  });
+
+  final RadarPlaybackStatus status;
+  final List<WeatherFrame> frames;
+  final int currentIndex;
+  final TOutput? currentOutput;
+  final Object? error;
+  final StackTrace? stackTrace;
+  final bool isPreloading;
+  final int preloadedFrameCount;
+
+  bool get hasFrames => frames.isNotEmpty;
+
+  bool get hasError => error != null;
+
+  WeatherFrame? get currentFrame {
+    if (frames.isEmpty) {
+      return null;
+    }
+
+    final safeIndex = currentIndex.clamp(0, frames.length - 1);
+
+    return frames[safeIndex];
+  }
+
+  RadarPlaybackSnapshot<TOutput> copyWith({
+    RadarPlaybackStatus? status,
+    List<WeatherFrame>? frames,
+    int? currentIndex,
+    TOutput? currentOutput,
+    bool clearCurrentOutput = false,
+    Object? error,
+    StackTrace? stackTrace,
+    bool clearError = false,
+    bool? isPreloading,
+    int? preloadedFrameCount,
+  }) {
+    return RadarPlaybackSnapshot<TOutput>(
+      status: status ?? this.status,
+      frames: frames ?? this.frames,
+      currentIndex: currentIndex ?? this.currentIndex,
+      currentOutput: clearCurrentOutput
+          ? null
+          : currentOutput ?? this.currentOutput,
+      error: clearError ? null : error ?? this.error,
+      stackTrace: clearError ? null : stackTrace ?? this.stackTrace,
+      isPreloading: isPreloading ?? this.isPreloading,
+      preloadedFrameCount: preloadedFrameCount ?? this.preloadedFrameCount,
+    );
+  }
+}
+
+======================================================
+6. RADAR PLAYBACK STATUS
+======================================================
+
+/// Gesamtzustand der Radar-Frame-Orchestrierung.
+enum RadarPlaybackStatus {
+  idle,
+  loadingTimeline,
+  ready,
+  preloading,
+  rendering,
+  playing,
+  paused,
+  completed,
+  failed,
+  disposed,
+}
+
+======================================================
+7. RAINVIEWER RADAR SERVICE
+======================================================
+
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
+
+class RainViewerRadarException implements Exception {
+  final String message;
+
+  const RainViewerRadarException(this.message);
+
+  @override
+  String toString() => 'RainViewerRadarException: $message';
+}
+
+class RainViewerRadarFrame {
+  final DateTime time;
+  final String path;
+
+  const RainViewerRadarFrame({required this.time, required this.path});
+}
+
+class RainViewerRadarMetadata {
+  final String host;
+  final DateTime generatedAt;
+  final List<RainViewerRadarFrame> frames;
+  final bool isStale;
+
+  const RainViewerRadarMetadata({
+    required this.host,
+    required this.generatedAt,
+    required this.frames,
+    this.isStale = false,
+  });
+
+  RainViewerRadarMetadata copyWith({bool? isStale}) {
+    return RainViewerRadarMetadata(
+      host: host,
+      generatedAt: generatedAt,
+      frames: frames,
+      isStale: isStale ?? this.isStale,
+    );
+  }
+
+  RainViewerRadarFrame get latestFrame {
+    if (frames.isEmpty) {
+      throw const RainViewerRadarException(
+        'RainViewer hat keine Radarframes geliefert.',
+      );
+    }
+
+    return frames.last;
+  }
+
+  String tileUrlTemplate({
+    required RainViewerRadarFrame frame,
+    int tileSize = 256,
+    int colorScheme = 2,
+    bool smooth = true,
+    bool showSnow = true,
+  }) {
+    final normalizedHost = host.endsWith('/')
+        ? host.substring(0, host.length - 1)
+        : host;
+
+    final normalizedPath = frame.path.startsWith('/')
+        ? frame.path
+        : '/${frame.path}';
+
+    final smoothValue = smooth ? 1 : 0;
+    final snowValue = showSnow ? 1 : 0;
+
+    return '$normalizedHost$normalizedPath/'
+        '$tileSize/{z}/{x}/{y}/'
+        '$colorScheme/${smoothValue}_$snowValue.png';
+  }
+}
+
+class RainViewerRadarService {
+  static final Uri defaultMetadataUri = Uri.parse(
+    'https://api.rainviewer.com/public/weather-maps.json',
+  );
+
+  final http.Client httpClient;
+  final Uri metadataUri;
+  final Duration requestTimeout;
+  final Duration cacheDuration;
+
+  RainViewerRadarMetadata? _cachedMetadata;
+  DateTime? _cachedAt;
+  Future<RainViewerRadarMetadata>? _pendingRequest;
+
+  RainViewerRadarService({
+    required this.httpClient,
+    Uri? metadataUri,
+    this.requestTimeout = const Duration(seconds: 15),
+    this.cacheDuration = const Duration(minutes: 5),
+  }) : metadataUri = metadataUri ?? defaultMetadataUri;
+
+  Future<RainViewerRadarMetadata> fetchMetadata({bool forceRefresh = false}) {
+    final cachedMetadata = _cachedMetadata;
+    final cachedAt = _cachedAt;
+
+    if (!forceRefresh &&
+        cachedMetadata != null &&
+        cachedAt != null &&
+        DateTime.now().difference(cachedAt) < cacheDuration) {
+      return Future<RainViewerRadarMetadata>.value(cachedMetadata);
+    }
+
+    final pendingRequest = _pendingRequest;
+
+    if (!forceRefresh && pendingRequest != null) {
+      return pendingRequest;
+    }
+
+    final request = _fetchMetadataWithFallback(allowStaleCache: !forceRefresh);
+    _pendingRequest = request;
+
+    return request.whenComplete(() {
+      if (identical(_pendingRequest, request)) {
+        _pendingRequest = null;
+      }
+    });
+  }
+
+  Future<RainViewerRadarMetadata> _fetchMetadataWithFallback({
+    required bool allowStaleCache,
+  }) async {
+    try {
+      return await _fetchMetadataFromNetwork();
+    } on RainViewerRadarException {
+      final cachedMetadata = _cachedMetadata;
+
+      if (allowStaleCache && cachedMetadata != null) {
+        return cachedMetadata.copyWith(isStale: true);
+      }
+
+      rethrow;
+    }
+  }
+
+  Future<RainViewerRadarMetadata> _fetchMetadataFromNetwork() async {
+    http.Response response;
+
+    try {
+      response = await httpClient.get(metadataUri).timeout(requestTimeout);
+    } on TimeoutException {
+      throw const RainViewerRadarException(
+        'Der Radarserver hat nicht rechtzeitig geantwortet.',
+      );
+    } catch (error) {
+      throw RainViewerRadarException(
+        'Netzwerkfehler beim Abruf der Radar-Metadaten: $error',
+      );
+    }
+
+    if (response.statusCode != 200) {
+      throw RainViewerRadarException(
+        'Radar-Metadaten konnten nicht geladen werden '
+        '(HTTP ${response.statusCode}).',
+      );
+    }
+
+    if (response.body.trim().isEmpty) {
+      throw const RainViewerRadarException(
+        'RainViewer hat keine Radar-Metadaten geliefert.',
+      );
+    }
+
+    dynamic decoded;
+
+    try {
+      decoded = jsonDecode(response.body);
+    } catch (error) {
+      throw RainViewerRadarException(
+        'Radar-Metadaten enthalten ungültiges JSON: $error',
+      );
+    }
+
+    if (decoded is! Map<String, dynamic>) {
+      throw const RainViewerRadarException(
+        'Radar-Metadaten besitzen ein ungültiges Format.',
+      );
+    }
+
+    final host = decoded['host'];
+    final generated = decoded['generated'];
+    final radar = decoded['radar'];
+
+    if (host is! String || host.trim().isEmpty) {
+      throw const RainViewerRadarException(
+        'In den Radar-Metadaten fehlt der Kachelserver.',
+      );
+    }
+
+    if (generated is! num) {
+      throw const RainViewerRadarException(
+        'In den Radar-Metadaten fehlt der Erzeugungszeitpunkt.',
+      );
+    }
+
+    if (radar is! Map<String, dynamic>) {
+      throw const RainViewerRadarException(
+        'In den Radar-Metadaten fehlen die Radardaten.',
+      );
+    }
+
+    final past = radar['past'];
+
+    if (past is! List) {
+      throw const RainViewerRadarException(
+        'In den Radar-Metadaten fehlen vergangene Radarframes.',
+      );
+    }
+
+    final frames = <RainViewerRadarFrame>[];
+
+    for (final entry in past) {
+      if (entry is! Map<String, dynamic>) {
+        continue;
+      }
+
+      final time = entry['time'];
+      final path = entry['path'];
+
+      if (time is! num || path is! String || path.trim().isEmpty) {
+        continue;
+      }
+
+      frames.add(
+        RainViewerRadarFrame(
+          time: DateTime.fromMillisecondsSinceEpoch(
+            time.toInt() * 1000,
+            isUtc: true,
+          ),
+          path: path,
+        ),
+      );
+    }
+
+    frames.sort((a, b) => a.time.compareTo(b.time));
+
+    if (frames.isEmpty) {
+      throw const RainViewerRadarException(
+        'RainViewer hat keine verwendbaren Radarframes geliefert.',
+      );
+    }
+
+    final metadata = RainViewerRadarMetadata(
+      host: host,
+      generatedAt: DateTime.fromMillisecondsSinceEpoch(
+        generated.toInt() * 1000,
+        isUtc: true,
+      ),
+      frames: List.unmodifiable(frames),
+    );
+
+    _cachedMetadata = metadata;
+    _cachedAt = DateTime.now();
+
+    return metadata;
+  }
+}
+
+======================================================
+8. AKTUELLE RADAR PAGE
+======================================================
+
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:http/http.dart' as http;
+import 'package:latlong2/latlong.dart';
+
+import '../services/radar/rainviewer_radar_service.dart';
+import '../services/weather_service.dart';
+import '../widgets/maps/ortha_hourly_forecast_chart.dart';
+import '../widgets/maps/ortha_map_header.dart';
+import '../widgets/maps/ortha_map_toolbar.dart';
+import '../widgets/maps/ortha_radar_legend.dart';
+import '../widgets/maps/ortha_radar_timeline.dart';
+import 'maps/ortha_fullscreen_map_page.dart';
+
+class RadarPage extends StatefulWidget {
+  final String place;
+  final double? latitude;
+  final double? longitude;
+  final List<HourlyForecast> hourlyForecast;
+  final Future<void> Function()? onRefresh;
+
+  const RadarPage({
+    super.key,
+    required this.place,
+    required this.latitude,
+    required this.longitude,
+    this.hourlyForecast = const [],
+    this.onRefresh,
+  });
+
+  @override
+  State<RadarPage> createState() => _RadarPageState();
+}
+
+class _RadarPageState extends State<RadarPage> {
+  late final http.Client _httpClient;
+  late final RainViewerRadarService _radarService;
+
+  final MapController _mapController = MapController();
+
+  RainViewerRadarMetadata? _metadata;
+  Timer? _animationTimer;
+  Timer? _frameTransitionTimer;
+  Timer? _rateLimitTimer;
+
+  int _selectedFrameIndex = 0;
+  int _primaryRadarFrameIndex = 0;
+  int _secondaryRadarFrameIndex = 0;
+  bool _showPrimaryRadarLayer = true;
+  bool _isAnimating = false;
+  bool _isLoading = true;
+  bool _isRefreshing = false;
+  bool _isMapInteractionLocked = true;
+  String? _errorMessage;
+  String? _lastLoggedRadarTileUrl;
+  DateTime? _radarRateLimitedUntil;
+  bool _radarRateLimited = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _httpClient = http.Client();
+    _radarService = RainViewerRadarService(httpClient: _httpClient);
+
+    _loadRadar();
+  }
+
+  @override
+  void didUpdateWidget(covariant RadarPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    final locationChanged =
+        oldWidget.latitude != widget.latitude ||
+        oldWidget.longitude != widget.longitude;
+
+    if (!locationChanged) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      _mapController.move(_center, _hasCoordinates ? 8.5 : 6);
+    });
+  }
+
+  @override
+  void dispose() {
+    _animationTimer?.cancel();
+    _frameTransitionTimer?.cancel();
+    _rateLimitTimer?.cancel();
+    _mapController.dispose();
+    _httpClient.close();
+    super.dispose();
+  }
+
+  bool get _hasCoordinates =>
+      widget.latitude != null && widget.longitude != null;
+
+  LatLng get _center {
+    if (!_hasCoordinates) {
+      return const LatLng(51.2277, 6.7735);
+    }
+
+    return LatLng(widget.latitude!, widget.longitude!);
+  }
+
+  RainViewerRadarFrame? get _selectedFrame {
+    final metadata = _metadata;
+
+    if (metadata == null || metadata.frames.isEmpty) {
+      return null;
+    }
+
+    final safeIndex = _selectedFrameIndex.clamp(0, metadata.frames.length - 1);
+
+    return metadata.frames[safeIndex];
+  }
+
+  Future<void> _loadRadar({bool forceRefresh = false}) async {
+    _stopAnimation();
+
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    }
+
+    try {
+      final metadata = await _radarService.fetchMetadata(
+        forceRefresh: forceRefresh,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _metadata = metadata;
+
+        final latestIndex = metadata.frames.isEmpty
+            ? 0
+            : metadata.frames.length - 1;
+
+        _selectedFrameIndex = latestIndex;
+        _primaryRadarFrameIndex = latestIndex;
+        _secondaryRadarFrameIndex = latestIndex;
+        _showPrimaryRadarLayer = true;
+      });
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _metadata = null;
+        _errorMessage =
+            'Die Live-Radardaten konnten derzeit nicht geladen werden.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _refresh() async {
+    if (_isRefreshing) {
+      return;
+    }
+
+    setState(() {
+      _isRefreshing = true;
+    });
+
+    try {
+      await widget.onRefresh?.call();
+      await _loadRadar(forceRefresh: true);
+
+      if (!mounted) return;
+
+      _mapController.move(_center, _mapController.camera.zoom);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isRefreshing = false;
+        });
+      }
+    }
+  }
+
+  void _selectFrame(int index) {
+    final metadata = _metadata;
+
+    if (metadata == null || metadata.frames.isEmpty) {
+      return;
+    }
+
+    final safeIndex = index.clamp(0, metadata.frames.length - 1);
+
+    _frameTransitionTimer?.cancel();
+
+    setState(() {
+      _selectedFrameIndex = safeIndex;
+      _primaryRadarFrameIndex = safeIndex;
+      _secondaryRadarFrameIndex = safeIndex;
+      _showPrimaryRadarLayer = true;
+    });
+  }
+
+  void _toggleAnimation() {
+    final metadata = _metadata;
+
+    if (_isRadarRateLimited) {
+      return;
+    }
+
+    if (metadata == null || metadata.frames.length < 2) {
+      return;
+    }
+
+    if (_isAnimating) {
+      _stopAnimation();
+      return;
+    }
+
+    setState(() {
+      _isAnimating = true;
+
+      if (_selectedFrameIndex >= metadata.frames.length - 1) {
+        _selectedFrameIndex = 0;
+        _primaryRadarFrameIndex = 0;
+        _secondaryRadarFrameIndex = 0;
+        _showPrimaryRadarLayer = true;
+      }
+    });
+
+    _scheduleNextRadarFrame();
+  }
+
+  void _scheduleNextRadarFrame() {
+    _animationTimer?.cancel();
+    _frameTransitionTimer?.cancel();
+
+    if (!_isAnimating || !mounted) {
+      return;
+    }
+
+    _animationTimer = Timer(const Duration(milliseconds: 1900), () {
+      if (!mounted || !_isAnimating) {
+        return;
+      }
+
+      final metadata = _metadata;
+
+      if (metadata == null || metadata.frames.length < 2) {
+        _stopAnimation();
+        return;
+      }
+
+      final nextIndex = (_selectedFrameIndex + 1) % metadata.frames.length;
+
+      setState(() {
+        if (_showPrimaryRadarLayer) {
+          _secondaryRadarFrameIndex = nextIndex;
+        } else {
+          _primaryRadarFrameIndex = nextIndex;
+        }
+      });
+
+      _frameTransitionTimer = Timer(const Duration(milliseconds: 850), () {
+        if (!mounted || !_isAnimating) {
+          return;
+        }
+
+        setState(() {
+          _selectedFrameIndex = nextIndex;
+          _showPrimaryRadarLayer = !_showPrimaryRadarLayer;
+        });
+
+        _scheduleNextRadarFrame();
+      });
+    });
+  }
+
+  bool get _isRadarRateLimited {
+    final limitedUntil = _radarRateLimitedUntil;
+
+    return limitedUntil != null && DateTime.now().isBefore(limitedUntil);
+  }
+
+  void _handleRadarTileError(Object error) {
+    final message = error.toString();
+
+    if (!message.contains('429')) {
+      return;
+    }
+
+    final nextAllowedAttempt = DateTime.now().add(const Duration(seconds: 60));
+
+    if (_radarRateLimitedUntil != null &&
+        _radarRateLimitedUntil!.isAfter(DateTime.now())) {
+      return;
+    }
+
+    _radarRateLimitedUntil = nextAllowedAttempt;
+    _stopAnimation();
+
+    _rateLimitTimer?.cancel();
+    _rateLimitTimer = Timer(const Duration(seconds: 60), () {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _radarRateLimitedUntil = null;
+        _radarRateLimited = false;
+      });
+    });
+
+    if (!mounted) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _radarRateLimited = true;
+      });
+    });
+
+    debugPrint('');
+    debugPrint('===== ORTHA RADAR RATE LIMIT =====');
+    debugPrint('RainViewer meldet HTTP 429.');
+    debugPrint('Radaranimation für 60 Sekunden angehalten.');
+    debugPrint('==================================');
+  }
+
+  void _stopAnimation() {
+    _animationTimer?.cancel();
+    _frameTransitionTimer?.cancel();
+    _animationTimer = null;
+    _frameTransitionTimer = null;
+
+    if (_isAnimating && mounted) {
+      setState(() {
+        _isAnimating = false;
+      });
+    } else {
+      _isAnimating = false;
+    }
+  }
+
+  void _toggleMapInteractionLock() {
+    setState(() {
+      _isMapInteractionLocked = !_isMapInteractionLocked;
+    });
+  }
+
+  void _zoomIn() {
+    final camera = _mapController.camera;
+    final targetZoom = (camera.zoom + 1).clamp(2.0, 18.0);
+
+    _mapController.move(camera.center, targetZoom);
+  }
+
+  void _zoomOut() {
+    final camera = _mapController.camera;
+    final targetZoom = (camera.zoom - 1).clamp(2.0, 18.0);
+
+    _mapController.move(camera.center, targetZoom);
+  }
+
+  void _centerOnLocation() {
+    _mapController.move(_center, _hasCoordinates ? 8.5 : 6);
+  }
+
+  String _formatRadarTime(DateTime timeUtc) {
+    final local = timeUtc.toLocal();
+    final hour = local.hour.toString().padLeft(2, '0');
+    final minute = local.minute.toString().padLeft(2, '0');
+
+    return '$hour:$minute Uhr';
+  }
+
+  void _logRadarTileUrl(String? radarTileUrl) {
+    if (radarTileUrl == null || radarTileUrl == _lastLoggedRadarTileUrl) {
+      return;
+    }
+
+    _lastLoggedRadarTileUrl = radarTileUrl;
+
+    debugPrint('');
+    debugPrint('===== ORTHA RADAR TILE URL =====');
+    debugPrint(radarTileUrl);
+    debugPrint('================================');
+  }
+
+  String _relativeRadarTime(DateTime timeUtc) {
+    final metadata = _metadata;
+
+    if (metadata == null || metadata.frames.isEmpty) {
+      return '';
+    }
+
+    final difference = metadata.latestFrame.time.difference(timeUtc).inMinutes;
+
+    if (difference <= 0) {
+      return 'Aktuellster Messstand';
+    }
+
+    return 'vor $difference Minuten';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final metadata = _metadata;
+    final selectedFrame = _selectedFrame;
+
+    final radarTileUrl = metadata != null && selectedFrame != null
+        ? metadata.tileUrlTemplate(frame: selectedFrame)
+        : null;
+
+    final primaryRadarFrame = metadata != null && metadata.frames.isNotEmpty
+        ? metadata.frames[_primaryRadarFrameIndex.clamp(
+            0,
+            metadata.frames.length - 1,
+          )]
+        : null;
+
+    final secondaryRadarFrame = metadata != null && metadata.frames.isNotEmpty
+        ? metadata.frames[_secondaryRadarFrameIndex.clamp(
+            0,
+            metadata.frames.length - 1,
+          )]
+        : null;
+
+    final primaryRadarTileUrl = metadata != null && primaryRadarFrame != null
+        ? metadata.tileUrlTemplate(frame: primaryRadarFrame)
+        : null;
+
+    final secondaryRadarTileUrl =
+        metadata != null && secondaryRadarFrame != null
+        ? metadata.tileUrlTemplate(frame: secondaryRadarFrame)
+        : null;
+
+    _logRadarTileUrl(radarTileUrl);
+
+    final radarRateLimited = _isRadarRateLimited;
+
+    final statusText = _isLoading
+        ? 'RainViewer · Wird geladen'
+        : radarRateLimited || _radarRateLimited
+        ? 'RainViewer · Server ausgelastet'
+        : _errorMessage != null
+        ? 'RainViewer · Nicht verfügbar'
+        : metadata?.isStale == true
+        ? 'RainViewer · Letzter verfügbarer Stand'
+        : 'RainViewer · Live';
+
+    return ListView(
+      padding: EdgeInsets.zero,
+      children: [
+        SizedBox(
+          height: 560,
+          child: OrthaFullscreenMapPage(
+            topBar: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: OrthaMapHeader(
+                place: widget.place,
+                mode: 'Niederschlagsradar',
+                statusText: statusText,
+                novaStatus: 'Normal',
+                coordinatesAvailable: _hasCoordinates,
+                onRefresh: _isRefreshing ? null : _refresh,
+                isRefreshing: _isRefreshing,
+              ),
+            ),
+            trailingControls: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                OrthaMapToolbar(
+                  compact: true,
+                  onZoomIn: _zoomIn,
+                  onZoomOut: _zoomOut,
+                  onCenter: _centerOnLocation,
+                ),
+                const SizedBox(height: 10),
+                Material(
+                  color: const Color(0xE6142F44),
+                  elevation: 5,
+                  shape: const CircleBorder(),
+                  child: IconButton(
+                    tooltip: _isMapInteractionLocked
+                        ? 'Karte entsperren'
+                        : 'Karte sperren',
+                    onPressed: _toggleMapInteractionLock,
+                    icon: Icon(
+                      _isMapInteractionLocked
+                          ? Icons.lock_outline
+                          : Icons.lock_open_outlined,
+                      color: _isMapInteractionLocked
+                          ? const Color(0xFFF2BE57)
+                          : Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            timeline:
+                metadata != null &&
+                    metadata.frames.length > 1 &&
+                    selectedFrame != null
+                ? OrthaRadarTimeline(
+                    value: _selectedFrameIndex,
+                    frameCount: metadata.frames.length,
+                    currentTimeText: _formatRadarTime(selectedFrame.time),
+                    relativeTimeText: _relativeRadarTime(selectedFrame.time),
+                    firstTimeText: _formatRadarTime(metadata.frames.first.time),
+                    lastTimeText: _formatRadarTime(metadata.frames.last.time),
+                    isAnimating: _isAnimating,
+                    onToggleAnimation: _toggleAnimation,
+                    onChangeStart: _stopAnimation,
+                    onChanged: _selectFrame,
+                  )
+                : null,
+            map: Stack(
+              fit: StackFit.expand,
+              children: [
+                FlutterMap(
+                  mapController: _mapController,
+                  options: MapOptions(
+                    initialCenter: _center,
+                    initialZoom: _hasCoordinates ? 8.5 : 6,
+                    minZoom: 2,
+                    maxZoom: 18,
+
+                    interactionOptions: InteractionOptions(
+                      flags: _isMapInteractionLocked
+                          ? InteractiveFlag.pinchZoom |
+                                InteractiveFlag.doubleTapZoom
+                          : InteractiveFlag.all,
+                    ),
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate:
+                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'de.ortha.meteo',
+                      maxZoom: 18,
+                      tileDisplay: const TileDisplay.fadeIn(),
+                    ),
+                    if (primaryRadarTileUrl != null)
+                      AnimatedOpacity(
+                        opacity: _showPrimaryRadarLayer ? 1.0 : 0.0,
+                        duration: const Duration(milliseconds: 700),
+                        curve: Curves.easeInOut,
+                        child: TileLayer(
+                          key: const ValueKey('ortha-radar-primary'),
+                          urlTemplate: primaryRadarTileUrl,
+                          userAgentPackageName: 'de.ortha.meteo',
+                          minNativeZoom: 0,
+                          maxNativeZoom: 7,
+                          maxZoom: 18,
+                          errorTileCallback: (tile, error, stackTrace) {
+                            _handleRadarTileError(error);
+                          },
+                        ),
+                      ),
+                    if (secondaryRadarTileUrl != null)
+                      AnimatedOpacity(
+                        opacity: _showPrimaryRadarLayer ? 0.0 : 1.0,
+                        duration: const Duration(milliseconds: 700),
+                        curve: Curves.easeInOut,
+                        child: TileLayer(
+                          key: const ValueKey('ortha-radar-secondary'),
+                          urlTemplate: secondaryRadarTileUrl,
+                          userAgentPackageName: 'de.ortha.meteo',
+                          minNativeZoom: 0,
+                          maxNativeZoom: 7,
+                          maxZoom: 18,
+                          errorTileCallback: (tile, error, stackTrace) {
+                            _handleRadarTileError(error);
+                          },
+                        ),
+                      ),
+                    if (_hasCoordinates)
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: _center,
+                            width: 32,
+                            height: 32,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.blue.withValues(alpha: 0.20),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 1.5,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.35),
+                                    blurRadius: 6,
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.my_location,
+                                color: Colors.white,
+                                size: 17,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    const RichAttributionWidget(
+                      attributions: [
+                        TextSourceAttribution('OpenStreetMap contributors'),
+                        TextSourceAttribution('RainViewer'),
+                      ],
+                    ),
+                  ],
+                ),
+                if (_isLoading)
+                  const Positioned.fill(
+                    child: ColoredBox(
+                      color: Color(0x99071018),
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            CircularProgressIndicator(),
+                            SizedBox(height: 16),
+                            Text(
+                              'Live-Radardaten werden geladen …',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                if (_errorMessage != null && !_isLoading)
+                  Positioned(
+                    left: 20,
+                    right: 20,
+                    top: 120,
+                    child: Material(
+                      color: Theme.of(context).colorScheme.errorContainer,
+                      elevation: 8,
+                      borderRadius: BorderRadius.circular(18),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(18, 14, 10, 14),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.cloud_off_outlined,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onErrorContainer,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                _errorMessage!,
+                                style: TextStyle(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onErrorContainer,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              tooltip: 'Erneut versuchen',
+                              onPressed: _loadRadar,
+                              icon: const Icon(Icons.refresh),
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onErrorContainer,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                if (metadata?.isStale == true && !_isLoading)
+                  Positioned(
+                    left: 20,
+                    right: 20,
+                    top: 120,
+                    child: Material(
+                      color: Colors.orange.withValues(alpha: 0.92),
+                      elevation: 8,
+                      borderRadius: BorderRadius.circular(18),
+                      child: const Padding(
+                        padding: EdgeInsets.all(14),
+                        child: Row(
+                          children: [
+                            Icon(Icons.history_toggle_off_outlined),
+                            SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Der Radarserver ist derzeit nicht erreichbar. '
+                                'Angezeigt wird der letzte verfügbare Radarstand.',
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        if (widget.hourlyForecast.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: OrthaHourlyForecastChart(forecast: widget.hourlyForecast),
+          ),
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16, 12, 16, 14),
+          child: OrthaRadarLegend(),
+        ),
+      ],
+    );
+  }
+}
+
+======================================================
+9. RELEVANTE RADAR-PAGE-STRUKTUREN
+======================================================
+
+1:import 'dart:async';
+3:import 'package:flutter/material.dart';
+4:import 'package:flutter_map/flutter_map.dart';
+5:import 'package:http/http.dart' as http;
+6:import 'package:latlong2/latlong.dart';
+8:import '../services/radar/rainviewer_radar_service.dart';
+9:import '../services/weather_service.dart';
+10:import '../widgets/maps/ortha_hourly_forecast_chart.dart';
+11:import '../widgets/maps/ortha_map_header.dart';
+12:import '../widgets/maps/ortha_map_toolbar.dart';
+13:import '../widgets/maps/ortha_radar_legend.dart';
+14:import '../widgets/maps/ortha_radar_timeline.dart';
+15:import 'maps/ortha_fullscreen_map_page.dart';
+17:class RadarPage extends StatefulWidget {
+37:class _RadarPageState extends State<RadarPage> {
+43:  RainViewerRadarMetadata? _metadata;
+44:  Timer? _animationTimer;
+45:  Timer? _frameTransitionTimer;
+46:  Timer? _rateLimitTimer;
+48:  int _selectedFrameIndex = 0;
+62:  void initState() {
+63:    super.initState();
+68:    _loadRadar();
+91:  void dispose() {
+92:    _animationTimer?.cancel();
+93:    _frameTransitionTimer?.cancel();
+94:    _rateLimitTimer?.cancel();
+95:    _mapController.dispose();
+97:    super.dispose();
+111:  RainViewerRadarFrame? get _selectedFrame {
+112:    final metadata = _metadata;
+118:    final safeIndex = _selectedFrameIndex.clamp(0, metadata.frames.length - 1);
+123:  Future<void> _loadRadar({bool forceRefresh = false}) async {
+124:    _stopAnimation();
+141:        _metadata = metadata;
+147:        _selectedFrameIndex = latestIndex;
+156:        _metadata = null;
+169:  Future<void> _refresh() async {
+180:      await _loadRadar(forceRefresh: true);
+195:    final metadata = _metadata;
+203:    _frameTransitionTimer?.cancel();
+206:      _selectedFrameIndex = safeIndex;
+214:    final metadata = _metadata;
+225:      _stopAnimation();
+232:      if (_selectedFrameIndex >= metadata.frames.length - 1) {
+233:        _selectedFrameIndex = 0;
+244:    _animationTimer?.cancel();
+245:    _frameTransitionTimer?.cancel();
+251:    _animationTimer = Timer(const Duration(milliseconds: 1900), () {
+256:      final metadata = _metadata;
+259:        _stopAnimation();
+263:      final nextIndex = (_selectedFrameIndex + 1) % metadata.frames.length;
+273:      _frameTransitionTimer = Timer(const Duration(milliseconds: 850), () {
+279:          _selectedFrameIndex = nextIndex;
+309:    _stopAnimation();
+311:    _rateLimitTimer?.cancel();
+312:    _rateLimitTimer = Timer(const Duration(seconds: 60), () {
+344:  void _stopAnimation() {
+345:    _animationTimer?.cancel();
+346:    _frameTransitionTimer?.cancel();
+347:    _animationTimer = null;
+348:    _frameTransitionTimer = null;
+405:    final metadata = _metadata;
+421:  Widget build(BuildContext context) {
+422:    final metadata = _metadata;
+423:    final selectedFrame = _selectedFrame;
+480:                onRefresh: _isRefreshing ? null : _refresh,
+498:                  child: IconButton(
+520:                    value: _selectedFrameIndex,
+528:                    onChangeStart: _stopAnimation,
+535:                FlutterMap(
+551:                    TileLayer(
+563:                        child: TileLayer(
+580:                        child: TileLayer(
+681:                            IconButton(
+683:                              onPressed: _loadRadar,
+
+======================================================
+10. PLAYBACK-API
+======================================================
+
+lib/weather_engine/radar/integration/radar_playback_source.dart:3:import '../playback/radar_playback_snapshot.dart';
+lib/weather_engine/radar/integration/radar_playback_source.dart:10:abstract interface class RadarPlaybackSource<TOutput> implements Listenable {
+lib/weather_engine/radar/integration/radar_playback_source.dart:11:  RadarPlaybackSnapshot<TOutput> get snapshot;
+lib/weather_engine/radar/integration/radar_playback_source.dart:13:  Future<void> initialize();
+lib/weather_engine/radar/integration/radar_playback_source.dart:15:  Future<void> refresh();
+lib/weather_engine/radar/integration/radar_playback_source.dart:17:  void dispose();
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:3:import '../playback/radar_playback_snapshot.dart';
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:4:import 'radar_playback_source.dart';
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:10:/// `dispose` wieder freigeben.
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:14:class RadarPlaybackViewController<TOutput> extends ChangeNotifier {
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:17:    this.disposeSource = false,
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:19:    _source.addListener(_handleSourceChanged);
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:29:  final bool disposeSource;
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:31:  bool _initialized = false;
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:33:  bool _disposed = false;
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:35:  Future<void>? _initializationOperation;
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:37:  RadarPlaybackSnapshot<TOutput> get snapshot => _source.snapshot;
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:39:  bool get isInitialized => _initialized;
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:41:  bool get isInitializing => _initializing;
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:43:  bool get isDisposed => _disposed;
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:51:  Future<void> initialize() {
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:54:    if (_initialized) {
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:55:      return Future<void>.value();
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:70:  Future<void> _runInitialization() async {
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:75:      await _source.initialize();
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:76:      _initialized = true;
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:81:      if (!_disposed) {
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:88:  Future<void> refresh() {
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:90:    return _source.refresh();
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:93:  void _handleSourceChanged() {
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:94:    if (_disposed) {
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:101:  void _ensureActive() {
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:102:    if (_disposed) {
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:110:  void dispose() {
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:111:    if (_disposed) {
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:115:    _disposed = true;
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:116:    _source.removeListener(_handleSourceChanged);
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:118:    if (disposeSource) {
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:119:      _source.dispose();
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:122:    super.dispose();
+lib/weather_engine/radar/playback/radar_playback_snapshot.dart:4:import 'radar_playback_status.dart';
+lib/weather_engine/radar/playback/radar_playback_snapshot.dart:8:class RadarPlaybackSnapshot<TOutput> {
+lib/weather_engine/radar/playback/radar_playback_snapshot.dart:9:  const RadarPlaybackSnapshot({
+lib/weather_engine/radar/playback/radar_playback_snapshot.dart:20:  final RadarPlaybackStatus status;
+lib/weather_engine/radar/playback/radar_playback_snapshot.dart:29:  bool get hasFrames => frames.isNotEmpty;
+lib/weather_engine/radar/playback/radar_playback_snapshot.dart:31:  bool get hasError => error != null;
+lib/weather_engine/radar/playback/radar_playback_snapshot.dart:43:  RadarPlaybackSnapshot<TOutput> copyWith({
+lib/weather_engine/radar/playback/radar_playback_snapshot.dart:44:    RadarPlaybackStatus? status,
+lib/weather_engine/radar/playback/radar_playback_snapshot.dart:55:    return RadarPlaybackSnapshot<TOutput>(
+lib/weather_engine/radar/playback/radar_playback_status.dart:2:enum RadarPlaybackStatus {
+lib/weather_engine/radar/playback/radar_playback_status.dart:8:  playing,
+lib/weather_engine/radar/playback/radar_playback_status.dart:9:  paused,
+lib/weather_engine/radar/playback/radar_playback_status.dart:12:  disposed,
+
+======================================================
+11. SICHERHEITSSTATUS
+======================================================
+
+- Radar-Seite nicht verändert
+- Sicherung der Radar-Seite erstellt
+- Kein Commit
+- Kein Push

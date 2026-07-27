@@ -1,0 +1,185 @@
+ORTHA METEO Ω
+Sprint 0.32 – Unversionierte Dateien Bestandsaudit
+
+Zeitpunkt: So 26 Jul 2026 20:19:02 CEST
+Branch: develop-v0.13.0
+Commit: 29c1d60
+
+Zusammenfassung:
+- Unversionierte Dateien insgesamt: 88
+- Produktiver Dart-Code / Tests: 48
+- Arbeitsartefakte / Backups / Logs: 39
+- Noch zu prüfende Dateien: 1
+- Formatprüfung Ergebniscode: 0
+- flutter analyze Ergebniscode: 0
+- flutter test Ergebniscode: 0
+
+======================================================
+ PRODUKTIVE DATEIEN
+======================================================
+lib/weather_engine/animation/weather_animation_controller.dart
+lib/weather_engine/animation/weather_animation_state.dart
+lib/weather_engine/cache/memory_weather_cache.dart
+lib/weather_engine/cache/weather_cache_entry.dart
+lib/weather_engine/cache/weather_cache_key.dart
+lib/weather_engine/cache/weather_cache.dart
+lib/weather_engine/models/weather_bounds.dart
+lib/weather_engine/models/weather_frame.dart
+lib/weather_engine/models/weather_tile.dart
+lib/weather_engine/models/weather_timeline.dart
+lib/weather_engine/preload/weather_preload_queue.dart
+lib/weather_engine/preload/weather_preload_result.dart
+lib/weather_engine/preload/weather_preload_status.dart
+lib/weather_engine/providers/weather_provider_request.dart
+lib/weather_engine/providers/weather_provider.dart
+lib/weather_engine/radar/integration/radar_integration.dart
+lib/weather_engine/radar/integration/radar_playback_binding.dart
+lib/weather_engine/radar/integration/radar_playback_source.dart
+lib/weather_engine/radar/integration/radar_playback_status_view.dart
+lib/weather_engine/radar/integration/radar_playback_view.dart
+lib/weather_engine/radar/playback/radar_playback_callbacks.dart
+lib/weather_engine/radar/playback/radar_playback_engine.dart
+lib/weather_engine/radar/playback/radar_playback_snapshot.dart
+lib/weather_engine/radar/playback/radar_playback_status.dart
+lib/weather_engine/radar/playback/radar_preload_planner.dart
+lib/weather_engine/radar/radar_provider_request.dart
+lib/weather_engine/radar/radar_provider.dart
+lib/weather_engine/renderer/weather_frame_renderer.dart
+lib/weather_engine/renderer/weather_render_context.dart
+lib/weather_engine/renderer/weather_render_pipeline.dart
+lib/weather_engine/renderer/weather_render_result.dart
+lib/weather_engine/renderer/weather_render_status.dart
+lib/weather_engine/weather_engine.dart
+test/weather_engine/animation/weather_animation_controller_test.dart
+test/weather_engine/cache/memory_weather_cache_test.dart
+test/weather_engine/cache/weather_cache_key_test.dart
+test/weather_engine/models/weather_bounds_test.dart
+test/weather_engine/models/weather_frame_test.dart
+test/weather_engine/models/weather_timeline_test.dart
+test/weather_engine/preload/weather_preload_queue_test.dart
+test/weather_engine/providers/weather_provider_request_test.dart
+test/weather_engine/radar/integration/radar_playback_view_controller_test.dart
+test/weather_engine/radar/integration/radar_playback_view_test.dart
+test/weather_engine/radar/integration/rainviewer_radar_playback_metadata_test.dart
+test/weather_engine/radar/integration/rainviewer_radar_playback_source_test.dart
+test/weather_engine/radar/playback/radar_playback_status_test.dart
+test/weather_engine/radar/playback/radar_preload_planner_test.dart
+test/weather_engine/renderer/weather_render_result_test.dart
+
+======================================================
+ ARBEITSARTEFAKTE
+======================================================
+.ortha_backups/sprint_0_32_radar_playback_20260726_201351/lib/pages/radar_page.dart
+.ortha_backups/sprint_0_32_radar_playback_20260726_201351/lib/weather_engine/radar/integration/radar_playback_view_controller.dart
+.ortha_backups/sprint_0_32_radar_playback_20260726_201351/lib/weather_engine/radar/integration/rainviewer_radar_playback_source.dart
+lib/pages/radar_page.dart.block5_5_20260726_181321.bak
+lib/pages/radar_page.dart.block5_7d_1_20260726_195025.bak
+lib/pages/radar_page.dart.block5_7d_20260726_194804.bak
+lib/pages/radar_page.dart.block5_7d_3_20260726_195352.bak
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart.block5_7b_20260726_190835.bak
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart.block5_7b_20260726_193131.bak
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart.block5_7b_3_20260726_193345.bak
+lib/weather_engine/radar/integration/rainviewer_radar_playback_source.dart.block5_6_1_20260726_184206.bak
+lib/weather_engine/radar/integration/rainviewer_radar_playback_source.dart.block5_6_2_20260726_184358.bak
+lib/weather_engine/radar/integration/rainviewer_radar_playback_source.dart.block5_6_3_20260726_184526.bak
+lib/weather_engine/radar/integration/rainviewer_radar_playback_source.dart.block5_7a_2_20260726_190145.bak
+lib/weather_engine/radar/integration/rainviewer_radar_playback_source.dart.block5_7a_20260726_185759.bak
+lib/weather_engine/radar/integration/rainviewer_radar_playback_source.dart.failed_block5_7a_20260726_185909.txt
+ORTHA_BLOCK_5_4_RADAR_INTEGRATION_AUDIT_20260726_180541.txt
+ORTHA_BLOCK_5_5_LIVE_INTEGRATION_20260726_181321.txt
+ORTHA_BLOCK_5_6_3_ROBUST_INITIALIZING_FORMAL_FIX_20260726_184526.txt
+ORTHA_BLOCK_5_7_RECOVERY_AUDIT_20260726_185317.txt
+ORTHA_BLOCK_5_7_SOURCE_INSPECTION_20260726_185420.txt
+ORTHA_BLOCK_5_7A_1_TEST_STRUCTURE_20260726_185909.txt
+ORTHA_BLOCK_5_7A_3_METADATA_BRIDGE_VALIDATION_20260726_190258.txt
+ORTHA_BLOCK_5_7B_1_CONTROLLER_DIAGNOSE_20260726_190932.txt
+ORTHA_BLOCK_5_7B_4_FINAL_CONTROLLER_FACTORY_20260726_193502.txt
+ORTHA_BLOCK_5_7B_CONTROLLER_STRUCTURE_20260726_190631.txt
+ORTHA_BLOCK_5_7B_CONTROLLER_STRUCTURE_20260726_190632.txt
+ORTHA_BLOCK_5_7B_RELEVANT_SOURCE.txt
+ORTHA_BLOCK_5_7C_RADAR_PAGE_PLAYBACK_INTEGRATION_20260726_194125.txt
+ORTHA_BLOCK_5_7D_4_EXACT_RADAR_PAGE_SOURCE_20260726_195456.txt
+ORTHA_BLOCK_5_7D_5_SAFE_PLAYBACK_SYNC_20260726_195645.txt
+ORTHA_BLOCK_5_7E_3_CRITICAL_ERRORS_20260726_200749.txt
+ORTHA_BLOCK_5_7E_3_SMARTPHONE_LOG_20260726_200749.txt
+ORTHA_BLOCK_5_7E_3_SMARTPHONE_REPORT_20260726_200749.txt
+ORTHA_BLOCK5_3_RADAR_PAGE_AUDIT_20260726_175917.txt
+ORTHA_BLOCK5_RADAR_INTEGRATION_AUDIT_20260726_174755.txt
+ORTHA_SPRINT_0_32_SAVE_REPORT_20260726_201351.txt
+test/weather_engine/radar/integration/rainviewer_radar_playback_source_test.dart.block5_7a_20260726_185759.bak
+test/weather_engine/radar/integration/rainviewer_radar_playback_source_test.dart.failed_block5_7a_20260726_185909.txt
+
+======================================================
+ NOCH ZU PRÜFEN
+======================================================
+SPRINT_0_32_STATUS.md
+
+======================================================
+ GIT-STATUS
+======================================================
+?? .ortha_backups/
+?? ORTHA_BLOCK5_3_RADAR_PAGE_AUDIT_20260726_175917.txt
+?? ORTHA_BLOCK5_RADAR_INTEGRATION_AUDIT_20260726_174755.txt
+?? ORTHA_BLOCK_5_4_RADAR_INTEGRATION_AUDIT_20260726_180541.txt
+?? ORTHA_BLOCK_5_5_LIVE_INTEGRATION_20260726_181321.txt
+?? ORTHA_BLOCK_5_6_3_ROBUST_INITIALIZING_FORMAL_FIX_20260726_184526.txt
+?? ORTHA_BLOCK_5_7A_1_TEST_STRUCTURE_20260726_185909.txt
+?? ORTHA_BLOCK_5_7A_3_METADATA_BRIDGE_VALIDATION_20260726_190258.txt
+?? ORTHA_BLOCK_5_7B_1_CONTROLLER_DIAGNOSE_20260726_190932.txt
+?? ORTHA_BLOCK_5_7B_4_FINAL_CONTROLLER_FACTORY_20260726_193502.txt
+?? ORTHA_BLOCK_5_7B_CONTROLLER_STRUCTURE_20260726_190631.txt
+?? ORTHA_BLOCK_5_7B_CONTROLLER_STRUCTURE_20260726_190632.txt
+?? ORTHA_BLOCK_5_7B_RELEVANT_SOURCE.txt
+?? ORTHA_BLOCK_5_7C_RADAR_PAGE_PLAYBACK_INTEGRATION_20260726_194125.txt
+?? ORTHA_BLOCK_5_7D_4_EXACT_RADAR_PAGE_SOURCE_20260726_195456.txt
+?? ORTHA_BLOCK_5_7D_5_SAFE_PLAYBACK_SYNC_20260726_195645.txt
+?? ORTHA_BLOCK_5_7E_3_CRITICAL_ERRORS_20260726_200749.txt
+?? ORTHA_BLOCK_5_7E_3_SMARTPHONE_LOG_20260726_200749.txt
+?? ORTHA_BLOCK_5_7E_3_SMARTPHONE_REPORT_20260726_200749.txt
+?? ORTHA_BLOCK_5_7_RECOVERY_AUDIT_20260726_185317.txt
+?? ORTHA_BLOCK_5_7_SOURCE_INSPECTION_20260726_185420.txt
+?? ORTHA_SPRINT_0_32_SAVE_REPORT_20260726_201351.txt
+?? ORTHA_SPRINT_0_32_UNTRACKED_AUDIT_20260726_201803.txt
+?? SPRINT_0_32_STATUS.md
+?? lib/pages/radar_page.dart.block5_5_20260726_181321.bak
+?? lib/pages/radar_page.dart.block5_7d_1_20260726_195025.bak
+?? lib/pages/radar_page.dart.block5_7d_20260726_194804.bak
+?? lib/pages/radar_page.dart.block5_7d_3_20260726_195352.bak
+?? lib/weather_engine/animation/
+?? lib/weather_engine/cache/
+?? lib/weather_engine/models/
+?? lib/weather_engine/preload/
+?? lib/weather_engine/providers/
+?? lib/weather_engine/radar/integration/radar_integration.dart
+?? lib/weather_engine/radar/integration/radar_playback_binding.dart
+?? lib/weather_engine/radar/integration/radar_playback_source.dart
+?? lib/weather_engine/radar/integration/radar_playback_status_view.dart
+?? lib/weather_engine/radar/integration/radar_playback_view.dart
+?? lib/weather_engine/radar/integration/radar_playback_view_controller.dart.block5_7b_20260726_190835.bak
+?? lib/weather_engine/radar/integration/radar_playback_view_controller.dart.block5_7b_20260726_193131.bak
+?? lib/weather_engine/radar/integration/radar_playback_view_controller.dart.block5_7b_3_20260726_193345.bak
+?? lib/weather_engine/radar/integration/rainviewer_radar_playback_source.dart.block5_6_1_20260726_184206.bak
+?? lib/weather_engine/radar/integration/rainviewer_radar_playback_source.dart.block5_6_2_20260726_184358.bak
+?? lib/weather_engine/radar/integration/rainviewer_radar_playback_source.dart.block5_6_3_20260726_184526.bak
+?? lib/weather_engine/radar/integration/rainviewer_radar_playback_source.dart.block5_7a_20260726_185759.bak
+?? lib/weather_engine/radar/integration/rainviewer_radar_playback_source.dart.block5_7a_2_20260726_190145.bak
+?? lib/weather_engine/radar/integration/rainviewer_radar_playback_source.dart.failed_block5_7a_20260726_185909.txt
+?? lib/weather_engine/radar/playback/
+?? lib/weather_engine/radar/radar_provider.dart
+?? lib/weather_engine/radar/radar_provider_request.dart
+?? lib/weather_engine/renderer/
+?? lib/weather_engine/weather_engine.dart
+?? test/weather_engine/
+
+======================================================
+ LETZTER COMMIT
+======================================================
+Commit: 29c1d60
+Autor: Bernhard Klaffke
+Datum: 2026-07-26 20:14:57 +0200
+Betreff: feat(radar): integrate playback source into radar page
+
+
+M	lib/pages/radar_page.dart
+A	lib/weather_engine/radar/integration/radar_playback_view_controller.dart
+A	lib/weather_engine/radar/integration/rainviewer_radar_playback_source.dart

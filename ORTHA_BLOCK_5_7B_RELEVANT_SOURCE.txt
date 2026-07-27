@@ -1,0 +1,1016 @@
+======================================================
+RADAR PLAYBACK SOURCE
+======================================================
+
+import 'package:flutter/foundation.dart';
+
+import '../playback/radar_playback_snapshot.dart';
+
+/// Abstrakte Schnittstelle zwischen einer Flutter-Oberfläche und der
+/// Radar-Playback-Orchestrierung.
+///
+/// Dadurch bleibt die Radaroberfläche unabhängig von der konkreten
+/// Implementierung der Playback Engine.
+abstract interface class RadarPlaybackSource<TOutput> implements Listenable {
+  RadarPlaybackSnapshot<TOutput> get snapshot;
+
+  Future<void> initialize();
+
+  Future<void> refresh();
+
+  void dispose();
+}
+
+======================================================
+RADAR PLAYBACK SNAPSHOT
+======================================================
+
+import 'package:flutter/foundation.dart';
+
+import '../../models/weather_frame.dart';
+import 'radar_playback_status.dart';
+
+/// Unveränderlicher Zustandsabzug der Radar-Wiedergabe.
+@immutable
+class RadarPlaybackSnapshot<TOutput> {
+  const RadarPlaybackSnapshot({
+    required this.status,
+    this.frames = const <WeatherFrame>[],
+    this.currentIndex = 0,
+    this.currentOutput,
+    this.error,
+    this.stackTrace,
+    this.isPreloading = false,
+    this.preloadedFrameCount = 0,
+  });
+
+  final RadarPlaybackStatus status;
+  final List<WeatherFrame> frames;
+  final int currentIndex;
+  final TOutput? currentOutput;
+  final Object? error;
+  final StackTrace? stackTrace;
+  final bool isPreloading;
+  final int preloadedFrameCount;
+
+  bool get hasFrames => frames.isNotEmpty;
+
+  bool get hasError => error != null;
+
+  WeatherFrame? get currentFrame {
+    if (frames.isEmpty) {
+      return null;
+    }
+
+    final safeIndex = currentIndex.clamp(0, frames.length - 1);
+
+    return frames[safeIndex];
+  }
+
+  RadarPlaybackSnapshot<TOutput> copyWith({
+    RadarPlaybackStatus? status,
+    List<WeatherFrame>? frames,
+    int? currentIndex,
+    TOutput? currentOutput,
+    bool clearCurrentOutput = false,
+    Object? error,
+    StackTrace? stackTrace,
+    bool clearError = false,
+    bool? isPreloading,
+    int? preloadedFrameCount,
+  }) {
+    return RadarPlaybackSnapshot<TOutput>(
+      status: status ?? this.status,
+      frames: frames ?? this.frames,
+      currentIndex: currentIndex ?? this.currentIndex,
+      currentOutput: clearCurrentOutput
+          ? null
+          : currentOutput ?? this.currentOutput,
+      error: clearError ? null : error ?? this.error,
+      stackTrace: clearError ? null : stackTrace ?? this.stackTrace,
+      isPreloading: isPreloading ?? this.isPreloading,
+      preloadedFrameCount: preloadedFrameCount ?? this.preloadedFrameCount,
+    );
+  }
+}
+
+======================================================
+RADAR PLAYBACK VIEW CONTROLLER
+======================================================
+
+import 'package:flutter/foundation.dart';
+
+import '../playback/radar_playback_snapshot.dart';
+import 'radar_playback_source.dart';
+
+/// UI-Lebenszykluscontroller für die Radar-Playback-Integration.
+///
+/// Eine Flutter-Seite kann diesen Controller in `initState` initialisieren,
+/// über einen `ListenableBuilder` oder `AnimatedBuilder` beobachten und in
+/// `dispose` wieder freigeben.
+///
+/// Die bestehende Kartenansicht muss dadurch weder Provider- noch
+/// Render-Details der Weather Engine kennen.
+class RadarPlaybackViewController<TOutput> extends ChangeNotifier {
+  RadarPlaybackViewController({
+    required this._source,
+    this.disposeSource = false,
+  }) {
+    _source.addListener(_handleSourceChanged);
+  }
+
+  final RadarPlaybackSource<TOutput> _source;
+
+  /// Gibt an, ob der Controller beim eigenen Dispose auch die angebundene
+  /// Radarquelle freigeben soll.
+  ///
+  /// Bleibt der Besitz bei einem übergeordneten Controller oder Service,
+  /// muss dieser Wert `false` bleiben.
+  final bool disposeSource;
+
+  bool _initialized = false;
+  bool _initializing = false;
+  bool _disposed = false;
+
+  Future<void>? _initializationOperation;
+
+  RadarPlaybackSnapshot<TOutput> get snapshot => _source.snapshot;
+
+  bool get isInitialized => _initialized;
+
+  bool get isInitializing => _initializing;
+
+  bool get isDisposed => _disposed;
+
+  RadarPlaybackSource<TOutput> get source => _source;
+
+  /// Initialisiert die Radarquelle höchstens einmal.
+  ///
+  /// Gleichzeitige Aufrufe erhalten dieselbe laufende Future. Dadurch werden
+  /// doppelte Timeline-Anfragen beim Aufbau eines Widgets verhindert.
+  Future<void> initialize() {
+    _ensureActive();
+
+    if (_initialized) {
+      return Future<void>.value();
+    }
+
+    final runningOperation = _initializationOperation;
+
+    if (runningOperation != null) {
+      return runningOperation;
+    }
+
+    final operation = _runInitialization();
+    _initializationOperation = operation;
+
+    return operation;
+  }
+
+  Future<void> _runInitialization() async {
+    _initializing = true;
+    notifyListeners();
+
+    try {
+      await _source.initialize();
+      _initialized = true;
+    } finally {
+      _initializing = false;
+      _initializationOperation = null;
+
+      if (!_disposed) {
+        notifyListeners();
+      }
+    }
+  }
+
+  /// Fordert eine neue Radar-Timeline über die angebundene Quelle an.
+  Future<void> refresh() {
+    _ensureActive();
+    return _source.refresh();
+  }
+
+  void _handleSourceChanged() {
+    if (_disposed) {
+      return;
+    }
+
+    notifyListeners();
+  }
+
+  void _ensureActive() {
+    if (_disposed) {
+      throw StateError(
+        'RadarPlaybackViewController wurde bereits freigegeben.',
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    if (_disposed) {
+      return;
+    }
+
+    _disposed = true;
+    _source.removeListener(_handleSourceChanged);
+
+    if (disposeSource) {
+      _source.dispose();
+    }
+
+    super.dispose();
+  }
+}
+
+======================================================
+VORHANDENE TESTS
+======================================================
+
+
+------------------------------------------------------
+DATEI: test/weather_engine/radar/integration/radar_playback_view_controller_test.dart
+------------------------------------------------------
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:wetter_app_ortha/weather_engine/weather_engine.dart';
+
+void main() {
+  group('RadarPlaybackViewController', () {
+    test('initialisiert die Radarquelle nur einmal', () async {
+      final source = _FakeRadarPlaybackSource();
+      final controller = RadarPlaybackViewController<String>(source: source);
+
+      await controller.initialize();
+      await controller.initialize();
+
+      expect(source.initializeCalls, 1);
+      expect(controller.isInitialized, isTrue);
+      expect(controller.isInitializing, isFalse);
+
+      controller.dispose();
+      source.dispose();
+    });
+
+    test(
+      'verwendet bei paralleler Initialisierung dieselbe Operation',
+      () async {
+        final source = _FakeRadarPlaybackSource();
+        final controller = RadarPlaybackViewController<String>(source: source);
+
+        final first = controller.initialize();
+        final second = controller.initialize();
+
+        await Future.wait(<Future<void>>[first, second]);
+
+        expect(source.initializeCalls, 1);
+        expect(controller.isInitialized, isTrue);
+
+        controller.dispose();
+        source.dispose();
+      },
+    );
+
+    test('reicht Aktualisierung an die Radarquelle weiter', () async {
+      final source = _FakeRadarPlaybackSource();
+      final controller = RadarPlaybackViewController<String>(source: source);
+
+      await controller.refresh();
+
+      expect(source.refreshCalls, 1);
+
+      controller.dispose();
+      source.dispose();
+    });
+
+    test('meldet Zustandsänderungen der Radarquelle weiter', () {
+      final source = _FakeRadarPlaybackSource();
+      final controller = RadarPlaybackViewController<String>(source: source);
+
+      var notifications = 0;
+      controller.addListener(() {
+        notifications++;
+      });
+
+      source.emitChange();
+
+      expect(notifications, 1);
+
+      controller.dispose();
+      source.dispose();
+    });
+
+    test('entfernt Listener beim Dispose', () {
+      final source = _FakeRadarPlaybackSource();
+      final controller = RadarPlaybackViewController<String>(source: source);
+
+      var notifications = 0;
+      controller.addListener(() {
+        notifications++;
+      });
+
+      controller.dispose();
+      source.emitChange();
+
+      expect(notifications, 0);
+
+      source.dispose();
+    });
+
+    test('kann Eigentum an der Radarquelle übernehmen', () {
+      final source = _FakeRadarPlaybackSource();
+      final controller = RadarPlaybackViewController<String>(
+        source: source,
+        disposeSource: true,
+      );
+
+      controller.dispose();
+
+      expect(source.disposeCalls, 1);
+    });
+
+    test('weist Nutzung nach Dispose zurück', () async {
+      final source = _FakeRadarPlaybackSource();
+      final controller = RadarPlaybackViewController<String>(source: source);
+
+      controller.dispose();
+
+      expect(controller.initialize, throwsStateError);
+
+      expect(controller.refresh, throwsStateError);
+
+      source.dispose();
+    });
+  });
+}
+
+class _FakeRadarPlaybackSource extends ChangeNotifier
+    implements RadarPlaybackSource<String> {
+  int initializeCalls = 0;
+  int refreshCalls = 0;
+  int disposeCalls = 0;
+
+  @override
+  RadarPlaybackSnapshot<String> snapshot = RadarPlaybackSnapshot<String>(
+    status: RadarPlaybackStatus.idle,
+  );
+
+  @override
+  Future<void> initialize() async {
+    initializeCalls++;
+    await Future<void>.delayed(Duration.zero);
+    notifyListeners();
+  }
+
+  @override
+  Future<void> refresh() async {
+    refreshCalls++;
+    notifyListeners();
+  }
+
+  void emitChange() {
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    disposeCalls++;
+    super.dispose();
+  }
+}
+
+------------------------------------------------------
+DATEI: test/weather_engine/radar/integration/rainviewer_radar_playback_source_test.dart
+------------------------------------------------------
+
+import 'dart:convert';
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'package:wetter_app_ortha/services/radar/rainviewer_radar_service.dart';
+import 'package:wetter_app_ortha/weather_engine/models/weather_frame.dart';
+import 'package:wetter_app_ortha/weather_engine/radar/integration/rainviewer_radar_playback_source.dart';
+import 'package:wetter_app_ortha/weather_engine/radar/playback/radar_playback_status.dart';
+
+void main() {
+  group('RainViewerRadarPlaybackSource', () {
+    test('startet im Status idle', () {
+      final client = MockClient((_) async {
+        return http.Response('{}', 200);
+      });
+
+      final source = RainViewerRadarPlaybackSource(
+        radarService: RainViewerRadarService(httpClient: client),
+      );
+
+      expect(source.snapshot.status, RadarPlaybackStatus.idle);
+      expect(source.snapshot.frames, isEmpty);
+      expect(source.snapshot.currentOutput, isNull);
+      expect(source.isInitialized, isFalse);
+      expect(source.isLoading, isFalse);
+      expect(source.isDisposed, isFalse);
+
+      source.dispose();
+      client.close();
+    });
+
+    test('lädt Timeline und wählt den neuesten Frame', () async {
+      final client = MockClient((_) async {
+        return http.Response(
+          jsonEncode({
+            'host': 'https://tilecache.rainviewer.com',
+            'generated': 1720000000,
+            'radar': {
+              'past': [
+                {'time': 1719999400, 'path': '/v2/radar/1719999400'},
+                {'time': 1720000000, 'path': '/v2/radar/1720000000'},
+              ],
+            },
+          }),
+          200,
+          headers: const {'content-type': 'application/json'},
+        );
+      });
+
+      final source = RainViewerRadarPlaybackSource(
+        radarService: RainViewerRadarService(httpClient: client),
+      );
+
+      final statuses = <RadarPlaybackStatus>[];
+
+      source.addListener(() {
+        statuses.add(source.snapshot.status);
+      });
+
+      await source.initialize();
+
+      expect(statuses, contains(RadarPlaybackStatus.loadingTimeline));
+      expect(source.snapshot.status, RadarPlaybackStatus.ready);
+      expect(source.snapshot.frames, hasLength(2));
+      expect(source.snapshot.currentIndex, 1);
+      expect(source.snapshot.currentOutput, isNotNull);
+      expect(source.snapshot.currentOutput?.path, '/v2/radar/1720000000');
+      expect(source.snapshot.currentFrame, isNotNull);
+      expect(source.isInitialized, isTrue);
+      expect(source.isLoading, isFalse);
+
+      final firstFrame = source.snapshot.frames.first;
+      final latestFrame = source.snapshot.frames.last;
+
+      expect(firstFrame.id, 'rainviewer-radar-1719999400000');
+      expect(firstFrame.layerType, WeatherLayerType.radar);
+      expect(firstFrame.providerId, 'rainviewer');
+      expect(firstFrame.state, WeatherFrameState.ready);
+      expect(firstFrame.sourceReference, '/v2/radar/1719999400');
+      expect(
+        firstFrame.validTime,
+        DateTime.fromMillisecondsSinceEpoch(1719999400 * 1000, isUtc: true),
+      );
+      expect(
+        firstFrame.generatedAt,
+        DateTime.fromMillisecondsSinceEpoch(1720000000 * 1000, isUtc: true),
+      );
+
+      expect(latestFrame.sourceReference, '/v2/radar/1720000000');
+
+      source.dispose();
+      client.close();
+    });
+
+    test('initialize führt höchstens einen Netzaufruf aus', () async {
+      var requestCount = 0;
+
+      final client = MockClient((_) async {
+        requestCount += 1;
+
+        return http.Response(
+          jsonEncode({
+            'host': 'https://tilecache.rainviewer.com',
+            'generated': 1720000000,
+            'radar': {
+              'past': [
+                {'time': 1720000000, 'path': '/v2/radar/1720000000'},
+              ],
+            },
+          }),
+          200,
+        );
+      });
+
+      final source = RainViewerRadarPlaybackSource(
+        radarService: RainViewerRadarService(httpClient: client),
+      );
+
+      await Future.wait([
+        source.initialize(),
+        source.initialize(),
+        source.initialize(),
+      ]);
+
+      expect(requestCount, 1);
+
+      await source.initialize();
+
+      expect(requestCount, 1);
+
+      source.dispose();
+      client.close();
+    });
+
+    test('refresh erzwingt einen neuen Netzaufruf', () async {
+      var requestCount = 0;
+
+      final client = MockClient((_) async {
+        requestCount += 1;
+
+        final timestamp = 1720000000 + requestCount;
+
+        return http.Response(
+          jsonEncode({
+            'host': 'https://tilecache.rainviewer.com',
+            'generated': timestamp,
+            'radar': {
+              'past': [
+                {'time': timestamp, 'path': '/v2/radar/$timestamp'},
+              ],
+            },
+          }),
+          200,
+        );
+      });
+
+      final source = RainViewerRadarPlaybackSource(
+        radarService: RainViewerRadarService(httpClient: client),
+      );
+
+      await source.initialize();
+      await source.refresh();
+
+      expect(requestCount, 2);
+      expect(source.snapshot.status, RadarPlaybackStatus.ready);
+      expect(source.snapshot.currentOutput?.path, '/v2/radar/1720000002');
+
+      source.dispose();
+      client.close();
+    });
+
+    test('übernimmt Fehler in den Snapshot', () async {
+      final client = MockClient((_) async {
+        return http.Response('Serverfehler', 500);
+      });
+
+      final source = RainViewerRadarPlaybackSource(
+        radarService: RainViewerRadarService(httpClient: client),
+      );
+
+      await expectLater(
+        source.initialize(),
+        throwsA(isA<RainViewerRadarException>()),
+      );
+
+      expect(source.snapshot.status, RadarPlaybackStatus.failed);
+      expect(source.snapshot.error, isA<RainViewerRadarException>());
+      expect(source.snapshot.stackTrace, isNotNull);
+      expect(source.isInitialized, isFalse);
+      expect(source.isLoading, isFalse);
+
+      source.dispose();
+      client.close();
+    });
+
+    test('dispose setzt Status disposed', () {
+      final client = MockClient((_) async {
+        return http.Response('{}', 200);
+      });
+
+      final source = RainViewerRadarPlaybackSource(
+        radarService: RainViewerRadarService(httpClient: client),
+      );
+
+      source.dispose();
+
+      expect(source.snapshot.status, RadarPlaybackStatus.disposed);
+      expect(source.isDisposed, isTrue);
+
+      expect(() => source.initialize(), throwsStateError);
+
+      expect(() => source.refresh(), throwsStateError);
+
+      client.close();
+    });
+  });
+}
+
+------------------------------------------------------
+DATEI: test/weather_engine/radar/integration/rainviewer_radar_playback_metadata_test.dart
+------------------------------------------------------
+
+import 'dart:convert';
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+
+import 'package:wetter_app_ortha/services/radar/rainviewer_radar_service.dart';
+import 'package:wetter_app_ortha/weather_engine/radar/integration/rainviewer_radar_playback_source.dart';
+
+void main() {
+  group('RainViewerRadarPlaybackSource Metadaten', () {
+    test('stellt vollständige Metadaten nach Initialisierung bereit', () async {
+      final metadataUri = Uri.parse(
+        'https://example.test/rainviewer/weather-maps.json',
+      );
+
+      final client = MockClient((request) async {
+        expect(request.url, metadataUri);
+
+        return http.Response(
+          jsonEncode({
+            'host': 'https://tilecache.rainviewer.com',
+            'generated': 1722000000,
+            'radar': {
+              'past': [
+                {'time': 1721999400, 'path': '/v2/radar/1721999400'},
+                {'time': 1722000000, 'path': '/v2/radar/1722000000'},
+              ],
+            },
+          }),
+          200,
+          headers: const {'content-type': 'application/json'},
+        );
+      });
+
+      final service = RainViewerRadarService(
+        httpClient: client,
+        metadataUri: metadataUri,
+      );
+
+      final source = RainViewerRadarPlaybackSource(radarService: service);
+
+      expect(source.metadata, isNull);
+
+      await source.initialize();
+
+      final metadata = source.metadata;
+
+      expect(metadata, isNotNull);
+      expect(metadata?.host, 'https://tilecache.rainviewer.com');
+      expect(metadata?.frames, hasLength(2));
+      expect(metadata?.frames.last.path, '/v2/radar/1722000000');
+      expect(metadata?.isStale, isFalse);
+
+      source.dispose();
+      client.close();
+    });
+
+    test('ersetzt Metadaten bei einem erzwungenen Refresh', () async {
+      final metadataUri = Uri.parse(
+        'https://example.test/rainviewer/weather-maps.json',
+      );
+
+      var requestCount = 0;
+
+      final client = MockClient((request) async {
+        requestCount += 1;
+
+        final generated = requestCount == 1 ? 1722000000 : 1722000600;
+
+        final frameTime = requestCount == 1 ? 1722000000 : 1722000600;
+
+        return http.Response(
+          jsonEncode({
+            'host': 'https://tilecache.rainviewer.com',
+            'generated': generated,
+            'radar': {
+              'past': [
+                {'time': frameTime, 'path': '/v2/radar/$frameTime'},
+              ],
+            },
+          }),
+          200,
+        );
+      });
+
+      final service = RainViewerRadarService(
+        httpClient: client,
+        metadataUri: metadataUri,
+      );
+
+      final source = RainViewerRadarPlaybackSource(radarService: service);
+
+      await source.initialize();
+
+      final firstMetadata = source.metadata;
+      final firstGeneratedAt = firstMetadata?.generatedAt;
+
+      await source.refresh();
+
+      final refreshedMetadata = source.metadata;
+
+      expect(requestCount, 2);
+      expect(refreshedMetadata, isNotNull);
+      expect(refreshedMetadata?.generatedAt, isNot(firstGeneratedAt));
+      expect(refreshedMetadata?.frames.single.path, '/v2/radar/1722000600');
+
+      source.dispose();
+      client.close();
+    });
+
+    test(
+      'behält letzte erfolgreiche Metadaten bei einem Refresh-Fehler',
+      () async {
+        final metadataUri = Uri.parse(
+          'https://example.test/rainviewer/weather-maps.json',
+        );
+
+        var requestCount = 0;
+
+        final client = MockClient((request) async {
+          requestCount += 1;
+
+          if (requestCount == 1) {
+            return http.Response(
+              jsonEncode({
+                'host': 'https://tilecache.rainviewer.com',
+                'generated': 1722000000,
+                'radar': {
+                  'past': [
+                    {'time': 1722000000, 'path': '/v2/radar/1722000000'},
+                  ],
+                },
+              }),
+              200,
+            );
+          }
+
+          return http.Response('Serverfehler', 500);
+        });
+
+        final service = RainViewerRadarService(
+          httpClient: client,
+          metadataUri: metadataUri,
+        );
+
+        final source = RainViewerRadarPlaybackSource(radarService: service);
+
+        await source.initialize();
+
+        final successfulMetadata = source.metadata;
+
+        expect(successfulMetadata, isNotNull);
+
+        await expectLater(
+          source.refresh(),
+          throwsA(isA<RainViewerRadarException>()),
+        );
+
+        expect(source.metadata, same(successfulMetadata));
+
+        source.dispose();
+        client.close();
+      },
+    );
+
+    test('entfernt Metadaten beim Dispose', () async {
+      final metadataUri = Uri.parse(
+        'https://example.test/rainviewer/weather-maps.json',
+      );
+
+      final client = MockClient((request) async {
+        return http.Response(
+          jsonEncode({
+            'host': 'https://tilecache.rainviewer.com',
+            'generated': 1722000000,
+            'radar': {
+              'past': [
+                {'time': 1722000000, 'path': '/v2/radar/1722000000'},
+              ],
+            },
+          }),
+          200,
+        );
+      });
+
+      final service = RainViewerRadarService(
+        httpClient: client,
+        metadataUri: metadataUri,
+      );
+
+      final source = RainViewerRadarPlaybackSource(radarService: service);
+
+      await source.initialize();
+
+      expect(source.metadata, isNotNull);
+
+      source.dispose();
+
+      expect(source.metadata, isNull);
+
+      client.close();
+    });
+  });
+}
+
+------------------------------------------------------
+DATEI: test/weather_engine/radar/integration/radar_playback_view_test.dart
+------------------------------------------------------
+
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:wetter_app_ortha/weather_engine/weather_engine.dart';
+
+void main() {
+  group('RadarPlaybackView', () {
+    testWidgets('initialisiert Controller beim Einhängen', (tester) async {
+      final source = _FakeRadarPlaybackSource();
+      final controller = RadarPlaybackViewController<String>(source: source);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: RadarPlaybackView<String>(
+            controller: controller,
+            builder: (context, snapshot, controller) {
+              return const Text('Radar');
+            },
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump();
+
+      expect(source.initializeCalls, 1);
+      expect(find.text('Radar'), findsOneWidget);
+
+      controller.dispose();
+      source.dispose();
+    });
+
+    testWidgets('reagiert auf Änderungen der Quelle', (tester) async {
+      final source = _FakeRadarPlaybackSource();
+      final controller = RadarPlaybackViewController<String>(source: source);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: RadarPlaybackView<String>(
+            controller: controller,
+            initializeOnMount: false,
+            builder: (context, snapshot, controller) {
+              return Text(snapshot.currentOutput ?? 'leer');
+            },
+          ),
+        ),
+      );
+
+      expect(find.text('leer'), findsOneWidget);
+
+      source.setOutput('Radarbild');
+      await tester.pump();
+
+      expect(find.text('Radarbild'), findsOneWidget);
+
+      controller.dispose();
+      source.dispose();
+    });
+
+    testWidgets('kann den Controller beim Entfernen freigeben', (tester) async {
+      final source = _FakeRadarPlaybackSource();
+      final controller = RadarPlaybackViewController<String>(source: source);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: RadarPlaybackView<String>(
+            controller: controller,
+            initializeOnMount: false,
+            disposeController: true,
+            builder: (context, snapshot, controller) {
+              return const Text('Radar');
+            },
+          ),
+        ),
+      );
+
+      await tester.pumpWidget(const MaterialApp(home: SizedBox.shrink()));
+
+      expect(controller.isDisposed, isTrue);
+
+      source.dispose();
+    });
+  });
+
+  group('RadarPlaybackStatusView', () {
+    testWidgets('zeigt Ladeanzeige', (tester) async {
+      final source = _FakeRadarPlaybackSource();
+      final controller = RadarPlaybackViewController<String>(source: source);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: RadarPlaybackStatusView<String>(
+            snapshot: RadarPlaybackSnapshot<String>(
+              status: RadarPlaybackStatus.loadingTimeline,
+            ),
+            controller: controller,
+            contentBuilder: (context, output, snapshot) {
+              return Text(output);
+            },
+          ),
+        ),
+      );
+
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+      controller.dispose();
+      source.dispose();
+    });
+
+    testWidgets('zeigt vorhandenen Radarinhalt', (tester) async {
+      final source = _FakeRadarPlaybackSource();
+      final controller = RadarPlaybackViewController<String>(source: source);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: RadarPlaybackStatusView<String>(
+            snapshot: RadarPlaybackSnapshot<String>(
+              status: RadarPlaybackStatus.ready,
+              currentOutput: 'Radarbild',
+            ),
+            controller: controller,
+            contentBuilder: (context, output, snapshot) {
+              return Text(output);
+            },
+          ),
+        ),
+      );
+
+      expect(find.text('Radarbild'), findsOneWidget);
+
+      controller.dispose();
+      source.dispose();
+    });
+  });
+}
+
+class _FakeRadarPlaybackSource extends ChangeNotifier
+    implements RadarPlaybackSource<String> {
+  int initializeCalls = 0;
+  int refreshCalls = 0;
+
+  @override
+  RadarPlaybackSnapshot<String> snapshot = RadarPlaybackSnapshot<String>(
+    status: RadarPlaybackStatus.idle,
+  );
+
+  @override
+  Future<void> initialize() async {
+    initializeCalls++;
+  }
+
+  @override
+  Future<void> refresh() async {
+    refreshCalls++;
+  }
+
+  void setOutput(String output) {
+    snapshot = RadarPlaybackSnapshot<String>(
+      status: RadarPlaybackStatus.ready,
+      currentOutput: output,
+    );
+
+    notifyListeners();
+  }
+}
+
+======================================================
+VERWENDUNGSSTELLEN
+======================================================
+
+lib/weather_engine/radar/integration/rainviewer_radar_playback_source.dart:23:    implements RadarPlaybackSource<RainViewerRadarFrame> {
+lib/weather_engine/radar/integration/radar_playback_status_view.dart:31:  final RadarPlaybackViewController<TOutput> controller;
+lib/weather_engine/radar/integration/radar_playback_source.dart:10:abstract interface class RadarPlaybackSource<TOutput> implements Listenable {
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:14:class RadarPlaybackViewController<TOutput> extends ChangeNotifier {
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:15:  RadarPlaybackViewController({
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:22:  final RadarPlaybackSource<TOutput> _source;
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:45:  RadarPlaybackSource<TOutput> get source => _source;
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:104:        'RadarPlaybackViewController wurde bereits freigegeben.',
+lib/weather_engine/radar/integration/radar_playback_view.dart:10:      RadarPlaybackViewController<TOutput> controller,
+lib/weather_engine/radar/integration/radar_playback_view.dart:18:/// - beobachtet den [RadarPlaybackViewController],
+lib/weather_engine/radar/integration/radar_playback_view.dart:33:  final RadarPlaybackViewController<TOutput> controller;
+lib/weather_engine/radar/integration/radar_playback_view.dart:43:  /// [RadarPlaybackViewController.initialize] entstehen.
+lib/weather_engine/radar/integration/radar_playback_binding.dart:18:    implements RadarPlaybackSource<TOutput> {
+test/weather_engine/radar/integration/radar_playback_view_controller_test.dart:6:  group('RadarPlaybackViewController', () {
+test/weather_engine/radar/integration/radar_playback_view_controller_test.dart:9:      final controller = RadarPlaybackViewController<String>(source: source);
+test/weather_engine/radar/integration/radar_playback_view_controller_test.dart:26:        final controller = RadarPlaybackViewController<String>(source: source);
+test/weather_engine/radar/integration/radar_playback_view_controller_test.dart:43:      final controller = RadarPlaybackViewController<String>(source: source);
+test/weather_engine/radar/integration/radar_playback_view_controller_test.dart:55:      final controller = RadarPlaybackViewController<String>(source: source);
+test/weather_engine/radar/integration/radar_playback_view_controller_test.dart:72:      final controller = RadarPlaybackViewController<String>(source: source);
+test/weather_engine/radar/integration/radar_playback_view_controller_test.dart:89:      final controller = RadarPlaybackViewController<String>(
+test/weather_engine/radar/integration/radar_playback_view_controller_test.dart:101:      final controller = RadarPlaybackViewController<String>(source: source);
+test/weather_engine/radar/integration/radar_playback_view_controller_test.dart:115:    implements RadarPlaybackSource<String> {
+test/weather_engine/radar/integration/radar_playback_view_test.dart:9:      final controller = RadarPlaybackViewController<String>(source: source);
+test/weather_engine/radar/integration/radar_playback_view_test.dart:34:      final controller = RadarPlaybackViewController<String>(source: source);
+test/weather_engine/radar/integration/radar_playback_view_test.dart:61:      final controller = RadarPlaybackViewController<String>(source: source);
+test/weather_engine/radar/integration/radar_playback_view_test.dart:87:      final controller = RadarPlaybackViewController<String>(source: source);
+test/weather_engine/radar/integration/radar_playback_view_test.dart:111:      final controller = RadarPlaybackViewController<String>(source: source);
+test/weather_engine/radar/integration/radar_playback_view_test.dart:137:    implements RadarPlaybackSource<String> {

@@ -1,0 +1,66 @@
+
+========================================================================
+INITSTATE
+========================================================================
+  void initState() {
+    super.initState();
+
+    _httpClient = http.Client();
+    _radarService = RainViewerRadarService(httpClient: _httpClient);
+    _playbackSource = RainViewerRadarPlaybackSource(
+      radarService: _radarService,
+    );
+    _playbackController = RadarPlaybackViewController<RainViewerRadarFrame>(
+      source: _playbackSource,
+      disposeSource: true,
+    );
+
+    _loadRadar();
+  }
+
+========================================================================
+DISPOSE
+========================================================================
+  void dispose() {
+    _animationTimer?.cancel();
+    _frameTransitionTimer?.cancel();
+    _rateLimitTimer?.cancel();
+    _playbackController.dispose();
+    _mapController.dispose();
+    _httpClient.close();
+    super.dispose();
+  }
+
+========================================================================
+_LOADRADAR
+========================================================================
+  Future<void> _loadRadar({bool forceRefresh = false}
+
+========================================================================
+_SELECTEDFRAME
+========================================================================
+  RainViewerRadarFrame? get _selectedFrame {
+    final metadata = _metadata;
+
+    if (metadata == null || metadata.frames.isEmpty) {
+      return null;
+    }
+
+    final safeIndex = _selectedFrameIndex.clamp(0, metadata.frames.length - 1);
+
+    return metadata.frames[safeIndex];
+  }
+
+========================================================================
+METADATEN-FUNDSTELLEN
+========================================================================
+155:       final metadata = _playbackSource.metadata;
+
+========================================================================
+CONTROLLER-FUNDSTELLEN
+========================================================================
+44:   _playbackController;
+75:     _playbackController = RadarPlaybackViewController<RainViewerRadarFrame>(
+107:     _playbackController.dispose();
+148:         await _playbackController.refresh();
+150:         await _playbackController.initialize();

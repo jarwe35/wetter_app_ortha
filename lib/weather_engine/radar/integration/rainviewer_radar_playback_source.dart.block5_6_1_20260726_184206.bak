@@ -1,0 +1,197 @@
+import 'package:flutter/foundation.dart';
+
+import '../../../services/radar/rainviewer_radar_service.dart';
+import '../../models/weather_frame.dart';
+import '../playback/radar_playback_snapshot.dart';
+import '../playback/radar_playback_status.dart';
+import 'radar_playback_source.dart';
+
+/// Produktive Verbindung zwischen dem bestehenden
+/// [RainViewerRadarService] und der allgemeinen Radar-Playback-Integration.
+///
+/// Die Source übernimmt ausschließlich:
+///
+/// - das Laden der RainViewer-Metadaten,
+/// - die Abbildung auf einen [RadarPlaybackSnapshot],
+/// - die Auswahl des aktuellsten Radarframes,
+/// - Refresh und Fehlerzustände,
+/// - die Benachrichtigung angebundener Flutter-Controller.
+///
+/// Die eigentliche Animation, Kartenanzeige und Layer-Überblendung verbleiben
+/// weiterhin in der Radaroberfläche.
+class RainViewerRadarPlaybackSource extends ChangeNotifier
+    implements RadarPlaybackSource<RainViewerRadarFrame> {
+  RainViewerRadarPlaybackSource({
+    required RainViewerRadarService radarService,
+  }) : _radarService = radarService;
+
+  final RainViewerRadarService _radarService;
+
+  RadarPlaybackSnapshot<RainViewerRadarFrame> _snapshot =
+      const RadarPlaybackSnapshot<RainViewerRadarFrame>(
+        status: RadarPlaybackStatus.idle,
+      );
+
+  bool _initialized = false;
+  bool _loading = false;
+  bool _disposed = false;
+
+  Future<void>? _pendingOperation;
+
+  @override
+  RadarPlaybackSnapshot<RainViewerRadarFrame> get snapshot => _snapshot;
+
+  bool get isInitialized => _initialized;
+
+  bool get isLoading => _loading;
+
+  bool get isDisposed => _disposed;
+
+  RainViewerRadarService get radarService => _radarService;
+
+  @override
+  Future<void> initialize() {
+    _ensureActive();
+
+    if (_initialized) {
+      return Future<void>.value();
+    }
+
+    return _load(forceRefresh: false);
+  }
+
+  @override
+  Future<void> refresh() {
+    _ensureActive();
+    return _load(forceRefresh: true);
+  }
+
+  Future<void> _load({required bool forceRefresh}) {
+    final runningOperation = _pendingOperation;
+
+    if (runningOperation != null) {
+      return runningOperation;
+    }
+
+    final operation = _performLoad(forceRefresh: forceRefresh);
+    _pendingOperation = operation;
+
+    return operation.whenComplete(() {
+      if (identical(_pendingOperation, operation)) {
+        _pendingOperation = null;
+      }
+    });
+  }
+
+  Future<void> _performLoad({required bool forceRefresh}) async {
+    _loading = true;
+
+    _updateSnapshot(
+      _snapshot.copyWith(
+        status: RadarPlaybackStatus.loadingTimeline,
+        clearError: true,
+      ),
+    );
+
+    try {
+      final metadata = await _radarService.fetchMetadata(
+        forceRefresh: forceRefresh,
+      );
+
+      if (_disposed) {
+        return;
+      }
+
+      final frames = metadata.frames;
+
+      if (frames.isEmpty) {
+        _initialized = true;
+
+        _updateSnapshot(
+          const RadarPlaybackSnapshot<RainViewerRadarFrame>(
+            status: RadarPlaybackStatus.ready,
+          ),
+        );
+
+        return;
+      }
+
+      final latestIndex = frames.length - 1;
+      final latestFrame = frames[latestIndex];
+
+      _initialized = true;
+
+      _updateSnapshot(
+        RadarPlaybackSnapshot<RainViewerRadarFrame>(
+          status: RadarPlaybackStatus.ready,
+          frames: List<WeatherFrame>.unmodifiable(
+            frames.map(_toWeatherFrame),
+          ),
+          currentIndex: latestIndex,
+          currentOutput: latestFrame,
+          isPreloading: false,
+          preloadedFrameCount: 0,
+        ),
+      );
+    } catch (error, stackTrace) {
+      if (_disposed) {
+        return;
+      }
+
+      _updateSnapshot(
+        _snapshot.copyWith(
+          status: RadarPlaybackStatus.failed,
+          error: error,
+          stackTrace: stackTrace,
+          isPreloading: false,
+        ),
+      );
+
+      rethrow;
+    } finally {
+      _loading = false;
+    }
+  }
+
+  WeatherFrame _toWeatherFrame(RainViewerRadarFrame frame) {
+    return WeatherFrame(
+      timestamp: frame.time,
+      sourceId: frame.path,
+    );
+  }
+
+  void _updateSnapshot(
+    RadarPlaybackSnapshot<RainViewerRadarFrame> nextSnapshot,
+  ) {
+    if (_disposed) {
+      return;
+    }
+
+    _snapshot = nextSnapshot;
+    notifyListeners();
+  }
+
+  void _ensureActive() {
+    if (_disposed) {
+      throw StateError(
+        'RainViewerRadarPlaybackSource wurde bereits freigegeben.',
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    if (_disposed) {
+      return;
+    }
+
+    _disposed = true;
+    _loading = false;
+
+    _snapshot = _snapshot.copyWith(
+      status: RadarPlaybackStatus.disposed,
+    );
+
+    super.dispose();
+  }
+}

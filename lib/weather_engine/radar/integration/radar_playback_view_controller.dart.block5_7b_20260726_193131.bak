@@ -1,0 +1,124 @@
+import 'package:flutter/foundation.dart';
+
+import '../playback/radar_playback_snapshot.dart';
+import 'radar_playback_source.dart';
+
+/// UI-Lebenszykluscontroller für die Radar-Playback-Integration.
+///
+/// Eine Flutter-Seite kann diesen Controller in `initState` initialisieren,
+/// über einen `ListenableBuilder` oder `AnimatedBuilder` beobachten und in
+/// `dispose` wieder freigeben.
+///
+/// Die bestehende Kartenansicht muss dadurch weder Provider- noch
+/// Render-Details der Weather Engine kennen.
+class RadarPlaybackViewController<TOutput> extends ChangeNotifier {
+  RadarPlaybackViewController({
+    required this._source,
+    this.disposeSource = false,
+  }) {
+    _source.addListener(_handleSourceChanged);
+  }
+
+  final RadarPlaybackSource<TOutput> _source;
+
+  /// Gibt an, ob der Controller beim eigenen Dispose auch die angebundene
+  /// Radarquelle freigeben soll.
+  ///
+  /// Bleibt der Besitz bei einem übergeordneten Controller oder Service,
+  /// muss dieser Wert `false` bleiben.
+  final bool disposeSource;
+
+  bool _initialized = false;
+  bool _initializing = false;
+  bool _disposed = false;
+
+  Future<void>? _initializationOperation;
+
+  RadarPlaybackSnapshot<TOutput> get snapshot => _source.snapshot;
+
+  bool get isInitialized => _initialized;
+
+  bool get isInitializing => _initializing;
+
+  bool get isDisposed => _disposed;
+
+  RadarPlaybackSource<TOutput> get source => _source;
+
+  /// Initialisiert die Radarquelle höchstens einmal.
+  ///
+  /// Gleichzeitige Aufrufe erhalten dieselbe laufende Future. Dadurch werden
+  /// doppelte Timeline-Anfragen beim Aufbau eines Widgets verhindert.
+  Future<void> initialize() {
+    _ensureActive();
+
+    if (_initialized) {
+      return Future<void>.value();
+    }
+
+    final runningOperation = _initializationOperation;
+
+    if (runningOperation != null) {
+      return runningOperation;
+    }
+
+    final operation = _runInitialization();
+    _initializationOperation = operation;
+
+    return operation;
+  }
+
+  Future<void> _runInitialization() async {
+    _initializing = true;
+    notifyListeners();
+
+    try {
+      await _source.initialize();
+      _initialized = true;
+    } finally {
+      _initializing = false;
+      _initializationOperation = null;
+
+      if (!_disposed) {
+        notifyListeners();
+      }
+    }
+  }
+
+  /// Fordert eine neue Radar-Timeline über die angebundene Quelle an.
+  Future<void> refresh() {
+    _ensureActive();
+    return _source.refresh();
+  }
+
+  void _handleSourceChanged() {
+    if (_disposed) {
+      return;
+    }
+
+    notifyListeners();
+  }
+
+  void _ensureActive() {
+    if (_disposed) {
+      throw StateError(
+        'RadarPlaybackViewController wurde bereits freigegeben.',
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    if (_disposed) {
+      return;
+    }
+
+    _disposed = true;
+    _source.removeListener(_handleSourceChanged);
+
+    if (disposeSource) {
+      _source.dispose();
+    }
+
+    super.dispose();
+  }
+}

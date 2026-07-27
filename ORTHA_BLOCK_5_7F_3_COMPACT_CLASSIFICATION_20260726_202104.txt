@@ -1,0 +1,101 @@
+ORTHA METEO Ω
+Block 5.7F.3 – Kompakte Dateiklassifizierung
+
+Branch: develop-v0.13.0
+Commit: 29c1d60
+Zeitpunkt: So 26 Jul 2026 20:21:04 CEST
+
+======================================================
+ ZUSAMMENFASSUNG
+======================================================
+
+Unversionierte Dateien insgesamt: 89
+Produktive Quelldateien:          33
+Testdateien:                       15
+Dokumentation:                     1
+Backups / Logs / Auditdateien:     40
+Sonstige Dateien:                  0
+
+======================================================
+ PRODUKTIVE QUELLDATEIEN
+======================================================
+lib/weather_engine/animation/weather_animation_controller.dart
+lib/weather_engine/animation/weather_animation_state.dart
+lib/weather_engine/cache/memory_weather_cache.dart
+lib/weather_engine/cache/weather_cache_entry.dart
+lib/weather_engine/cache/weather_cache_key.dart
+lib/weather_engine/cache/weather_cache.dart
+lib/weather_engine/models/weather_bounds.dart
+lib/weather_engine/models/weather_frame.dart
+lib/weather_engine/models/weather_tile.dart
+lib/weather_engine/models/weather_timeline.dart
+lib/weather_engine/preload/weather_preload_queue.dart
+lib/weather_engine/preload/weather_preload_result.dart
+lib/weather_engine/preload/weather_preload_status.dart
+lib/weather_engine/providers/weather_provider_request.dart
+lib/weather_engine/providers/weather_provider.dart
+lib/weather_engine/radar/integration/radar_integration.dart
+lib/weather_engine/radar/integration/radar_playback_binding.dart
+lib/weather_engine/radar/integration/radar_playback_source.dart
+lib/weather_engine/radar/integration/radar_playback_status_view.dart
+lib/weather_engine/radar/integration/radar_playback_view.dart
+lib/weather_engine/radar/playback/radar_playback_callbacks.dart
+lib/weather_engine/radar/playback/radar_playback_engine.dart
+lib/weather_engine/radar/playback/radar_playback_snapshot.dart
+lib/weather_engine/radar/playback/radar_playback_status.dart
+lib/weather_engine/radar/playback/radar_preload_planner.dart
+lib/weather_engine/radar/radar_provider_request.dart
+lib/weather_engine/radar/radar_provider.dart
+lib/weather_engine/renderer/weather_frame_renderer.dart
+lib/weather_engine/renderer/weather_render_context.dart
+lib/weather_engine/renderer/weather_render_pipeline.dart
+lib/weather_engine/renderer/weather_render_result.dart
+lib/weather_engine/renderer/weather_render_status.dart
+lib/weather_engine/weather_engine.dart
+
+======================================================
+ TESTDATEIEN
+======================================================
+test/weather_engine/animation/weather_animation_controller_test.dart
+test/weather_engine/cache/memory_weather_cache_test.dart
+test/weather_engine/cache/weather_cache_key_test.dart
+test/weather_engine/models/weather_bounds_test.dart
+test/weather_engine/models/weather_frame_test.dart
+test/weather_engine/models/weather_timeline_test.dart
+test/weather_engine/preload/weather_preload_queue_test.dart
+test/weather_engine/providers/weather_provider_request_test.dart
+test/weather_engine/radar/integration/radar_playback_view_controller_test.dart
+test/weather_engine/radar/integration/radar_playback_view_test.dart
+test/weather_engine/radar/integration/rainviewer_radar_playback_metadata_test.dart
+test/weather_engine/radar/integration/rainviewer_radar_playback_source_test.dart
+test/weather_engine/radar/playback/radar_playback_status_test.dart
+test/weather_engine/radar/playback/radar_preload_planner_test.dart
+test/weather_engine/renderer/weather_render_result_test.dart
+
+======================================================
+ DOKUMENTATION
+======================================================
+SPRINT_0_32_STATUS.md
+
+======================================================
+ SONSTIGE DATEIEN
+======================================================
+Keine
+
+======================================================
+ ARBEITSARTEFAKTE – NUR ANZAHL
+======================================================
+
+40 Dateien
+
+Die einzelnen Backup-, Log- und Auditdateien werden
+bewusst nicht im Terminal ausgegeben.
+
+======================================================
+ ERGEBNIS
+======================================================
+
+- Keine Quelldatei verändert
+- Keine Datei gelöscht
+- Kein Commit
+- Kein Push

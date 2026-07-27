@@ -1,0 +1,325 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/ortha_widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/ortha_widget_background"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingLeft="14dp"
+    android:paddingTop="12dp"
+    android:paddingRight="14dp"
+    android:paddingBottom="12dp">
+
+    <!-- Logo / Refresh -->
+    <LinearLayout
+        android:layout_width="58dp"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/ortha_widget_refresh"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:adjustViewBounds="true"
+            android:contentDescription="Wetterdaten aktualisieren"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ortha_meteo_master" />
+
+        <TextView
+            android:id="@+id/ortha_widget_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:gravity="center"
+            android:maxLines="1"
+            android:text="ORTHA METEO Ω"
+            android:textColor="#D9ECF7"
+            android:textSize="7sp"
+            android:textStyle="bold" />
+
+        <!-- Unsichtbare Warnampel-IDs bleiben für den Provider erhalten. -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="1dp"
+            android:visibility="gone"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/ortha_widget_light_red"
+                android:layout_width="1dp"
+                android:layout_height="1dp"
+                android:text="●" />
+
+            <TextView
+                android:id="@+id/ortha_widget_light_yellow"
+                android:layout_width="1dp"
+                android:layout_height="1dp"
+                android:text="●" />
+
+            <TextView
+                android:id="@+id/ortha_widget_light_green"
+                android:layout_width="1dp"
+                android:layout_height="1dp"
+                android:text="●" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Trennlinie -->
+    <TextView
+        android:layout_width="1dp"
+        android:layout_height="72dp"
+        android:layout_marginStart="9dp"
+        android:layout_marginEnd="13dp"
+        android:background="#48678396"
+        android:text="" />
+
+    <!-- Aktuelles Wetter -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1.35"
+        android:gravity="center_vertical"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/ortha_widget_place"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="Duisburg  ›"
+            android:textColor="#FFFFFF"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="1dp"
+            android:text="Aktuelles Wetter"
+            android:textColor="#8FA7B7"
+            android:textSize="10sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/ortha_widget_temperature"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:includeFontPadding="false"
+                android:text="-- °C"
+                android:textColor="#FFFFFF"
+                android:textSize="31sp"
+                android:textStyle="normal" />
+
+            <TextView
+                android:id="@+id/ortha_widget_symbol"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="7dp"
+                android:contentDescription="Aktuelles Wettersymbol"
+                android:includeFontPadding="false"
+                android:text="–"
+                android:textSize="27sp" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/ortha_widget_apparent_temperature"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="1dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="Gefühlt -- °C"
+            android:textColor="#66C7F3"
+            android:textSize="10sp" />
+
+        <TextView
+            android:id="@+id/ortha_widget_warning"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="● Keine amtliche Warnung"
+            android:textColor="#77D6A6"
+            android:textSize="8sp" />
+
+    </LinearLayout>
+
+    <!-- Trennlinie -->
+    <TextView
+        android:layout_width="1dp"
+        android:layout_height="72dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:background="#48678396"
+        android:text="" />
+
+    <!-- Tag 1 -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="0.72"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/ortha_widget_day_1_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:maxLines="1"
+            android:text="Heute"
+            android:textColor="#E9F1F6"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/ortha_widget_day_1_symbol"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:text="–"
+            android:textSize="23sp" />
+
+        <TextView
+            android:id="@+id/ortha_widget_day_1_temperature"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:gravity="center"
+            android:maxLines="1"
+            android:text="– / –"
+            android:textColor="#D5E0E7"
+            android:textSize="9sp" />
+
+    </LinearLayout>
+
+    <!-- Trennlinie -->
+    <TextView
+        android:layout_width="1dp"
+        android:layout_height="64dp"
+        android:layout_marginStart="7dp"
+        android:layout_marginEnd="7dp"
+        android:background="#3A678396"
+        android:text="" />
+
+    <!-- Tag 2 -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="0.72"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/ortha_widget_day_2_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:maxLines="1"
+            android:text="–"
+            android:textColor="#E9F1F6"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/ortha_widget_day_2_symbol"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:text="–"
+            android:textSize="23sp" />
+
+        <TextView
+            android:id="@+id/ortha_widget_day_2_temperature"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:gravity="center"
+            android:maxLines="1"
+            android:text="– / –"
+            android:textColor="#D5E0E7"
+            android:textSize="9sp" />
+
+    </LinearLayout>
+
+    <!-- Trennlinie -->
+    <TextView
+        android:layout_width="1dp"
+        android:layout_height="64dp"
+        android:layout_marginStart="7dp"
+        android:layout_marginEnd="7dp"
+        android:background="#3A678396"
+        android:text="" />
+
+    <!-- Tag 3 und Zeit -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="0.82"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/ortha_widget_day_3_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:maxLines="1"
+            android:text="–"
+            android:textColor="#E9F1F6"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/ortha_widget_day_3_symbol"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:text="–"
+            android:textSize="23sp" />
+
+        <TextView
+            android:id="@+id/ortha_widget_day_3_temperature"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:gravity="center"
+            android:maxLines="1"
+            android:text="– / –"
+            android:textColor="#D5E0E7"
+            android:textSize="9sp" />
+
+        <TextView
+            android:id="@+id/ortha_widget_updated"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:maxLines="1"
+            android:text="Aktualisiert: --:--"
+            android:textColor="#7990A0"
+            android:textSize="7sp" />
+
+    </LinearLayout>
+
+</LinearLayout>

@@ -1,0 +1,186 @@
+ORTHA METEO Ω
+Sprint 0.32 – Weather Map Engine Ω
+Block 5.7B.4 – Finale Controller-Factory
+Erzeugt: So 26 Jul 2026 19:36:30 CEST
+
+Ergebnis:
+- öffentliche Controller-Factory ergänzt
+- öffentliche API verwendet source: source
+- privater Konstruktor verwendet this._source
+- interne Factory-Weitergabe verwendet source: source
+- prefer_initializing_formals erfüllt
+- private Source-Kapselung erhalten
+- Source-Getter erhalten
+- disposeSource erhalten
+- Controller-Tests erfolgreich
+- View-Tests erfolgreich
+- Radar-Integrationstests erfolgreich
+- Radar-Gesamttests erfolgreich
+- Weather-Engine-Tests erfolgreich
+- flutter analyze erfolgreich
+- vollständiger Testlauf erfolgreich
+- RadarPage unverändert
+- kein Commit
+- kein Push
+
+======================================================
+CONTROLLER
+======================================================
+
+import 'package:flutter/foundation.dart';
+
+import '../playback/radar_playback_snapshot.dart';
+import 'radar_playback_source.dart';
+
+/// UI-Lebenszykluscontroller für die Radar-Playback-Integration.
+///
+/// Eine Flutter-Seite kann diesen Controller in `initState` initialisieren,
+/// über einen `ListenableBuilder` oder `AnimatedBuilder` beobachten und in
+/// `dispose` wieder freigeben.
+///
+/// Die bestehende Kartenansicht muss dadurch weder Provider- noch
+/// Render-Details der Weather Engine kennen.
+class RadarPlaybackViewController<TOutput> extends ChangeNotifier {
+  factory RadarPlaybackViewController({
+    required RadarPlaybackSource<TOutput> source,
+    bool disposeSource = false,
+  }) {
+    return RadarPlaybackViewController<TOutput>._(
+      source: source,
+      disposeSource: disposeSource,
+    );
+  }
+
+  RadarPlaybackViewController._({
+    required this._source,
+    required this.disposeSource,
+  }) {
+    _source.addListener(_handleSourceChanged);
+  }
+
+  final RadarPlaybackSource<TOutput> _source;
+
+  /// Gibt an, ob der Controller beim eigenen Dispose auch die angebundene
+  /// Radarquelle freigeben soll.
+  ///
+  /// Bleibt der Besitz bei einem übergeordneten Controller oder Service,
+  /// muss dieser Wert `false` bleiben.
+  final bool disposeSource;
+
+  bool _initialized = false;
+  bool _initializing = false;
+  bool _disposed = false;
+
+  Future<void>? _initializationOperation;
+
+  RadarPlaybackSnapshot<TOutput> get snapshot => _source.snapshot;
+
+  bool get isInitialized => _initialized;
+
+  bool get isInitializing => _initializing;
+
+  bool get isDisposed => _disposed;
+
+  RadarPlaybackSource<TOutput> get source => _source;
+
+  /// Initialisiert die Radarquelle höchstens einmal.
+  ///
+  /// Gleichzeitige Aufrufe erhalten dieselbe laufende Future. Dadurch werden
+  /// doppelte Timeline-Anfragen beim Aufbau eines Widgets verhindert.
+  Future<void> initialize() {
+    _ensureActive();
+
+    if (_initialized) {
+      return Future<void>.value();
+    }
+
+    final runningOperation = _initializationOperation;
+
+    if (runningOperation != null) {
+      return runningOperation;
+    }
+
+    final operation = _runInitialization();
+    _initializationOperation = operation;
+
+    return operation;
+  }
+
+  Future<void> _runInitialization() async {
+    _initializing = true;
+    notifyListeners();
+
+    try {
+      await _source.initialize();
+      _initialized = true;
+    } finally {
+      _initializing = false;
+      _initializationOperation = null;
+
+      if (!_disposed) {
+        notifyListeners();
+      }
+    }
+  }
+
+  /// Fordert eine neue Radar-Timeline über die angebundene Quelle an.
+  Future<void> refresh() {
+    _ensureActive();
+    return _source.refresh();
+  }
+
+  void _handleSourceChanged() {
+    if (_disposed) {
+      return;
+    }
+
+    notifyListeners();
+  }
+
+  void _ensureActive() {
+    if (_disposed) {
+      throw StateError(
+        'RadarPlaybackViewController wurde bereits freigegeben.',
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    if (_disposed) {
+      return;
+    }
+
+    _disposed = true;
+    _source.removeListener(_handleSourceChanged);
+
+    if (disposeSource) {
+      _source.dispose();
+    }
+
+    super.dispose();
+  }
+}
+
+======================================================
+GIT STATUS
+======================================================
+
+?? ORTHA_BLOCK5_3_RADAR_PAGE_AUDIT_20260726_175917.txt
+?? ORTHA_BLOCK5_RADAR_INTEGRATION_AUDIT_20260726_174755.txt
+?? ORTHA_BLOCK_5_4_RADAR_INTEGRATION_AUDIT_20260726_180541.txt
+?? ORTHA_BLOCK_5_5_LIVE_INTEGRATION_20260726_181321.txt
+?? ORTHA_BLOCK_5_6_3_ROBUST_INITIALIZING_FORMAL_FIX_20260726_184526.txt
+?? ORTHA_BLOCK_5_7A_1_TEST_STRUCTURE_20260726_185909.txt
+?? ORTHA_BLOCK_5_7A_3_METADATA_BRIDGE_VALIDATION_20260726_190258.txt
+?? ORTHA_BLOCK_5_7B_1_CONTROLLER_DIAGNOSE_20260726_190932.txt
+?? ORTHA_BLOCK_5_7B_4_FINAL_CONTROLLER_FACTORY_20260726_193502.txt
+?? ORTHA_BLOCK_5_7B_CONTROLLER_STRUCTURE_20260726_190631.txt
+?? ORTHA_BLOCK_5_7B_CONTROLLER_STRUCTURE_20260726_190632.txt
+?? ORTHA_BLOCK_5_7B_RELEVANT_SOURCE.txt
+?? ORTHA_BLOCK_5_7_RECOVERY_AUDIT_20260726_185317.txt
+?? ORTHA_BLOCK_5_7_SOURCE_INSPECTION_20260726_185420.txt
+?? SPRINT_0_32_STATUS.md
+?? lib/pages/radar_page.dart.block5_5_20260726_181321.bak
+?? lib/weather_engine/
+?? test/weather_engine/

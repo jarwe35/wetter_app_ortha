@@ -1,0 +1,31 @@
+ORTHA METEO Ω
+Sprint 0.32 – Radar Playback
+Sicherung des technisch stabilen Zwischenstands
+Zeitpunkt: So 26 Jul 2026 20:14:58 CEST
+
+Branch:
+develop-v0.13.0
+
+Commit:
+29c1d60
+
+Commit-Nachricht:
+feat(radar): integrate playback source into radar page
+
+Prüfungen:
+- dart format erfolgreich
+- gezielte Radar-Tests erfolgreich bzw. nicht separat vorhanden
+- flutter analyze erfolgreich
+- vollständiger flutter test erfolgreich
+- Smartphone-Installation zuvor erfolgreich
+- App-Prozess zuvor stabil
+- keine kritischen Laufzeitfehler
+- manueller Radar-Funktionstest noch offen
+
+Git:
+- Commit erfolgreich
+- Push erfolgreich
+- Status: Arbeitsverzeichnis enthält weitere Dateien oder Änderungen
+
+Lokale Sicherung:
+/Users/bernhardklaffke/ORTHA_Projekte/wetter_app_ortha/.ortha_backups/sprint_0_32_radar_playback_20260726_201351

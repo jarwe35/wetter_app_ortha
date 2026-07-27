@@ -1,0 +1,353 @@
+ORTHA METEO Ω
+Block 5.7B.1 – Controller-Test Diagnose
+Erzeugt: So 26 Jul 2026 19:09:33 CEST
+
+Analyse-Exitcode:
+3
+
+======================================================
+ANALYSEFEHLER DER MINIMALEN PROBE
+======================================================
+
+Analyzing ortha_radar_playback_controller_probe_20260726_190932_test.dart...
+
+  error - ortha_radar_playback_controller_probe_20260726_190932_test.dart:1:8 - Target of URI doesn't exist: 'package:flutter/foundation.dart'. Try creating the file referenced by the URI, or try using a URI for a file that does exist. - uri_does_not_exist
+  error - ortha_radar_playback_controller_probe_20260726_190932_test.dart:2:8 - Target of URI doesn't exist: 'package:flutter_test/flutter_test.dart'. Try creating the file referenced by the URI, or try using a URI for a file that does exist. - uri_does_not_exist
+  error - ortha_radar_playback_controller_probe_20260726_190932_test.dart:4:8 - Target of URI doesn't exist: 'package:wetter_app_ortha/weather_engine/radar/integration/radar_playback_source.dart'. Try creating the file referenced by the URI, or try using a URI for a file that does exist. - uri_does_not_exist
+  error - ortha_radar_playback_controller_probe_20260726_190932_test.dart:5:8 - Target of URI doesn't exist: 'package:wetter_app_ortha/weather_engine/radar/integration/radar_playback_view_controller.dart'. Try creating the file referenced by the URI, or try using a URI for a file that does exist. - uri_does_not_exist
+  error - ortha_radar_playback_controller_probe_20260726_190932_test.dart:6:8 - Target of URI doesn't exist: 'package:wetter_app_ortha/weather_engine/radar/playback/radar_playback_snapshot.dart'. Try creating the file referenced by the URI, or try using a URI for a file that does exist. - uri_does_not_exist
+  error - ortha_radar_playback_controller_probe_20260726_190932_test.dart:9:3 - The function 'test' isn't defined. Try importing the library that defines 'test', correcting the name to the name of an existing function, or defining a function named 'test'. - undefined_function
+  error - ortha_radar_playback_controller_probe_20260726_190932_test.dart:12:24 - The function 'RadarPlaybackViewController' isn't defined. Try importing the library that defines 'RadarPlaybackViewController', correcting the name to the name of an existing function, or defining a function named 'RadarPlaybackViewController'. - undefined_function
+  error - ortha_radar_playback_controller_probe_20260726_190932_test.dart:16:5 - The function 'expect' isn't defined. Try importing the library that defines 'expect', correcting the name to the name of an existing function, or defining a function named 'expect'. - undefined_function
+  error - ortha_radar_playback_controller_probe_20260726_190932_test.dart:16:31 - The function 'same' isn't defined. Try importing the library that defines 'same', correcting the name to the name of an existing function, or defining a function named 'same'. - undefined_function
+  error - ortha_radar_playback_controller_probe_20260726_190932_test.dart:19:12 - The method 'dispose' isn't defined for the type '_ProbeSource'. Try correcting the name to the name of an existing method, or defining a method named 'dispose'. - undefined_method
+  error - ortha_radar_playback_controller_probe_20260726_190932_test.dart:23:28 - Classes can only extend other classes. Try specifying a different superclass, or removing the extends clause. - extends_non_class
+  error - ortha_radar_playback_controller_probe_20260726_190932_test.dart:24:16 - Classes and mixins can only implement other classes and mixins. Try specifying a class or mixin, or remove the name from the list. - implements_non_class
+  error - ortha_radar_playback_controller_probe_20260726_190932_test.dart:26:3 - Undefined class 'RadarPlaybackSnapshot'. Try changing the name to the name of an existing class, or creating a class with the name 'RadarPlaybackSnapshot'. - undefined_class
+  error - ortha_radar_playback_controller_probe_20260726_190932_test.dart:27:13 - The name 'RadarPlaybackSnapshot' isn't a class. Try correcting the name to match an existing class. - creation_with_non_type
+  error - ortha_radar_playback_controller_probe_20260726_190932_test.dart:28:17 - Undefined name 'RadarPlaybackStatus'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+warning - ortha_radar_playback_controller_probe_20260726_190932_test.dart:26:37 - The getter doesn't override an inherited getter. Try updating this class to match the superclass, or removing the override annotation. - override_on_non_overriding_member
+warning - ortha_radar_playback_controller_probe_20260726_190932_test.dart:32:16 - The method doesn't override an inherited method. Try updating this class to match the superclass, or removing the override annotation. - override_on_non_overriding_member
+warning - ortha_radar_playback_controller_probe_20260726_190932_test.dart:35:16 - The method doesn't override an inherited method. Try updating this class to match the superclass, or removing the override annotation. - override_on_non_overriding_member
+
+18 issues found.
+
+======================================================
+RADAR PLAYBACK SOURCE
+======================================================
+
+import 'package:flutter/foundation.dart';
+
+import '../playback/radar_playback_snapshot.dart';
+
+/// Abstrakte Schnittstelle zwischen einer Flutter-Oberfläche und der
+/// Radar-Playback-Orchestrierung.
+///
+/// Dadurch bleibt die Radaroberfläche unabhängig von der konkreten
+/// Implementierung der Playback Engine.
+abstract interface class RadarPlaybackSource<TOutput> implements Listenable {
+  RadarPlaybackSnapshot<TOutput> get snapshot;
+
+  Future<void> initialize();
+
+  Future<void> refresh();
+
+  void dispose();
+}
+
+======================================================
+RADAR PLAYBACK SNAPSHOT
+======================================================
+
+import 'package:flutter/foundation.dart';
+
+import '../../models/weather_frame.dart';
+import 'radar_playback_status.dart';
+
+/// Unveränderlicher Zustandsabzug der Radar-Wiedergabe.
+@immutable
+class RadarPlaybackSnapshot<TOutput> {
+  const RadarPlaybackSnapshot({
+    required this.status,
+    this.frames = const <WeatherFrame>[],
+    this.currentIndex = 0,
+    this.currentOutput,
+    this.error,
+    this.stackTrace,
+    this.isPreloading = false,
+    this.preloadedFrameCount = 0,
+  });
+
+  final RadarPlaybackStatus status;
+  final List<WeatherFrame> frames;
+  final int currentIndex;
+  final TOutput? currentOutput;
+  final Object? error;
+  final StackTrace? stackTrace;
+  final bool isPreloading;
+  final int preloadedFrameCount;
+
+  bool get hasFrames => frames.isNotEmpty;
+
+  bool get hasError => error != null;
+
+  WeatherFrame? get currentFrame {
+    if (frames.isEmpty) {
+      return null;
+    }
+
+    final safeIndex = currentIndex.clamp(0, frames.length - 1);
+
+    return frames[safeIndex];
+  }
+
+  RadarPlaybackSnapshot<TOutput> copyWith({
+    RadarPlaybackStatus? status,
+    List<WeatherFrame>? frames,
+    int? currentIndex,
+    TOutput? currentOutput,
+    bool clearCurrentOutput = false,
+    Object? error,
+    StackTrace? stackTrace,
+    bool clearError = false,
+    bool? isPreloading,
+    int? preloadedFrameCount,
+  }) {
+    return RadarPlaybackSnapshot<TOutput>(
+      status: status ?? this.status,
+      frames: frames ?? this.frames,
+      currentIndex: currentIndex ?? this.currentIndex,
+      currentOutput: clearCurrentOutput
+          ? null
+          : currentOutput ?? this.currentOutput,
+      error: clearError ? null : error ?? this.error,
+      stackTrace: clearError ? null : stackTrace ?? this.stackTrace,
+      isPreloading: isPreloading ?? this.isPreloading,
+      preloadedFrameCount: preloadedFrameCount ?? this.preloadedFrameCount,
+    );
+  }
+}
+
+======================================================
+RADAR PLAYBACK VIEW CONTROLLER
+======================================================
+
+import 'package:flutter/foundation.dart';
+
+import '../playback/radar_playback_snapshot.dart';
+import 'radar_playback_source.dart';
+
+/// UI-Lebenszykluscontroller für die Radar-Playback-Integration.
+///
+/// Eine Flutter-Seite kann diesen Controller in `initState` initialisieren,
+/// über einen `ListenableBuilder` oder `AnimatedBuilder` beobachten und in
+/// `dispose` wieder freigeben.
+///
+/// Die bestehende Kartenansicht muss dadurch weder Provider- noch
+/// Render-Details der Weather Engine kennen.
+class RadarPlaybackViewController<TOutput> extends ChangeNotifier {
+  RadarPlaybackViewController({
+    required this._source,
+    this.disposeSource = false,
+  }) {
+    _source.addListener(_handleSourceChanged);
+  }
+
+  final RadarPlaybackSource<TOutput> _source;
+
+  /// Gibt an, ob der Controller beim eigenen Dispose auch die angebundene
+  /// Radarquelle freigeben soll.
+  ///
+  /// Bleibt der Besitz bei einem übergeordneten Controller oder Service,
+  /// muss dieser Wert `false` bleiben.
+  final bool disposeSource;
+
+  bool _initialized = false;
+  bool _initializing = false;
+  bool _disposed = false;
+
+  Future<void>? _initializationOperation;
+
+  RadarPlaybackSnapshot<TOutput> get snapshot => _source.snapshot;
+
+  bool get isInitialized => _initialized;
+
+  bool get isInitializing => _initializing;
+
+  bool get isDisposed => _disposed;
+
+  RadarPlaybackSource<TOutput> get source => _source;
+
+  /// Initialisiert die Radarquelle höchstens einmal.
+  ///
+  /// Gleichzeitige Aufrufe erhalten dieselbe laufende Future. Dadurch werden
+  /// doppelte Timeline-Anfragen beim Aufbau eines Widgets verhindert.
+  Future<void> initialize() {
+    _ensureActive();
+
+    if (_initialized) {
+      return Future<void>.value();
+    }
+
+    final runningOperation = _initializationOperation;
+
+    if (runningOperation != null) {
+      return runningOperation;
+    }
+
+    final operation = _runInitialization();
+    _initializationOperation = operation;
+
+    return operation;
+  }
+
+  Future<void> _runInitialization() async {
+    _initializing = true;
+    notifyListeners();
+
+    try {
+      await _source.initialize();
+      _initialized = true;
+    } finally {
+      _initializing = false;
+      _initializationOperation = null;
+
+      if (!_disposed) {
+        notifyListeners();
+      }
+    }
+  }
+
+  /// Fordert eine neue Radar-Timeline über die angebundene Quelle an.
+  Future<void> refresh() {
+    _ensureActive();
+    return _source.refresh();
+  }
+
+  void _handleSourceChanged() {
+    if (_disposed) {
+      return;
+    }
+
+    notifyListeners();
+  }
+
+  void _ensureActive() {
+    if (_disposed) {
+      throw StateError(
+        'RadarPlaybackViewController wurde bereits freigegeben.',
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    if (_disposed) {
+      return;
+    }
+
+    _disposed = true;
+    _source.removeListener(_handleSourceChanged);
+
+    if (disposeSource) {
+      _source.dispose();
+    }
+
+    super.dispose();
+  }
+}
+
+======================================================
+TEMPORÄRE TEST-PROBE
+======================================================
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:wetter_app_ortha/weather_engine/radar/integration/radar_playback_source.dart';
+import 'package:wetter_app_ortha/weather_engine/radar/integration/radar_playback_view_controller.dart';
+import 'package:wetter_app_ortha/weather_engine/radar/playback/radar_playback_snapshot.dart';
+
+void main() {
+  test('Controller probe', () {
+    final source = _ProbeSource();
+
+    final controller = RadarPlaybackViewController<String>(
+      _source: source,
+    );
+
+    expect(controller.source, same(source));
+
+    controller.dispose();
+    source.dispose();
+  });
+}
+
+class _ProbeSource extends ChangeNotifier
+    implements RadarPlaybackSource<String> {
+  @override
+  RadarPlaybackSnapshot<String> get snapshot =>
+      const RadarPlaybackSnapshot<String>(
+        status: RadarPlaybackStatus.idle,
+      );
+
+  @override
+  Future<void> initialize() async {}
+
+  @override
+  Future<void> refresh() async {}
+}
+
+======================================================
+VERWENDUNGSSTELLEN
+======================================================
+
+lib/weather_engine/radar/integration/rainviewer_radar_playback_source.dart:23:    implements RadarPlaybackSource<RainViewerRadarFrame> {
+lib/weather_engine/radar/integration/radar_playback_status_view.dart:31:  final RadarPlaybackViewController<TOutput> controller;
+lib/weather_engine/radar/integration/radar_playback_source.dart:10:abstract interface class RadarPlaybackSource<TOutput> implements Listenable {
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:14:class RadarPlaybackViewController<TOutput> extends ChangeNotifier {
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:15:  RadarPlaybackViewController({
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:22:  final RadarPlaybackSource<TOutput> _source;
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:45:  RadarPlaybackSource<TOutput> get source => _source;
+lib/weather_engine/radar/integration/radar_playback_view_controller.dart:104:        'RadarPlaybackViewController wurde bereits freigegeben.',
+lib/weather_engine/radar/integration/radar_playback_view.dart:10:      RadarPlaybackViewController<TOutput> controller,
+lib/weather_engine/radar/integration/radar_playback_view.dart:18:/// - beobachtet den [RadarPlaybackViewController],
+lib/weather_engine/radar/integration/radar_playback_view.dart:33:  final RadarPlaybackViewController<TOutput> controller;
+lib/weather_engine/radar/integration/radar_playback_view.dart:43:  /// [RadarPlaybackViewController.initialize] entstehen.
+lib/weather_engine/radar/integration/radar_playback_binding.dart:18:    implements RadarPlaybackSource<TOutput> {
+test/weather_engine/radar/integration/radar_playback_view_controller_test.dart:6:  group('RadarPlaybackViewController', () {
+test/weather_engine/radar/integration/radar_playback_view_controller_test.dart:9:      final controller = RadarPlaybackViewController<String>(source: source);
+test/weather_engine/radar/integration/radar_playback_view_controller_test.dart:26:        final controller = RadarPlaybackViewController<String>(source: source);
+test/weather_engine/radar/integration/radar_playback_view_controller_test.dart:43:      final controller = RadarPlaybackViewController<String>(source: source);
+test/weather_engine/radar/integration/radar_playback_view_controller_test.dart:55:      final controller = RadarPlaybackViewController<String>(source: source);
+test/weather_engine/radar/integration/radar_playback_view_controller_test.dart:72:      final controller = RadarPlaybackViewController<String>(source: source);
+test/weather_engine/radar/integration/radar_playback_view_controller_test.dart:89:      final controller = RadarPlaybackViewController<String>(
+test/weather_engine/radar/integration/radar_playback_view_controller_test.dart:101:      final controller = RadarPlaybackViewController<String>(source: source);
+test/weather_engine/radar/integration/radar_playback_view_controller_test.dart:115:    implements RadarPlaybackSource<String> {
+test/weather_engine/radar/integration/radar_playback_view_test.dart:9:      final controller = RadarPlaybackViewController<String>(source: source);
+test/weather_engine/radar/integration/radar_playback_view_test.dart:34:      final controller = RadarPlaybackViewController<String>(source: source);
+test/weather_engine/radar/integration/radar_playback_view_test.dart:61:      final controller = RadarPlaybackViewController<String>(source: source);
+test/weather_engine/radar/integration/radar_playback_view_test.dart:87:      final controller = RadarPlaybackViewController<String>(source: source);
+test/weather_engine/radar/integration/radar_playback_view_test.dart:111:      final controller = RadarPlaybackViewController<String>(source: source);
+test/weather_engine/radar/integration/radar_playback_view_test.dart:137:    implements RadarPlaybackSource<String> {
+
+======================================================
+GIT STATUS
+======================================================
+
+?? ORTHA_BLOCK5_3_RADAR_PAGE_AUDIT_20260726_175917.txt
+?? ORTHA_BLOCK5_RADAR_INTEGRATION_AUDIT_20260726_174755.txt
+?? ORTHA_BLOCK_5_4_RADAR_INTEGRATION_AUDIT_20260726_180541.txt
+?? ORTHA_BLOCK_5_5_LIVE_INTEGRATION_20260726_181321.txt
+?? ORTHA_BLOCK_5_6_3_ROBUST_INITIALIZING_FORMAL_FIX_20260726_184526.txt
+?? ORTHA_BLOCK_5_7A_1_TEST_STRUCTURE_20260726_185909.txt
+?? ORTHA_BLOCK_5_7A_3_METADATA_BRIDGE_VALIDATION_20260726_190258.txt
+?? ORTHA_BLOCK_5_7B_1_CONTROLLER_DIAGNOSE_20260726_190932.txt
+?? ORTHA_BLOCK_5_7B_CONTROLLER_STRUCTURE_20260726_190631.txt
+?? ORTHA_BLOCK_5_7B_CONTROLLER_STRUCTURE_20260726_190632.txt
+?? ORTHA_BLOCK_5_7_RECOVERY_AUDIT_20260726_185317.txt
+?? ORTHA_BLOCK_5_7_SOURCE_INSPECTION_20260726_185420.txt
+?? SPRINT_0_32_STATUS.md
+?? lib/pages/radar_page.dart.block5_5_20260726_181321.bak
+?? lib/weather_engine/
+?? test/weather_engine/

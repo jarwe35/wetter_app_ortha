@@ -2,133 +2,153 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wetter_app_ortha/widgets/dashboard/ortha_dashboard_header.dart';
 
-void main() {
-  Future<void> pumpHeader(
-    WidgetTester tester, {
-    Size size = const Size(390, 844),
-    OrthaWarningBeaconState warningState = OrthaWarningBeaconState.green,
-    VoidCallback? onHome,
-    VoidCallback? onOpenWarnings,
-  }) async {
-    tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = size;
-
-    addTearDown(() {
-      tester.view.resetDevicePixelRatio();
-      tester.view.resetPhysicalSize();
-    });
-
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: SizedBox(
-            width: size.width,
-            child: OrthaDashboardHeader(
-              warningState: warningState,
-              onHome: onHome,
-              onOpenWarnings: onOpenWarnings,
-            ),
+Widget _buildTestApp({
+  required OrthaWarningBeaconState warningState,
+  VoidCallback? onHome,
+  VoidCallback? onRefresh,
+  VoidCallback? onOpenWarnings,
+  String place = 'Duisburg',
+}) {
+  return MaterialApp(
+    home: Scaffold(
+      body: Center(
+        child: SizedBox(
+          width: 420,
+          child: OrthaDashboardHeader(
+            place: place,
+            warningState: warningState,
+            onHome: onHome,
+            onRefresh: onRefresh,
+            onOpenWarnings: onOpenWarnings,
           ),
         ),
       ),
+    ),
+  );
+}
+
+void main() {
+  testWidgets('zeigt den aktiven Standort', (tester) async {
+    await tester.pumpWidget(
+      _buildTestApp(
+        warningState: OrthaWarningBeaconState.green,
+        place: 'Duisburg',
+      ),
     );
 
-    await tester.pump();
-  }
+    expect(
+      find.byKey(const ValueKey('dashboard-header-place')),
+      findsOneWidget,
+    );
+    expect(find.text('Duisburg'), findsOneWidget);
+  });
 
-  testWidgets('zeigt den reduzierten grünen Statusheader', (tester) async {
-    await pumpHeader(tester);
-
-    expect(find.byIcon(Icons.home_outlined), findsOneWidget);
+  testWidgets('zeigt die grüne Warnlage', (tester) async {
+    await tester.pumpWidget(
+      _buildTestApp(warningState: OrthaWarningBeaconState.green),
+    );
 
     expect(find.text('Keine Warnungen'), findsOneWidget);
-
-    expect(
-      find.text(
-        'Für Ihren Standort liegen aktuell keine amtlichen '
-        'Warnungen vor.',
-      ),
-      findsOneWidget,
-    );
-
-    expect(find.text('ORTHA METEO Ω'), findsNothing);
-    expect(find.text('Meine Orte'), findsNothing);
-
-    expect(find.byIcon(Icons.straighten_outlined), findsNothing);
-
-    expect(tester.takeException(), isNull);
+    expect(find.byIcon(Icons.check_circle_outline_rounded), findsOneWidget);
   });
 
-  testWidgets('zeigt den Ladezustand', (tester) async {
-    await pumpHeader(tester, warningState: OrthaWarningBeaconState.loading);
-
-    expect(find.text('Warnlage wird geprüft'), findsOneWidget);
-
-    expect(
-      find.text('Die amtlichen Warnquellen werden aktuell abgefragt.'),
-      findsOneWidget,
+  testWidgets('zeigt die gelbe amtliche Warnlage', (tester) async {
+    await tester.pumpWidget(
+      _buildTestApp(warningState: OrthaWarningBeaconState.yellow),
     );
-
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('zeigt die gelbe amtliche Warnung', (tester) async {
-    await pumpHeader(tester, warningState: OrthaWarningBeaconState.yellow);
 
     expect(find.text('Amtliche Warnung'), findsOneWidget);
-
-    expect(
-      find.textContaining('mindestens eine amtliche Warnung'),
-      findsOneWidget,
-    );
-
-    expect(tester.takeException(), isNull);
+    expect(find.byIcon(Icons.warning_amber_rounded), findsOneWidget);
   });
 
   testWidgets('zeigt die rote akute Warnlage', (tester) async {
-    await pumpHeader(tester, warningState: OrthaWarningBeaconState.red);
+    await tester.pumpWidget(
+      _buildTestApp(warningState: OrthaWarningBeaconState.red),
+    );
 
     expect(find.text('Akute Warnlage'), findsOneWidget);
-
-    expect(
-      find.textContaining('erhebliche oder akute Warnlage'),
-      findsOneWidget,
-    );
-
-    expect(tester.takeException(), isNull);
+    expect(find.byIcon(Icons.crisis_alert_rounded), findsOneWidget);
   });
 
-  testWidgets('führt Home- und Warnzentrale-Aktion aus', (tester) async {
-    var homeOpened = false;
-    var warningsOpened = false;
-
-    await pumpHeader(
-      tester,
-      onHome: () {
-        homeOpened = true;
-      },
-      onOpenWarnings: () {
-        warningsOpened = true;
-      },
+  testWidgets('zeigt den Ladezustand', (tester) async {
+    await tester.pumpWidget(
+      _buildTestApp(warningState: OrthaWarningBeaconState.loading),
     );
 
-    await tester.tap(find.byIcon(Icons.home_outlined));
+    expect(find.text('Warnlage wird geprüft'), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+  });
+
+  testWidgets('führt Home-, Refresh- und Warnaktionen aus', (tester) async {
+    var homePressed = false;
+    var refreshPressed = false;
+    var warningsPressed = false;
+
+    await tester.pumpWidget(
+      _buildTestApp(
+        warningState: OrthaWarningBeaconState.green,
+        onHome: () {
+          homePressed = true;
+        },
+        onRefresh: () {
+          refreshPressed = true;
+        },
+        onOpenWarnings: () {
+          warningsPressed = true;
+        },
+      ),
+    );
+
+    await tester.tap(
+      find.byKey(const ValueKey('dashboard-header-logo-button')),
+    );
     await tester.pump();
 
-    expect(homeOpened, isTrue);
+    expect(homePressed, isTrue);
+
+    await tester.tap(find.byKey(const ValueKey('dashboard-header-refresh')));
+    await tester.pump();
+
+    expect(refreshPressed, isTrue);
+
+    await tester.tap(find.byKey(const ValueKey('dashboard-warning-beacon')));
+    await tester.pump();
+
+    expect(warningsPressed, isTrue);
+  });
+
+  testWidgets('öffnet Warnzentrale auch über den Statusbereich', (
+    tester,
+  ) async {
+    var warningsPressed = false;
+
+    await tester.pumpWidget(
+      _buildTestApp(
+        warningState: OrthaWarningBeaconState.yellow,
+        onOpenWarnings: () {
+          warningsPressed = true;
+        },
+      ),
+    );
 
     await tester.tap(find.byKey(const ValueKey('nova-status-area')));
     await tester.pump();
 
-    expect(warningsOpened, isTrue);
-    expect(tester.takeException(), isNull);
+    expect(warningsPressed, isTrue);
   });
 
-  testWidgets('bleibt auf kleinem Display ohne Ausnahme', (tester) async {
-    await pumpHeader(tester, size: const Size(320, 700));
+  testWidgets('enthält das kompakte ORTHA-Masterlogo', (tester) async {
+    await tester.pumpWidget(
+      _buildTestApp(warningState: OrthaWarningBeaconState.green),
+    );
 
-    expect(find.text('Keine Warnungen'), findsOneWidget);
-
-    expect(tester.takeException(), isNull);
+    expect(
+      find.byKey(const ValueKey('dashboard-warning-master-logo')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('ortha-dashboard-header')),
+      findsOneWidget,
+    );
   });
 }

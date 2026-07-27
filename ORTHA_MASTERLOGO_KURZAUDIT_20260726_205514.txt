@@ -1,0 +1,1007 @@
+======================================================
+ ORTHA METEO Ω
+ Masterlogo – Kurzaudit
+======================================================
+
+===== 1. MÖGLICHE LOGO-ASSETS =====
+assets/branding/ortha_meteo_master.png
+
+===== 2. WIDGET-LAYOUT-DATEIEN =====
+android/app/src/main/res/layout/ortha_meteo_widget.xml
+
+===== 3. WIDGET-IMAGEVIEWS UND REFRESH =====
+android/app/src/main/res/layout/ortha_meteo_widget.xml:28:            android:id="@+id/ortha_widget_refresh"
+android/app/src/main/res/layout/ortha_meteo_widget.xml:252:        android:id="@+id/ortha_widget_updated"
+android/app/src/main/res/xml/ortha_meteo_widget_info.xml:11:    android:updatePeriodMillis="0"
+android/app/src/main/AndroidManifest.xml:38:                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+android/app/src/main/kotlin/com/example/wetter_app_ortha/OrthaMeteoWidgetProvider.kt:8:import android.widget.RemoteViews
+android/app/src/main/kotlin/com/example/wetter_app_ortha/OrthaMeteoWidgetProvider.kt:13:    override fun onUpdate(
+android/app/src/main/kotlin/com/example/wetter_app_ortha/OrthaMeteoWidgetProvider.kt:20:            val views = RemoteViews(
+android/app/src/main/kotlin/com/example/wetter_app_ortha/OrthaMeteoWidgetProvider.kt:97:                R.id.ortha_widget_updated,
+android/app/src/main/kotlin/com/example/wetter_app_ortha/OrthaMeteoWidgetProvider.kt:133:                PendingIntent.FLAG_UPDATE_CURRENT or
+android/app/src/main/kotlin/com/example/wetter_app_ortha/OrthaMeteoWidgetProvider.kt:148:                R.id.ortha_widget_refresh,
+android/app/src/main/kotlin/com/example/wetter_app_ortha/OrthaMeteoWidgetProvider.kt:152:            appWidgetManager.updateAppWidget(
+android/app/src/main/kotlin/com/example/wetter_app_ortha/OrthaMeteoWidgetProvider.kt:160:        views: RemoteViews,
+android/app/src/main/kotlin/com/example/wetter_app_ortha/OrthaMeteoWidgetProvider.kt:219:        views: RemoteViews,
+
+===== 4. DATEIEN MIT »AMTLICHE WARNUNG« =====
+lib/utils/official_warning_text_formatter.dart:1:class OfficialWarningTextFormatter {
+lib/utils/official_warning_text_formatter.dart:2:  const OfficialWarningTextFormatter._();
+lib/models/official_warning_geometry.dart:1:class OfficialWarningGeometry {
+lib/models/official_warning_geometry.dart:4:  const OfficialWarningGeometry({required this.polygons});
+lib/models/satellite_layer.dart:9:  officialWarnings,
+lib/models/official_weather_warning.dart:3:enum OfficialWarningSeverity { minor, moderate, severe, extreme, unknown }
+lib/models/official_weather_warning.dart:5:class OfficialWeatherWarning {
+lib/models/official_weather_warning.dart:11:  final OfficialWarningSeverity severity;
+lib/models/official_weather_warning.dart:18:  final OfficialWarningGeometry? geometry;
+lib/models/official_weather_warning.dart:20:  const OfficialWeatherWarning({
+lib/main.dart:135:  final OfficialWarningPipeline officialWarningPipeline =
+lib/main.dart:136:      const OfficialWarningPipeline();
+lib/main.dart:162:  late final OfficialWeatherWarningService officialWeatherWarningService;
+lib/main.dart:173:  List<OfficialWeatherWarning> officialWarnings = [];
+lib/main.dart:174:  bool officialWarningsSupported = false;
+lib/main.dart:175:  bool officialWarningsLoading = false;
+lib/main.dart:176:  String? officialWarningsError;
+lib/main.dart:245:    officialWeatherWarningService = ProviderBasedOfficialWeatherWarningService(
+lib/main.dart:394:            'verwenden, um Wetterdaten, amtliche Warnungen und Risiken '
+lib/main.dart:563:  Future<void> _processOfficialWarningAlert({
+lib/main.dart:564:    required List<OfficialWeatherWarning> warnings,
+lib/main.dart:567:    final request = officialWarningPipeline.evaluate(
+lib/main.dart:595:      officialWarnings = [];
+lib/main.dart:596:      officialWarningsError = null;
+lib/main.dart:597:      officialWarningsLoading = false;
+lib/main.dart:618:      final warningsSupported = officialWeatherWarningService.supportsLocation(
+lib/main.dart:623:      var warnings = <OfficialWeatherWarning>[];
+lib/main.dart:629:            officialWarningsLoading = true;
+lib/main.dart:634:          warnings = await officialWeatherWarningService.fetchWarnings(
+lib/main.dart:639:          warningsError = 'Amtliche Warnungen sind derzeit nicht verfügbar.';
+lib/main.dart:657:        officialWarningsSupported = warningsSupported;
+lib/main.dart:658:        officialWarnings = warnings;
+lib/main.dart:659:        officialWarningsError = warningsError;
+lib/main.dart:660:        officialWarningsLoading = false;
+lib/main.dart:668:        hasOfficialWarning: warnings.isNotEmpty,
+lib/main.dart:671:      await _processOfficialWarningAlert(
+lib/main.dart:685:        officialWarningsLoading = false;
+lib/main.dart:978:            warnings: officialWarnings,
+lib/main.dart:979:            isLoading: officialWarningsLoading,
+lib/main.dart:980:            errorMessage: officialWarningsError,
+lib/main.dart:1018:    if (officialWarningsLoading) {
+lib/main.dart:1022:    final activeWarnings = officialWarnings
+lib/main.dart:1032:          warning.severity == OfficialWarningSeverity.severe ||
+lib/main.dart:1033:          warning.severity == OfficialWarningSeverity.extreme,
+lib/main.dart:1082:                          title: 'Amtliche Warnungen',
+lib/main.dart:1103:                          OfficialWeatherWarningsCard(
+lib/main.dart:1104:                            warnings: officialWarnings,
+lib/main.dart:1105:                            isSupported: officialWarningsSupported,
+lib/main.dart:1106:                            isLoading: officialWarningsLoading,
+lib/main.dart:1107:                            errorMessage: officialWarningsError,
+lib/main.dart:1172:                      warnings: officialWarnings,
+lib/main.dart:1449:class OfficialWeatherWarningsCard extends StatelessWidget {
+lib/main.dart:1450:  final List<OfficialWeatherWarning> warnings;
+lib/main.dart:1458:  const OfficialWeatherWarningsCard({
+lib/main.dart:1469:  Color severityColor(OfficialWarningSeverity severity) {
+lib/main.dart:1471:      case OfficialWarningSeverity.minor:
+lib/main.dart:1473:      case OfficialWarningSeverity.moderate:
+lib/main.dart:1475:      case OfficialWarningSeverity.severe:
+lib/main.dart:1477:      case OfficialWarningSeverity.extreme:
+lib/main.dart:1479:      case OfficialWarningSeverity.unknown:
+lib/main.dart:1484:  String severityText(OfficialWarningSeverity severity) {
+lib/main.dart:1486:      case OfficialWarningSeverity.minor:
+lib/main.dart:1488:      case OfficialWarningSeverity.moderate:
+lib/main.dart:1490:      case OfficialWarningSeverity.severe:
+lib/main.dart:1492:      case OfficialWarningSeverity.extreme:
+lib/main.dart:1494:      case OfficialWarningSeverity.unknown:
+lib/main.dart:1499:  String sourceLabel(OfficialWeatherWarning warning) {
+lib/main.dart:1519:  IconData sourceIcon(OfficialWeatherWarning warning) {
+lib/main.dart:1604:                      'Amtliche Warnungen werden geladen …',
+lib/main.dart:1612:            const _OfficialWarningStatusBox(
+lib/main.dart:1619:            _OfficialWarningStatusBox(
+lib/main.dart:1627:                _OfficialWarningStatusBox(
+lib/main.dart:1633:                _OfficialWarningStatusBox(
+lib/main.dart:1644:              final cleanedDescription = OfficialWarningTextFormatter.sanitize(
+lib/main.dart:1648:              final descriptionSummary = OfficialWarningTextFormatter.summary(
+lib/main.dart:1652:              final cleanedInstruction = OfficialWarningTextFormatter.sanitize(
+lib/main.dart:1679:                    OfficialWarningHeader(
+lib/main.dart:1726:                      OfficialWarningMap(
+lib/main.dart:1735:                      OfficialWarningSummary(summary: descriptionSummary),
+lib/main.dart:1781:                      OfficialWarningInstruction(
+lib/main.dart:1803:class _OfficialWarningStatusBox extends StatelessWidget {
+lib/main.dart:1808:  const _OfficialWarningStatusBox({
+lib/pages/warning_center_page.dart:9:  final List<OfficialWeatherWarning> warnings;
+lib/pages/warning_center_page.dart:27:  Color _severityColor(OfficialWarningSeverity severity) {
+lib/pages/warning_center_page.dart:29:      case OfficialWarningSeverity.minor:
+lib/pages/warning_center_page.dart:31:      case OfficialWarningSeverity.moderate:
+lib/pages/warning_center_page.dart:33:      case OfficialWarningSeverity.severe:
+lib/pages/warning_center_page.dart:35:      case OfficialWarningSeverity.extreme:
+lib/pages/warning_center_page.dart:37:      case OfficialWarningSeverity.unknown:
+lib/pages/warning_center_page.dart:113:          title: 'Keine amtliche Warnung',
+lib/pages/warning_center_page.dart:174:          'Amtliche Warnungen für $place',
+lib/pages/warning_center_page.dart:263:  final OfficialWeatherWarning warning;
+lib/pages/warning_center_page.dart:344:                    child: OfficialWarningMap(
+lib/pages/satellite_page.dart:24:  final List<OfficialWeatherWarning> warnings;
+lib/pages/satellite_page.dart:301:                              SatelliteLayerRegistry.officialWarnings.id &&
+lib/pages/satellite_page.dart:389:        _selectedLayerId == SatelliteLayerRegistry.officialWarnings.id;
+lib/pages/satellite_page.dart:483:                OfficialWarningPolygonOverlay(warnings: widget.warnings),
+lib/pages/satellite_page.dart:654:      SatelliteLayerType.officialWarnings => Icons.warning_amber_outlined,
+lib/engine/official_warning_pipeline.dart:6:class OfficialWarningPipeline {
+lib/engine/official_warning_pipeline.dart:8:  final OfficialWarningAlertEngine alertEngine;
+
+===== 5. DART-KONTEXT DER WARNUNG =====
+
+------------------------------------------------------
+DATEI: lib/engine/official_warning_pipeline.dart
+------------------------------------------------------
+1-import '../models/official_weather_warning.dart';
+2-import '../notifications/official_warning_alert_engine.dart';
+3-import '../notifications/notification_request.dart';
+4-import 'warning_intelligence_engine.dart';
+5-
+6:class OfficialWarningPipeline {
+7-  final WarningIntelligenceEngine intelligenceEngine;
+8:  final OfficialWarningAlertEngine alertEngine;
+9-
+10:  const OfficialWarningPipeline({
+11-    this.intelligenceEngine = const WarningIntelligenceEngine(),
+12:    this.alertEngine = const OfficialWarningAlertEngine(),
+13-  });
+14-
+15-  NotificationRequest? evaluate({
+16:    required List<OfficialWeatherWarning> warnings,
+17-    String? locationName,
+18-  }) {
+19-    final activeWarnings = warnings
+20-        .where((warning) => warning.isActive)
+21-        .toList();
+22-
+23-    if (activeWarnings.isEmpty) {
+24-      return null;
+25-    }
+26-
+27-    activeWarnings.sort(
+28-      (a, b) => _severityRank(b.severity).compareTo(_severityRank(a.severity)),
+29-    );
+30-
+31-    final warning = activeWarnings.first;
+32-
+33-    final intelligence = intelligenceEngine.analyze(warning);
+34-
+35-    return alertEngine.evaluate(
+36-      warning: warning,
+37-      intelligence: intelligence,
+38-      locationName: locationName,
+39-    );
+40-  }
+41-
+42:  int _severityRank(OfficialWarningSeverity severity) {
+43-    switch (severity) {
+44:      case OfficialWarningSeverity.extreme:
+45-        return 4;
+46:      case OfficialWarningSeverity.severe:
+47-        return 3;
+48:      case OfficialWarningSeverity.moderate:
+49-        return 2;
+50:      case OfficialWarningSeverity.minor:
+51-        return 1;
+52:      case OfficialWarningSeverity.unknown:
+53-        return 0;
+54-    }
+55-  }
+56-}
+
+------------------------------------------------------
+DATEI: lib/engine/warning_intelligence_engine.dart
+------------------------------------------------------
+1-import '../models/official_weather_warning.dart';
+2-
+3-enum OrthaWarningLevel { none, yellow, orange, red, darkRed }
+4-
+5-class WarningIntelligenceResult {
+6-  final OrthaWarningLevel level;
+7-  final bool shouldNotify;
+8-  final bool shouldSpeak;
+9-  final String recommendation;
+10-
+11-  const WarningIntelligenceResult({
+12-    required this.level,
+13-    required this.shouldNotify,
+14-    required this.shouldSpeak,
+15-    required this.recommendation,
+16-  });
+17-}
+18-
+19-class WarningIntelligenceEngine {
+20-  const WarningIntelligenceEngine();
+21-
+22:  WarningIntelligenceResult analyze(OfficialWeatherWarning warning) {
+23-    switch (warning.severity) {
+24:      case OfficialWarningSeverity.extreme:
+25-        return const WarningIntelligenceResult(
+26-          level: OrthaWarningLevel.darkRed,
+27-          shouldNotify: true,
+28-          shouldSpeak: true,
+29-          recommendation:
+30-              'Extreme Wettergefahr. Sofortige Schutzmaßnahmen beachten.',
+31-        );
+32-
+33:      case OfficialWarningSeverity.severe:
+34-        return const WarningIntelligenceResult(
+35-          level: OrthaWarningLevel.red,
+36-          shouldNotify: true,
+37-          shouldSpeak: true,
+38-          recommendation:
+39-              'Schwere Wettergefahr. Verhalten anpassen und Warnhinweise beachten.',
+40-        );
+41-
+42:      case OfficialWarningSeverity.moderate:
+43-        return const WarningIntelligenceResult(
+44-          level: OrthaWarningLevel.orange,
+45-          shouldNotify: true,
+46-          shouldSpeak: false,
+47-          recommendation:
+48-              'Erhöhte Wettergefahr. Vorsicht im betroffenen Gebiet.',
+49-        );
+50-
+51:      case OfficialWarningSeverity.minor:
+52-        return const WarningIntelligenceResult(
+53-          level: OrthaWarningLevel.yellow,
+54-          shouldNotify: false,
+55-          shouldSpeak: false,
+56-          recommendation: 'Leichte Wetterbeeinträchtigung möglich.',
+57-        );
+58-
+59:      case OfficialWarningSeverity.unknown:
+60-        return const WarningIntelligenceResult(
+61-          level: OrthaWarningLevel.yellow,
+62-          shouldNotify: false,
+63-          shouldSpeak: false,
+64-          recommendation: 'Warnung konnte nicht eindeutig bewertet werden.',
+65-        );
+66-    }
+67-  }
+68-}
+
+------------------------------------------------------
+DATEI: lib/main.dart
+------------------------------------------------------
+110-
+111-class WeatherHomePage extends StatefulWidget {
+112-  const WeatherHomePage({super.key});
+113-
+114-  @override
+115-  State<WeatherHomePage> createState() => _WeatherHomePageState();
+116-}
+117-
+118-class _WeatherHomePageState extends State<WeatherHomePage> {
+119-  static const SavedLocation _defaultLocation = SavedLocation(
+120-    name: 'Duisburg',
+121-    latitude: 51.4344,
+122-    longitude: 6.7623,
+123-    country: 'Deutschland',
+124-    timezone: 'Europe/Berlin',
+125-  );
+126-
+127-  final WeatherService weatherService = WeatherService();
+128-  final LocationStorageService locationStorageService =
+129-      LocationStorageService();
+130-  final CurrentLocationService currentLocationService =
+131-      const CurrentLocationService();
+132-  final LocationStartupPreferenceService locationStartupPreferenceService =
+133-      const LocationStartupPreferenceService();
+134-  final RiskEngine riskEngine = const RiskEngine();
+135:  final OfficialWarningPipeline officialWarningPipeline =
+136:      const OfficialWarningPipeline();
+137-  final RecommendationEngine recommendationEngine =
+138-      const RecommendationEngine();
+139-  final NovaAlertEngine novaAlertEngine = const NovaAlertEngine();
+140-  final UnitSettingsService unitSettingsService = UnitSettingsService();
+141-
+142-  late final LocalNovaNotificationGateway novaNotificationGateway;
+143-  late final NovaAlertDispatcher novaAlertDispatcher;
+144-  late final FlutterNovaSpeechService novaSpeechService;
+145-  late final NovaSignalSettingsStore novaSignalSettingsStore;
+146-  late final NovaSignalSettingsProvider novaSignalSettingsProvider;
+147-  late final NovaSignalCoordinator novaSignalCoordinator;
+148-  late final SharedPreferencesAlertHistoryStore novaAlertHistoryStore;
+149-  late final NovaDuplicateAlertGuard novaDuplicateAlertGuard;
+150-
+151-  late final http.Client locationHttpClient;
+152-  late final LocationService locationService;
+153-  late final LocationMigrationService locationMigrationService;
+154-
+155-  late final http.Client dwdHttpClient;
+156-  late final DwdWarningProvider dwdWarningProvider;
+157-
+158-  late final http.Client bbkHttpClient;
+159-  late final HttpBbkWarningClient bbkWarningClient;
+160-  late final BbkWarningProvider bbkWarningProvider;
+161-
+162:  late final OfficialWeatherWarningService officialWeatherWarningService;
+163-
+164-  UnitSettings unitSettings = const UnitSettings();
+165-
+166-  final List<SavedLocation> savedLocations = [];
+167-
+168-  SavedLocation? selectedLocation;
+169-  String selectedPlace = 'Duisburg';
+170-  WeatherData? weatherData;
+171-  RiskResult? riskResult;
+172-
+173:  List<OfficialWeatherWarning> officialWarnings = [];
+174-  bool officialWarningsSupported = false;
+175-  bool officialWarningsLoading = false;
+176-  String? officialWarningsError;
+177-
+178-  bool isLoading = false;
+179-  bool isUsingCurrentLocation = false;
+180-  bool isCurrentLocationLoading = false;
+181-  String? errorMessage;
+182-  String? currentLocationMessage;
+183-
+184-  int selectedNavigationIndex = 0;
+185-
+186-  @override
+187-  void initState() {
+188-    super.initState();
+189-
+190-    novaNotificationGateway = LocalNovaNotificationGateway();
+191-
+192-    novaSignalSettingsStore = const NovaSignalSettingsStore();
+193-    novaSignalSettingsProvider = NovaSignalSettingsProvider(
+194-      novaSignalSettingsStore,
+195-    );
+196-    novaSignalCoordinator = NovaSignalCoordinator(
+197-      settingsProvider: novaSignalSettingsProvider,
+198-    );
+--
+220-    dwdWarningProvider = DwdWarningProvider(
+221-      downloadClient: DwdCapDownloadClient(
+222-        httpClient: dwdHttpClient,
+223-        sourceUri: Uri.parse(
+224-          'https://opendata.dwd.de/weather/alerts/cap/'
+225-          'COMMUNEUNION_DWD_STAT/'
+226-          'Z_CAP_C_EDZW_LATEST_PVW_STATUS_PREMIUMDWD_'
+227-          'COMMUNEUNION_DE.zip',
+228-        ),
+229-      ),
+230-    );
+231-
+232-    bbkHttpClient = http.Client();
+233-
+234-    bbkWarningClient = HttpBbkWarningClient(
+235-      httpClient: bbkHttpClient,
+236-
+237-      // Vorübergehend noch erforderlicher Legacy-Parameter.
+238-      // Die reale Provider-Kette verwendet fetchMapData(),
+239-      // fetchWarningDetail() und fetchWarningGeometry().
+240-      endpoint: Uri.https('warnung.bund.de', '/api31/mowas/mapData.json'),
+241-    );
+242-
+243-    bbkWarningProvider = BbkWarningProvider(client: bbkWarningClient);
+244-
+245:    officialWeatherWarningService = ProviderBasedOfficialWeatherWarningService(
+246-      providers: [dwdWarningProvider, bbkWarningProvider],
+247-    );
+248-
+249-    initializeUnitSettings();
+
+------------------------------------------------------
+DATEI: lib/models/official_warning_geometry.dart
+------------------------------------------------------
+1:class OfficialWarningGeometry {
+2-  final List<List<List<double>>> polygons;
+3-
+4:  const OfficialWarningGeometry({required this.polygons});
+5-
+6-  bool get isEmpty => polygons.isEmpty;
+7-
+8-  bool contains({required double latitude, required double longitude}) {
+9-    return polygons.any(
+10-      (ring) =>
+11-          _ringContainsPoint(ring, latitude: latitude, longitude: longitude),
+12-    );
+13-  }
+14-
+15-  bool _ringContainsPoint(
+16-    List<List<double>> ring, {
+17-    required double latitude,
+18-    required double longitude,
+19-  }) {
+20-    if (ring.length < 3) {
+21-      return false;
+22-    }
+23-
+24-    var inside = false;
+25-    var previousIndex = ring.length - 1;
+26-
+27-    for (var currentIndex = 0; currentIndex < ring.length; currentIndex++) {
+28-      final current = ring[currentIndex];
+29-      final previous = ring[previousIndex];
+
+------------------------------------------------------
+DATEI: lib/models/official_weather_warning.dart
+------------------------------------------------------
+1-import 'official_warning_geometry.dart';
+2-
+3:enum OfficialWarningSeverity { minor, moderate, severe, extreme, unknown }
+4-
+5:class OfficialWeatherWarning {
+6-  final String id;
+7-  final String title;
+8-  final String description;
+9-  final String instruction;
+10-  final String source;
+11:  final OfficialWarningSeverity severity;
+12-  final DateTime validFrom;
+13-  final DateTime validUntil;
+14-  final List<String> areaDescriptions;
+15-  final Map<String, String> geocodes;
+16-  final List<String> polygons;
+17-
+18:  final OfficialWarningGeometry? geometry;
+19-
+20:  const OfficialWeatherWarning({
+21-    required this.id,
+22-    required this.title,
+23-    required this.description,
+24-    required this.instruction,
+25-    required this.source,
+26-    required this.severity,
+27-    required this.validFrom,
+28-    required this.validUntil,
+29-    this.areaDescriptions = const [],
+30-    this.geocodes = const {},
+31-    this.polygons = const [],
+32-    this.geometry,
+33-  });
+34-
+35-  bool get isActive {
+36-    final now = DateTime.now();
+37-
+38-    return !now.isBefore(validFrom) && now.isBefore(validUntil);
+39-  }
+40-
+41-  Duration get remainingDuration {
+42-    final now = DateTime.now();
+43-
+44-    if (!now.isBefore(validUntil)) {
+45-      return Duration.zero;
+
+------------------------------------------------------
+DATEI: lib/notifications/official_warning_alert_engine.dart
+------------------------------------------------------
+1-import '../engine/warning_intelligence_engine.dart';
+2-import '../models/official_weather_warning.dart';
+3-import 'notification_level.dart';
+4-import 'notification_request.dart';
+5-
+6:class OfficialWarningAlertEngine {
+7:  const OfficialWarningAlertEngine();
+8-
+9-  NotificationRequest? evaluate({
+10:    required OfficialWeatherWarning warning,
+11-    required WarningIntelligenceResult intelligence,
+12-    String? locationName,
+13-  }) {
+14-    if (intelligence.level == OrthaWarningLevel.none) {
+15-      return null;
+16-    }
+17-
+18-    final normalizedLocation = locationName?.trim();
+19-
+20-    final locationSuffix =
+21-        normalizedLocation == null || normalizedLocation.isEmpty
+22-        ? ''
+23-        : ' für $normalizedLocation';
+24-
+25-    switch (intelligence.level) {
+26-      case OrthaWarningLevel.yellow:
+27-        return NotificationRequest(
+28-          level: NotificationLevel.information,
+29-          title: 'NOVA Wetterhinweis$locationSuffix',
+30-          message: intelligence.recommendation,
+31-        );
+32-
+33-      case OrthaWarningLevel.orange:
+34-        return NotificationRequest(
+35-          level: NotificationLevel.warning,
+
+------------------------------------------------------
+DATEI: lib/pages/satellite_page.dart
+------------------------------------------------------
+1-import 'dart:async';
+2-
+3-import 'package:flutter/material.dart';
+4-import 'package:flutter_map/flutter_map.dart';
+5-import 'package:latlong2/latlong.dart';
+6-
+7-import '../models/satellite_layer.dart';
+8-import '../models/official_weather_warning.dart';
+9-import '../services/radar/rainviewer_radar_service.dart';
+10-import '../services/satellite/esri_satellite_source.dart';
+11-import '../services/satellite/rainviewer_satellite_source.dart';
+12-import '../services/satellite/satellite_controller.dart';
+13-import '../services/satellite/satellite_layer_registry.dart';
+14-import '../widgets/maps/ortha_map_header.dart';
+15-import 'maps/ortha_fullscreen_map_page.dart';
+16-import '../widgets/maps/ortha_map_toolbar.dart';
+17-import '../widgets/maps/ortha_radar_timeline.dart';
+18-import '../widgets/warnings/official_warning_polygon_overlay.dart';
+19-
+20-class SatellitePage extends StatefulWidget {
+21-  final String place;
+22-  final double? latitude;
+23-  final double? longitude;
+24:  final List<OfficialWeatherWarning> warnings;
+25-  final Future<void> Function()? onRefresh;
+26-
+27-  const SatellitePage({
+28-    super.key,
+29-    required this.place,
+30-    required this.latitude,
+31-    required this.longitude,
+32-    this.warnings = const [],
+33-    this.onRefresh,
+34-  });
+35-
+36-  @override
+37-  State<SatellitePage> createState() => _SatellitePageState();
+38-}
+39-
+40-class _SatellitePageState extends State<SatellitePage> {
+41-  final MapController _mapController = MapController();
+42-  final SatelliteController _satelliteController = SatelliteController();
+43-  final RainViewerSatelliteSource _rainViewerSource =
+44-      RainViewerSatelliteSource();
+45-
+46-  SatelliteLayerState? _baseLayerState;
+47-  SatelliteLayerState? _selectedLayerState;
+48-  RainViewerRadarMetadata? _rainViewerMetadata;
+49-  Timer? _radarAnimationTimer;
+--
+458-              initialZoom: hasCoordinates ? 10 : 6,
+459-              minZoom: 2,
+460-              maxZoom: 18,
+461-              interactionOptions: const InteractionOptions(
+462-                flags: InteractiveFlag.all,
+463-              ),
+464-            ),
+465-            children: [
+466-              if (baseLayerAvailable)
+467-                TileLayer(
+468-                  urlTemplate: EsriSatelliteSource.worldImageryUrlTemplate,
+469-                  userAgentPackageName: 'com.example.wetter_app_ortha',
+470-                  maxZoom: 18,
+471-                  tileDisplay: const TileDisplay.fadeIn(),
+472-                ),
+473-              if (rainViewerTileUrl != null)
+474-                TileLayer(
+475-                  urlTemplate: rainViewerTileUrl,
+476-                  userAgentPackageName: 'com.example.wetter_app_ortha',
+477-                  minNativeZoom: 0,
+478-                  maxNativeZoom: 7,
+479-                  maxZoom: 18,
+480-                  tileDisplay: const TileDisplay.fadeIn(),
+481-                ),
+482-              if (warningOverlaySelected)
+483:                OfficialWarningPolygonOverlay(warnings: widget.warnings),
+484-              if (hasCoordinates)
+485-                MarkerLayer(
+486-                  markers: [
+487-                    Marker(
+488-                      point: _center,
+489-                      width: 32,
+490-                      height: 32,
+491-                      child: Container(
+492-                        decoration: BoxDecoration(
+493-                          color: Colors.blue.withValues(alpha: 0.20),
+494-                          shape: BoxShape.circle,
+495-                          border: Border.all(color: Colors.white, width: 1.5),
+496-                          boxShadow: [
+497-                            BoxShadow(
+498-                              color: Colors.black.withValues(alpha: 0.35),
+499-                              blurRadius: 6,
+500-                            ),
+501-                          ],
+502-                        ),
+503-                        child: const Icon(
+504-                          Icons.my_location,
+505-                          color: Colors.white,
+506-                          size: 17,
+507-                        ),
+508-                      ),
+
+------------------------------------------------------
+DATEI: lib/pages/warning_center_page.dart
+------------------------------------------------------
+1-import 'package:flutter/material.dart';
+2-
+3-import '../models/official_weather_warning.dart';
+4-import '../theme/ortha_colors.dart';
+5-import '../widgets/warnings/official_warning_map.dart';
+6-
+7-class WarningCenterPage extends StatelessWidget {
+8-  final VoidCallback? onHome;
+9:  final List<OfficialWeatherWarning> warnings;
+10-  final bool isLoading;
+11-  final String? errorMessage;
+12-  final String place;
+13-  final double latitude;
+14-  final double longitude;
+15-
+16-  const WarningCenterPage({
+17-    super.key,
+18-    this.onHome,
+19-    required this.warnings,
+20-    required this.isLoading,
+21-    required this.errorMessage,
+22-    required this.place,
+23-    required this.latitude,
+24-    required this.longitude,
+25-  });
+26-
+27:  Color _severityColor(OfficialWarningSeverity severity) {
+28-    switch (severity) {
+29:      case OfficialWarningSeverity.minor:
+30-        return const Color(0xFFFFC83D);
+31:      case OfficialWarningSeverity.moderate:
+32-        return const Color(0xFFFF9838);
+33:      case OfficialWarningSeverity.severe:
+34-        return const Color(0xFFFF625C);
+35:      case OfficialWarningSeverity.extreme:
+36-        return const Color(0xFFE4435D);
+37:      case OfficialWarningSeverity.unknown:
+38-        return const Color(0xFF91A2AF);
+39-    }
+40-  }
+41-
+42-  @override
+43-  Widget build(BuildContext context) {
+44-    return Scaffold(
+45-      backgroundColor: Colors.transparent,
+46-      appBar: AppBar(
+47-        backgroundColor: OrthaColors.surface.withValues(alpha: 0.96),
+48-        foregroundColor: OrthaColors.primaryText,
+49-        surfaceTintColor: Colors.transparent,
+50-        elevation: 0,
+51-        automaticallyImplyLeading: false,
+52-        leading: IconButton(
+53-          tooltip: 'Zur Übersicht',
+54-          icon: const Icon(Icons.home_outlined),
+55-          onPressed: onHome ?? () => Navigator.of(context).pop(),
+56-        ),
+57-        title: const Text(
+58-          'ORTHA METEO Ω',
+59-          style: TextStyle(
+60-            color: OrthaColors.primaryText,
+61-            fontWeight: FontWeight.bold,
+62-          ),
+--
+149-      crossAxisAlignment: CrossAxisAlignment.start,
+150-      children: [
+151-        const Row(
+152-          children: [
+153-            Icon(
+154-              Icons.warning_amber_rounded,
+155-              color: OrthaColors.accent,
+156-              size: 32,
+157-            ),
+158-            SizedBox(width: 11),
+159-            Expanded(
+160-              child: Text(
+161-                'Warnzentrale',
+162-                style: TextStyle(
+163-                  color: OrthaColors.primaryText,
+164-                  fontSize: 25,
+165-                  height: 1.05,
+166-                  fontWeight: FontWeight.w800,
+167-                ),
+168-              ),
+169-            ),
+170-          ],
+171-        ),
+172-        const SizedBox(height: 8),
+173-        Text(
+174:          'Amtliche Warnungen für $place',
+175-          style: const TextStyle(
+176-            color: OrthaColors.secondaryText,
+177-            fontSize: 15,
+178-          ),
+179-        ),
+180-      ],
+181-    );
+182-  }
+183-}
+184-
+185-class _StatusCard extends StatelessWidget {
+186-  final IconData icon;
+187-  final String title;
+188-  final String text;
+189-  final Color accentColor;
+190-
+191-  const _StatusCard({
+192-    required this.icon,
+193-    required this.title,
+194-    required this.text,
+195-    required this.accentColor,
+196-  });
+197-
+198-  @override
+199-  Widget build(BuildContext context) {
+--
+238-                  style: const TextStyle(
+239-                    color: OrthaColors.primaryText,
+240-                    fontSize: 16,
+241-                    fontWeight: FontWeight.w800,
+242-                  ),
+
+===== 6. INHALT DER WIDGET-LAYOUTS =====
+
+------------------------------------------------------
+DATEI: android/app/src/main/res/layout/ortha_meteo_widget.xml
+------------------------------------------------------
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/ortha_widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/ortha_widget_background"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/ortha_widget_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="ORTHA METEO Ω"
+            android:textColor="#9ED7F5"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/ortha_widget_refresh"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:contentDescription="Wetterdaten aktualisieren"
+            android:gravity="center"
+            android:text="↻"
+            android:textColor="#FFFFFF"
+            android:textSize="25sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/ortha_widget_place"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="3dp"
+        android:maxLines="1"
+        android:text="Ort ändern ›"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/ortha_widget_temperature"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="-- °C"
+                android:textColor="#FFFFFF"
+                android:textSize="34sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/ortha_widget_apparent_temperature"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Gefühlt -- °C"
+                android:textColor="#B9CAD4"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/ortha_widget_symbol"
+            android:layout_width="58dp"
+            android:layout_height="wrap_content"
+            android:contentDescription="Wettersymbol"
+            android:gravity="center"
+            android:text="☀"
+            android:textColor="#FFFFFF"
+            android:textSize="32sp" />
+
+        <LinearLayout
+            android:id="@+id/ortha_widget_warning_light"
+            android:layout_width="34dp"
+            android:layout_height="86dp"
+            android:layout_marginStart="10dp"
+            android:background="#1210202B"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="5dp">
+
+            <TextView
+                android:id="@+id/ortha_widget_light_red"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="●"
+                android:textColor="#39464E"
+                android:textSize="20sp" />
+
+            <TextView
+                android:id="@+id/ortha_widget_light_yellow"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="●"
+                android:textColor="#39464E"
+                android:textSize="20sp" />
+
+            <TextView
+                android:id="@+id/ortha_widget_light_green"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="●"
+                android:textColor="#77D6A6"
+                android:textSize="20sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:orientation="horizontal"
+        android:weightSum="3">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/ortha_widget_day_1_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Heute"
+                android:textColor="#D4DEE5"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/ortha_widget_day_1_symbol"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="–"
+                android:textColor="#FFFFFF"
+                android:textSize="20sp" />
+
+            <TextView
+                android:id="@+id/ortha_widget_day_1_temperature"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="– / –"
+                android:textColor="#FFFFFF"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/ortha_widget_day_2_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="–"
+                android:textColor="#D4DEE5"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/ortha_widget_day_2_symbol"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="–"
+                android:textColor="#FFFFFF"
+                android:textSize="20sp" />
+
+            <TextView
+                android:id="@+id/ortha_widget_day_2_temperature"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="– / –"
+                android:textColor="#FFFFFF"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/ortha_widget_day_3_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="–"
+                android:textColor="#D4DEE5"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/ortha_widget_day_3_symbol"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="–"
+                android:textColor="#FFFFFF"
+                android:textSize="20sp" />
+
+            <TextView
+                android:id="@+id/ortha_widget_day_3_temperature"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="– / –"
+                android:textColor="#FFFFFF"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/ortha_widget_warning"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:background="#144F4559"
+        android:gravity="center"
+        android:padding="7dp"
+        android:text="● Keine amtliche Warnung"
+        android:textColor="#77D6A6"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/ortha_widget_updated"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="7dp"
+        android:text="Aktualisiert: --:--"
+        android:textColor="#B9CAD4"
+        android:textSize="10sp" />
+
+</LinearLayout>
+
+======================================================
+ Keine Datei verändert
+ Kein Commit
+ Kein Push
+======================================================

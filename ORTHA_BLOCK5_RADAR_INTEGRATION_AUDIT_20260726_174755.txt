@@ -1,0 +1,230 @@
+======================================================
+ORTHA METEO Ω
+Block 5.1 – Radar Integration Audit
+======================================================
+
+Zeitpunkt:
+So 26 Jul 2026 17:47:55 CEST
+
+Projekt:
+/Users/bernhardklaffke/ORTHA_Projekte/wetter_app_ortha
+
+Branch:
+develop-v0.13.0
+
+------------------------------------------------------
+RADAR-, MAP- UND WEATHER-DATEIEN
+------------------------------------------------------
+
+lib/models/warning_bridge/bbk_map_warning.dart
+lib/pages/maps/ortha_fullscreen_map_page.dart
+lib/pages/radar_page.dart
+lib/pollen/dwd/dwd_pollen_forecast_mapper.dart
+lib/services/radar/ortha_radar_frame_cache.dart
+lib/services/radar/rainviewer_radar_service.dart
+lib/services/satellite/rainviewer_satellite_source.dart
+lib/services/warning_providers/bbk/bbk_map_data_parser.dart
+lib/weather_engine/animation/weather_animation_controller.dart
+lib/weather_engine/radar/integration/radar_integration.dart
+lib/weather_engine/radar/integration/radar_playback_binding.dart
+lib/weather_engine/radar/playback/radar_playback_callbacks.dart
+lib/weather_engine/radar/playback/radar_playback_engine.dart
+lib/weather_engine/radar/playback/radar_playback_snapshot.dart
+lib/weather_engine/radar/playback/radar_playback_status.dart
+lib/weather_engine/radar/playback/radar_preload_planner.dart
+lib/weather_engine/radar/radar_provider_request.dart
+lib/weather_engine/radar/radar_provider.dart
+lib/widgets/maps/ortha_map_header.dart
+lib/widgets/maps/ortha_map_layout.dart
+lib/widgets/maps/ortha_map_shell.dart
+lib/widgets/maps/ortha_map_toolbar.dart
+lib/widgets/maps/ortha_radar_legend.dart
+lib/widgets/maps/ortha_radar_timeline.dart
+lib/widgets/radar/ortha_radar_map.dart
+lib/widgets/warnings/official_warning_map.dart
+
+------------------------------------------------------
+RADAR-KLASSEN
+------------------------------------------------------
+
+lib/weather_engine/radar/integration/radar_playback_binding.dart:15:class RadarPlaybackBinding<TOutput> extends ChangeNotifier {
+lib/weather_engine/radar/playback/radar_playback_snapshot.dart:8:class RadarPlaybackSnapshot<TOutput> {
+lib/weather_engine/radar/playback/radar_playback_engine.dart:26:class RadarPlaybackEngine<TOutput> extends ChangeNotifier {
+lib/weather_engine/radar/playback/radar_preload_planner.dart:6:class RadarPreloadPlanner<T> {
+lib/weather_engine/radar/radar_provider.dart:8:abstract interface class RadarProvider implements WeatherProvider {
+lib/weather_engine/radar/radar_provider_request.dart:9:class RadarProviderRequest {
+lib/pollen/dwd/dwd_pollen_forecast_mapper.dart:11:class DwdPollenForecastMapper {
+lib/models/warning_bridge/bbk_map_warning.dart:1:class BbkMapWarning {
+lib/pages/maps/ortha_fullscreen_map_page.dart:14:class OrthaFullscreenMapPage extends StatelessWidget {
+lib/pages/radar_page.dart:17:class RadarPage extends StatefulWidget {
+lib/pages/radar_page.dart:37:class _RadarPageState extends State<RadarPage> {
+lib/services/warning_providers/bbk/bbk_map_data_parser.dart:3:class BbkMapDataParser {
+lib/services/satellite/rainviewer_satellite_source.dart:8:class RainViewerSatelliteSource extends SatelliteSource {
+lib/services/radar/ortha_radar_frame_cache.dart:7:class OrthaRadarPreloadResult {
+lib/services/radar/ortha_radar_frame_cache.dart:36:class OrthaRadarFrameCache {
+lib/services/radar/rainviewer_radar_service.dart:6:class RainViewerRadarException implements Exception {
+lib/services/radar/rainviewer_radar_service.dart:15:class RainViewerRadarFrame {
+lib/services/radar/rainviewer_radar_service.dart:22:class RainViewerRadarMetadata {
+lib/services/radar/rainviewer_radar_service.dart:78:class RainViewerRadarService {
+lib/widgets/maps/ortha_map_shell.dart:11:class OrthaMapShell extends StatelessWidget {
+lib/widgets/maps/ortha_map_layout.dart:18:class OrthaMapLayout extends StatelessWidget {
+lib/widgets/maps/ortha_map_toolbar.dart:9:class OrthaMapToolbar extends StatelessWidget {
+lib/widgets/maps/ortha_radar_legend.dart:6:class OrthaRadarLegend extends StatelessWidget {
+lib/widgets/maps/ortha_radar_timeline.dart:8:class OrthaRadarTimeline extends StatelessWidget {
+lib/widgets/maps/ortha_map_header.dart:8:class OrthaMapHeader extends StatelessWidget {
+lib/widgets/weather/ortha_weather_icon.dart:26:abstract final class OrthaWeatherCodeMapper {
+lib/widgets/radar/ortha_radar_map.dart:10:class _RadarLegendEntry extends StatelessWidget {
+lib/widgets/radar/ortha_radar_map.dart:37:class OrthaRadarMap extends StatefulWidget {
+lib/widgets/radar/ortha_radar_map.dart:53:class _OrthaRadarMapState extends State<OrthaRadarMap> {
+lib/widgets/warnings/official_warning_map.dart:7:class OfficialWarningMap extends StatelessWidget {
+
+------------------------------------------------------
+RAINVIEWER-VERWENDUNG
+------------------------------------------------------
+
+lib/pages/radar_page.dart:8:import '../services/radar/rainviewer_radar_service.dart';
+lib/pages/radar_page.dart:39:  late final RainViewerRadarService _radarService;
+lib/pages/radar_page.dart:43:  RainViewerRadarMetadata? _metadata;
+lib/pages/radar_page.dart:66:    _radarService = RainViewerRadarService(httpClient: _httpClient);
+lib/pages/radar_page.dart:111:  RainViewerRadarFrame? get _selectedFrame {
+lib/pages/radar_page.dart:339:    debugPrint('RainViewer meldet HTTP 429.');
+lib/pages/radar_page.dart:457:        ? 'RainViewer · Wird geladen'
+lib/pages/radar_page.dart:459:        ? 'RainViewer · Server ausgelastet'
+lib/pages/radar_page.dart:461:        ? 'RainViewer · Nicht verfügbar'
+lib/pages/radar_page.dart:463:        ? 'RainViewer · Letzter verfügbarer Stand'
+lib/pages/radar_page.dart:464:        : 'RainViewer · Live';
+lib/pages/radar_page.dart:626:                        TextSourceAttribution('RainViewer'),
+lib/pages/satellite_page.dart:9:import '../services/radar/rainviewer_radar_service.dart';
+lib/pages/satellite_page.dart:11:import '../services/satellite/rainviewer_satellite_source.dart';
+lib/pages/satellite_page.dart:43:  final RainViewerSatelliteSource _rainViewerSource =
+lib/pages/satellite_page.dart:44:      RainViewerSatelliteSource();
+lib/pages/satellite_page.dart:48:  RainViewerRadarMetadata? _rainViewerMetadata;
+lib/pages/satellite_page.dart:86:      RainViewerRadarMetadata? rainViewerMetadata;
+lib/pages/satellite_page.dart:161:  RainViewerRadarFrame? get _selectedRadarFrame {
+lib/pages/satellite_page.dart:518:                    const TextSourceAttribution('RainViewer'),
+lib/services/satellite/satellite_layer_registry.dart:76:        id: 'rainviewer-radar',
+lib/services/satellite/satellite_layer_registry.dart:81:        sourceName: 'RainViewer',
+lib/services/satellite/rainviewer_satellite_source.dart:4:import '../radar/rainviewer_radar_service.dart';
+lib/services/satellite/rainviewer_satellite_source.dart:8:class RainViewerSatelliteSource extends SatelliteSource {
+lib/services/satellite/rainviewer_satellite_source.dart:9:  final RainViewerRadarService radarService;
+lib/services/satellite/rainviewer_satellite_source.dart:11:  RainViewerSatelliteSource({
+lib/services/satellite/rainviewer_satellite_source.dart:12:    RainViewerRadarService? radarService,
+lib/services/satellite/rainviewer_satellite_source.dart:20:           RainViewerRadarService(httpClient: httpClient ?? http.Client());
+lib/services/satellite/rainviewer_satellite_source.dart:23:  String get id => 'rainviewer';
+lib/services/satellite/rainviewer_satellite_source.dart:26:  String get name => 'RainViewer';
+lib/services/satellite/rainviewer_satellite_source.dart:29:  List<String> get supportedLayerIds => const ['rainviewer-radar'];
+lib/services/satellite/rainviewer_satellite_source.dart:31:  Future<RainViewerRadarMetadata> loadMetadata({bool forceRefresh = false}) {
+lib/services/satellite/rainviewer_satellite_source.dart:35:  String tileUrlTemplate(RainViewerRadarMetadata metadata) {
+lib/services/satellite/rainviewer_satellite_source.dart:60:    } on RainViewerRadarException catch (error) {
+lib/services/satellite/satellite_source_registry.dart:2:import 'rainviewer_satellite_source.dart';
+lib/services/satellite/satellite_source_registry.dart:8:    RainViewerSatelliteSource(),
+lib/services/radar/rainviewer_radar_service.dart:6:class RainViewerRadarException implements Exception {
+lib/services/radar/rainviewer_radar_service.dart:9:  const RainViewerRadarException(this.message);
+lib/services/radar/rainviewer_radar_service.dart:12:  String toString() => 'RainViewerRadarException: $message';
+lib/services/radar/rainviewer_radar_service.dart:15:class RainViewerRadarFrame {
+lib/services/radar/rainviewer_radar_service.dart:19:  const RainViewerRadarFrame({required this.time, required this.path});
+lib/services/radar/rainviewer_radar_service.dart:22:class RainViewerRadarMetadata {
+lib/services/radar/rainviewer_radar_service.dart:25:  final List<RainViewerRadarFrame> frames;
+lib/services/radar/rainviewer_radar_service.dart:28:  const RainViewerRadarMetadata({
+lib/services/radar/rainviewer_radar_service.dart:35:  RainViewerRadarMetadata copyWith({bool? isStale}) {
+lib/services/radar/rainviewer_radar_service.dart:36:    return RainViewerRadarMetadata(
+lib/services/radar/rainviewer_radar_service.dart:44:  RainViewerRadarFrame get latestFrame {
+lib/services/radar/rainviewer_radar_service.dart:46:      throw const RainViewerRadarException(
+lib/services/radar/rainviewer_radar_service.dart:47:        'RainViewer hat keine Radarframes geliefert.',
+lib/services/radar/rainviewer_radar_service.dart:55:    required RainViewerRadarFrame frame,
+lib/services/radar/rainviewer_radar_service.dart:78:class RainViewerRadarService {
+lib/services/radar/rainviewer_radar_service.dart:80:    'https://api.rainviewer.com/public/weather-maps.json',
+lib/services/radar/rainviewer_radar_service.dart:88:  RainViewerRadarMetadata? _cachedMetadata;
+lib/services/radar/rainviewer_radar_service.dart:90:  Future<RainViewerRadarMetadata>? _pendingRequest;
+lib/services/radar/rainviewer_radar_service.dart:92:  RainViewerRadarService({
+lib/services/radar/rainviewer_radar_service.dart:99:  Future<RainViewerRadarMetadata> fetchMetadata({bool forceRefresh = false}) {
+lib/services/radar/rainviewer_radar_service.dart:107:      return Future<RainViewerRadarMetadata>.value(cachedMetadata);
+lib/services/radar/rainviewer_radar_service.dart:126:  Future<RainViewerRadarMetadata> _fetchMetadataWithFallback({
+lib/services/radar/rainviewer_radar_service.dart:131:    } on RainViewerRadarException {
+lib/services/radar/rainviewer_radar_service.dart:142:  Future<RainViewerRadarMetadata> _fetchMetadataFromNetwork() async {
+lib/services/radar/rainviewer_radar_service.dart:148:      throw const RainViewerRadarException(
+lib/services/radar/rainviewer_radar_service.dart:152:      throw RainViewerRadarException(
+lib/services/radar/rainviewer_radar_service.dart:158:      throw RainViewerRadarException(
+lib/services/radar/rainviewer_radar_service.dart:165:      throw const RainViewerRadarException(
+lib/services/radar/rainviewer_radar_service.dart:166:        'RainViewer hat keine Radar-Metadaten geliefert.',
+lib/services/radar/rainviewer_radar_service.dart:175:      throw RainViewerRadarException(
+lib/services/radar/rainviewer_radar_service.dart:181:      throw const RainViewerRadarException(
+lib/services/radar/rainviewer_radar_service.dart:191:      throw const RainViewerRadarException(
+lib/services/radar/rainviewer_radar_service.dart:197:      throw const RainViewerRadarException(
+lib/services/radar/rainviewer_radar_service.dart:203:      throw const RainViewerRadarException(
+lib/services/radar/rainviewer_radar_service.dart:211:      throw const RainViewerRadarException(
+lib/services/radar/rainviewer_radar_service.dart:216:    final frames = <RainViewerRadarFrame>[];
+lib/services/radar/rainviewer_radar_service.dart:231:        RainViewerRadarFrame(
+lib/services/radar/rainviewer_radar_service.dart:244:      throw const RainViewerRadarException(
+lib/services/radar/rainviewer_radar_service.dart:245:        'RainViewer hat keine verwendbaren Radarframes geliefert.',
+lib/services/radar/rainviewer_radar_service.dart:249:    final metadata = RainViewerRadarMetadata(
+lib/widgets/radar/ortha_radar_map.dart:8:import '../../services/radar/rainviewer_radar_service.dart';
+lib/widgets/radar/ortha_radar_map.dart:55:  late final RainViewerRadarService _radarService;
+lib/widgets/radar/ortha_radar_map.dart:59:  RainViewerRadarMetadata? _metadata;
+lib/widgets/radar/ortha_radar_map.dart:60:  RainViewerRadarFrame? _selectedFrame;
+lib/widgets/radar/ortha_radar_map.dart:76:    _radarService = RainViewerRadarService(httpClient: _httpClient);
+lib/widgets/radar/ortha_radar_map.dart:332:                        TextSourceAttribution('RainViewer'),
+
+------------------------------------------------------
+FLUTTER-MAP-VERWENDUNG
+------------------------------------------------------
+
+lib/pages/radar_page.dart:41:  final MapController _mapController = MapController();
+lib/pages/radar_page.dart:535:                FlutterMap(
+lib/pages/radar_page.dart:551:                    TileLayer(
+lib/pages/radar_page.dart:563:                        child: TileLayer(
+lib/pages/radar_page.dart:580:                        child: TileLayer(
+lib/pages/radar_page.dart:593:                      MarkerLayer(
+lib/pages/satellite_page.dart:41:  final MapController _mapController = MapController();
+lib/pages/satellite_page.dart:454:          FlutterMap(
+lib/pages/satellite_page.dart:467:                TileLayer(
+lib/pages/satellite_page.dart:474:                TileLayer(
+lib/pages/satellite_page.dart:485:                MarkerLayer(
+lib/widgets/radar/ortha_radar_map.dart:57:  final MapController _mapController = MapController();
+lib/widgets/radar/ortha_radar_map.dart:294:                FlutterMap(
+lib/widgets/radar/ortha_radar_map.dart:303:                    TileLayer(
+lib/widgets/radar/ortha_radar_map.dart:308:                    TileLayer(
+lib/widgets/radar/ortha_radar_map.dart:315:                    MarkerLayer(
+lib/widgets/warnings/official_warning_polygon_overlay.dart:68:    return PolygonLayer(polygons: polygons);
+lib/widgets/warnings/official_warning_map.dart:71:          FlutterMap(
+lib/widgets/warnings/official_warning_map.dart:84:              TileLayer(
+lib/widgets/warnings/official_warning_map.dart:88:              PolygonLayer(polygons: polygons),
+lib/widgets/warnings/official_warning_map.dart:89:              MarkerLayer(
+
+------------------------------------------------------
+RADAR-NAVIGATION
+------------------------------------------------------
+
+lib/main.dart:1157:                  ? RadarPage(
+lib/pages/radar_page.dart:17:class RadarPage extends StatefulWidget {
+lib/pages/radar_page.dart:24:  const RadarPage({
+lib/pages/radar_page.dart:34:  State<RadarPage> createState() => _RadarPageState();
+lib/pages/radar_page.dart:37:class _RadarPageState extends State<RadarPage> {
+lib/pages/radar_page.dart:72:  void didUpdateWidget(covariant RadarPage oldWidget) {
+lib/pages/radar_page.dart:158:            'Die Live-Radardaten konnten derzeit nicht geladen werden.';
+lib/pages/radar_page.dart:642:                              'Live-Radardaten werden geladen …',
+lib/widgets/navigation/ortha_navigation_drawer.dart:39:            _entry(context, Icons.radar_outlined, 'Live-Radar', 3),
+lib/widgets/radar/ortha_radar_map.dart:229:              Text('Live-Radardaten werden geladen …'),
+lib/widgets/radar/ortha_radar_map.dart:248:                  'Live-Radardaten konnten nicht geladen werden.',
+lib/widgets/radar/ortha_radar_map.dart:555:              'Live-Radar für ${widget.place}',
+
+------------------------------------------------------
+WEATHER ENGINE EXPORTS
+------------------------------------------------------
+
+lib/weather_engine/radar/integration/radar_integration.dart:1:export 'radar_playback_binding.dart';
+lib/weather_engine/radar/integration/radar_playback_binding.dart:3:import '../playback/radar_playback_engine.dart';
+lib/weather_engine/radar/integration/radar_playback_binding.dart:4:import '../playback/radar_playback_snapshot.dart';
+lib/weather_engine/radar/playback/radar_playback_snapshot.dart:4:import 'radar_playback_status.dart';
+lib/weather_engine/radar/playback/radar_playback_engine.dart:10:import 'radar_playback_callbacks.dart';
+lib/weather_engine/radar/playback/radar_playback_engine.dart:11:import 'radar_playback_snapshot.dart';
+lib/weather_engine/radar/playback/radar_playback_engine.dart:12:import 'radar_playback_status.dart';
+lib/weather_engine/weather_engine.dart:16:export 'radar/playback/radar_playback_callbacks.dart';
+lib/weather_engine/weather_engine.dart:17:export 'radar/playback/radar_playback_engine.dart';
+lib/weather_engine/weather_engine.dart:18:export 'radar/playback/radar_playback_snapshot.dart';
+lib/weather_engine/weather_engine.dart:19:export 'radar/playback/radar_playback_status.dart';
+lib/weather_engine/weather_engine.dart:28:export 'radar/integration/radar_integration.dart';
+
+======================================================
+ENDE DES AUDITS
+======================================================

@@ -662,10 +662,21 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
 
       final widgetPlace = savedLocation?.name ?? data.place;
 
+      final widgetWarningLevel = warnings.isEmpty
+          ? 'green'
+          : switch (warnings.first.severity) {
+              OfficialWarningSeverity.extreme => 'darkRed',
+              OfficialWarningSeverity.severe => 'red',
+              OfficialWarningSeverity.moderate => 'orange',
+              OfficialWarningSeverity.minor => 'yellow',
+              OfficialWarningSeverity.unknown => 'yellow',
+            };
+
       await OrthaWidgetService.update(
         weather: data,
         placeOverride: widgetPlace,
         hasOfficialWarning: warnings.isNotEmpty,
+        warningLevel: widgetWarningLevel,
       );
 
       await _processOfficialWarningAlert(
@@ -1053,6 +1064,16 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             OrthaDashboardHeader(
+              place: selectedPlace,
+
+              temperatureText: weatherData == null
+                  ? '—'
+                  : '${weatherData!.temperature.toStringAsFixed(1)} °C',
+              conditionText: weatherData == null
+                  ? ''
+                  : weatherText(weatherData!.weatherCode),
+              weatherCode: weatherData?.weatherCode,
+              isDay: weatherData?.isDay ?? true,
               onHome: () {
                 if (selectedNavigationIndex == 0) {
                   return;
@@ -1063,6 +1084,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                 });
               },
               onOpenWarnings: () => handleNavigationSelection(11),
+              onRefresh: () => loadWeather(selectedPlace),
               warningState: _warningBeaconState(),
             ),
             SizedBox(height: ui.cardSpacing),

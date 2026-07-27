@@ -19,12 +19,15 @@ class OrthaWidgetService {
   static Future<void> update({
     required WeatherData weather,
     required String placeOverride,
-    required bool hasOfficialWarning,
+    bool hasOfficialWarning = false,
+    String? warningLevel,
   }) async {
     final data = OrthaWidgetData.fromWeather(
       weather: weather,
       placeOverride: placeOverride,
       hasOfficialWarning: hasOfficialWarning,
+
+      warningLevel: warningLevel,
     );
 
     try {

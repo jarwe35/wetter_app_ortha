@@ -1,0 +1,337 @@
+ORTHA METEO Ω
+Block 5.7 – Recovery Audit
+Erzeugt: So 26 Jul 2026 18:53:17 CEST
+
+======================================================
+1. GIT STATUS
+======================================================
+?? ORTHA_BLOCK5_3_RADAR_PAGE_AUDIT_20260726_175917.txt
+?? ORTHA_BLOCK5_RADAR_INTEGRATION_AUDIT_20260726_174755.txt
+?? ORTHA_BLOCK_5_4_RADAR_INTEGRATION_AUDIT_20260726_180541.txt
+?? ORTHA_BLOCK_5_5_LIVE_INTEGRATION_20260726_181321.txt
+?? ORTHA_BLOCK_5_6_3_ROBUST_INITIALIZING_FORMAL_FIX_20260726_184526.txt
+?? ORTHA_BLOCK_5_7_RECOVERY_AUDIT_20260726_185317.txt
+?? SPRINT_0_32_STATUS.md
+?? lib/pages/radar_page.dart.block5_5_20260726_181321.bak
+?? lib/weather_engine/
+?? test/weather_engine/
+
+======================================================
+2. DATEIEN
+======================================================
+VORHANDEN: lib/weather_engine/radar/integration/rainviewer_radar_playback_source.dart
+VORHANDEN: lib/weather_engine/radar/integration/radar_playback_view_controller.dart
+VORHANDEN: lib/pages/radar_page.dart
+
+======================================================
+3. PLAYBACK-SOURCE – METADATEN
+======================================================
+
+======================================================
+4. CONTROLLER-KONSTRUKTOR
+======================================================
+import 'package:flutter/foundation.dart';
+
+import '../playback/radar_playback_snapshot.dart';
+import 'radar_playback_source.dart';
+
+/// UI-Lebenszykluscontroller für die Radar-Playback-Integration.
+///
+/// Eine Flutter-Seite kann diesen Controller in `initState` initialisieren,
+/// über einen `ListenableBuilder` oder `AnimatedBuilder` beobachten und in
+/// `dispose` wieder freigeben.
+///
+/// Die bestehende Kartenansicht muss dadurch weder Provider- noch
+/// Render-Details der Weather Engine kennen.
+class RadarPlaybackViewController<TOutput> extends ChangeNotifier {
+  RadarPlaybackViewController({
+    required this._source,
+    this.disposeSource = false,
+  }) {
+    _source.addListener(_handleSourceChanged);
+  }
+
+  final RadarPlaybackSource<TOutput> _source;
+
+  /// Gibt an, ob der Controller beim eigenen Dispose auch die angebundene
+  /// Radarquelle freigeben soll.
+  ///
+  /// Bleibt der Besitz bei einem übergeordneten Controller oder Service,
+  /// muss dieser Wert `false` bleiben.
+  final bool disposeSource;
+
+  bool _initialized = false;
+  bool _initializing = false;
+  bool _disposed = false;
+
+  Future<void>? _initializationOperation;
+
+  RadarPlaybackSnapshot<TOutput> get snapshot => _source.snapshot;
+
+  bool get isInitialized => _initialized;
+
+  bool get isInitializing => _initializing;
+
+  bool get isDisposed => _disposed;
+
+  RadarPlaybackSource<TOutput> get source => _source;
+
+  /// Initialisiert die Radarquelle höchstens einmal.
+  ///
+  /// Gleichzeitige Aufrufe erhalten dieselbe laufende Future. Dadurch werden
+  /// doppelte Timeline-Anfragen beim Aufbau eines Widgets verhindert.
+  Future<void> initialize() {
+    _ensureActive();
+
+    if (_initialized) {
+      return Future<void>.value();
+    }
+
+    final runningOperation = _initializationOperation;
+
+    if (runningOperation != null) {
+      return runningOperation;
+    }
+
+    final operation = _runInitialization();
+    _initializationOperation = operation;
+
+    return operation;
+  }
+
+  Future<void> _runInitialization() async {
+    _initializing = true;
+    notifyListeners();
+
+    try {
+      await _source.initialize();
+      _initialized = true;
+    } finally {
+      _initializing = false;
+      _initializationOperation = null;
+
+      if (!_disposed) {
+        notifyListeners();
+      }
+    }
+  }
+
+  /// Fordert eine neue Radar-Timeline über die angebundene Quelle an.
+  Future<void> refresh() {
+    _ensureActive();
+    return _source.refresh();
+  }
+
+  void _handleSourceChanged() {
+    if (_disposed) {
+      return;
+    }
+
+    notifyListeners();
+  }
+
+
+======================================================
+5. RADAR PAGE – IMPORTS UND FELDER
+======================================================
+39:  late final RainViewerRadarService _radarService;
+66:    _radarService = RainViewerRadarService(httpClient: _httpClient);
+134:      final metadata = await _radarService.fetchMetadata(
+
+======================================================
+6. RADAR PAGE – INITSTATE
+======================================================
+57-  String? _lastLoggedRadarTileUrl;
+58-  DateTime? _radarRateLimitedUntil;
+59-  bool _radarRateLimited = false;
+60-
+61-  @override
+62:  void initState() {
+63-    super.initState();
+64-
+65-    _httpClient = http.Client();
+66-    _radarService = RainViewerRadarService(httpClient: _httpClient);
+67-
+68-    _loadRadar();
+69-  }
+70-
+71-  @override
+72-  void didUpdateWidget(covariant RadarPage oldWidget) {
+73-    super.didUpdateWidget(oldWidget);
+74-
+75-    final locationChanged =
+76-        oldWidget.latitude != widget.latitude ||
+77-        oldWidget.longitude != widget.longitude;
+78-
+79-    if (!locationChanged) {
+80-      return;
+81-    }
+82-
+83-    WidgetsBinding.instance.addPostFrameCallback((_) {
+84-      if (!mounted) return;
+85-
+86-      _mapController.move(_center, _hasCoordinates ? 8.5 : 6);
+87-    });
+88-  }
+89-
+90-  @override
+91-  void dispose() {
+92-    _animationTimer?.cancel();
+93-    _frameTransitionTimer?.cancel();
+94-    _rateLimitTimer?.cancel();
+95-    _mapController.dispose();
+96-    _httpClient.close();
+97-    super.dispose();
+
+======================================================
+7. RADAR PAGE – DISPOSE
+======================================================
+86-      _mapController.move(_center, _hasCoordinates ? 8.5 : 6);
+87-    });
+88-  }
+89-
+90-  @override
+91:  void dispose() {
+92-    _animationTimer?.cancel();
+93-    _frameTransitionTimer?.cancel();
+94-    _rateLimitTimer?.cancel();
+95-    _mapController.dispose();
+96-    _httpClient.close();
+97-    super.dispose();
+98-  }
+99-
+100-  bool get _hasCoordinates =>
+101-      widget.latitude != null && widget.longitude != null;
+102-
+103-  LatLng get _center {
+104-    if (!_hasCoordinates) {
+105-      return const LatLng(51.2277, 6.7735);
+106-    }
+107-
+108-    return LatLng(widget.latitude!, widget.longitude!);
+109-  }
+110-
+111-  RainViewerRadarFrame? get _selectedFrame {
+112-    final metadata = _metadata;
+113-
+114-    if (metadata == null || metadata.frames.isEmpty) {
+115-      return null;
+116-    }
+117-
+118-    final safeIndex = _selectedFrameIndex.clamp(0, metadata.frames.length - 1);
+119-
+120-    return metadata.frames[safeIndex];
+121-  }
+
+======================================================
+8. RADAR PAGE – LOAD UND REFRESH
+======================================================
+113-
+114-    if (metadata == null || metadata.frames.isEmpty) {
+115-      return null;
+116-    }
+117-
+118-    final safeIndex = _selectedFrameIndex.clamp(0, metadata.frames.length - 1);
+119-
+120-    return metadata.frames[safeIndex];
+121-  }
+122-
+123:  Future<void> _loadRadar({bool forceRefresh = false}) async {
+124-    _stopAnimation();
+125-
+126-    if (mounted) {
+127-      setState(() {
+128-        _isLoading = true;
+129-        _errorMessage = null;
+130-      });
+131-    }
+132-
+133-    try {
+134-      final metadata = await _radarService.fetchMetadata(
+135-        forceRefresh: forceRefresh,
+136-      );
+137-
+138-      if (!mounted) return;
+139-
+140-      setState(() {
+141-        _metadata = metadata;
+142-
+143-        final latestIndex = metadata.frames.isEmpty
+144-            ? 0
+145-            : metadata.frames.length - 1;
+146-
+147-        _selectedFrameIndex = latestIndex;
+148-        _primaryRadarFrameIndex = latestIndex;
+149-        _secondaryRadarFrameIndex = latestIndex;
+150-        _showPrimaryRadarLayer = true;
+151-      });
+152-    } catch (_) {
+153-      if (!mounted) return;
+154-
+155-      setState(() {
+156-        _metadata = null;
+157-        _errorMessage =
+158-            'Die Live-Radardaten konnten derzeit nicht geladen werden.';
+159-      });
+160-    } finally {
+161-      if (mounted) {
+162-        setState(() {
+163-          _isLoading = false;
+164-        });
+165-      }
+166-    }
+167-  }
+168-
+169-  Future<void> _refresh() async {
+170-    if (_isRefreshing) {
+171-      return;
+172-    }
+173-
+174-    setState(() {
+175-      _isRefreshing = true;
+176-    });
+177-
+178-    try {
+179-      await widget.onRefresh?.call();
+180-      await _loadRadar(forceRefresh: true);
+181-
+182-      if (!mounted) return;
+183-
+184-      _mapController.move(_center, _mapController.camera.zoom);
+185-    } finally {
+186-      if (mounted) {
+187-        setState(() {
+188-          _isRefreshing = false;
+189-        });
+190-      }
+191-    }
+192-  }
+193-
+194-  void _selectFrame(int index) {
+195-    final metadata = _metadata;
+196-
+197-    if (metadata == null || metadata.frames.isEmpty) {
+198-      return;
+199-    }
+200-
+201-    final safeIndex = index.clamp(0, metadata.frames.length - 1);
+202-
+203-    _frameTransitionTimer?.cancel();
+204-
+205-    setState(() {
+206-      _selectedFrameIndex = safeIndex;
+207-      _primaryRadarFrameIndex = safeIndex;
+208-      _secondaryRadarFrameIndex = safeIndex;
+209-      _showPrimaryRadarLayer = true;
+210-    });
+211-  }
+212-
+213-  void _toggleAnimation() {
+
+======================================================
+9. PLAYBACK LISTENER
+======================================================
+
+======================================================
+10. BACKUP-DATEIEN BLOCK 5.7
+======================================================

@@ -1,0 +1,332 @@
+part of '../../main.dart';
+
+class WeatherCard extends StatelessWidget {
+  final WeatherData data;
+  final UnitSettings unitSettings;
+
+  const WeatherCard({
+    super.key,
+    required this.data,
+    required this.unitSettings,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CardBox(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const OrthaGlowIcon(
+                icon: Icons.location_on_outlined,
+                size: 20,
+                style: OrthaGlowIconStyle.gold,
+                glow: OrthaLightEngine.strong,
+                intensity: 0.88,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  data.place,
+                  style: const TextStyle(
+                    color: orthaPrimaryText,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              Text(
+                shortTime(data.observationTime),
+                style: const TextStyle(color: orthaSecondaryText, fontSize: 13),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 340;
+              final iconSize = compact ? 78.0 : 92.0;
+              final temperatureSize = compact ? 46.0 : 54.0;
+
+              final heroCondition = data.weatherCode == 0 && data.isDay
+                  ? OrthaWeatherCondition.mainlyClear
+                  : OrthaWeatherCodeMapper.fromWmoCode(data.weatherCode);
+
+              final weatherIconWidget = OrthaWeatherIcon(
+                condition: heroCondition,
+                isNight: data.isDay == false,
+                size: iconSize,
+                semanticLabel: weatherText(data.weatherCode),
+              );
+
+              final temperatureWidget = Column(
+                crossAxisAlignment: compact
+                    ? CrossAxisAlignment.center
+                    : CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    formatTemperature(
+                      data.temperature,
+                      unitSettings,
+                      decimals: 1,
+                    ),
+                    style: TextStyle(
+                      color: orthaPrimaryText,
+                      fontSize: temperatureSize,
+                      height: 1,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    weatherText(data.weatherCode),
+                    textAlign: compact ? TextAlign.center : TextAlign.start,
+                    style: const TextStyle(
+                      color: orthaSecondaryText,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              );
+
+              if (compact) {
+                return Center(
+                  child: Column(
+                    children: [
+                      weatherIconWidget,
+                      const SizedBox(height: 16),
+                      temperatureWidget,
+                    ],
+                  ),
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  weatherIconWidget,
+                  const SizedBox(width: 18),
+                  Expanded(child: temperatureWidget),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 18),
+          if (data.dailyForecast.isNotEmpty)
+            _SunriseSunsetPanel(
+              sunrise: data.dailyForecast.first.sunrise,
+              sunset: data.dailyForecast.first.sunset,
+            ),
+          if (data.dailyForecast.isNotEmpty) const SizedBox(height: 18),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: orthaSurfaceElevated,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: orthaBorder.withValues(alpha: 0.72)),
+            ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final compact = constraints.maxWidth < 360;
+
+                final items = [
+                  _WeatherMetaItem(
+                    icon: Icons.device_thermostat_outlined,
+                    label:
+                        'Gefühlt ${formatTemperature(data.apparentTemperature, unitSettings, decimals: 1)}',
+                  ),
+                  _WeatherMetaItem(
+                    icon: Icons.water_drop_outlined,
+                    label: 'Luftfeuchtigkeit ${data.humidity} %',
+                  ),
+                  _WeatherMetaItem(
+                    icon: Icons.air,
+                    label:
+                        'Wind ${formatWindSpeed(data.windSpeed, unitSettings)}',
+                  ),
+                  _WeatherMetaItem(
+                    icon: Icons.water_outlined,
+                    label:
+                        'Niederschlag 24 h '
+                        '${formatPrecipitation(data.precipitationNext24Hours, unitSettings)}',
+                  ),
+                ];
+
+                if (compact) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (var index = 0; index < items.length; index++) ...[
+                        items[index],
+                        if (index < items.length - 1)
+                          const SizedBox(height: 12),
+                      ],
+                    ],
+                  );
+                }
+
+                return Wrap(spacing: 18, runSpacing: 12, children: items);
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SunriseSunsetPanel extends StatelessWidget {
+  final String sunrise;
+  final String sunset;
+
+  const _SunriseSunsetPanel({required this.sunrise, required this.sunset});
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label:
+          'Sonnenaufgang ${_formatSolarTime(sunrise)}, '
+          'Sonnenuntergang ${_formatSolarTime(sunset)}',
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          color: orthaSurfaceElevated,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: orthaBorder.withValues(alpha: 0.72)),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: _SolarTimeItem(
+                icon: Icons.wb_sunny_outlined,
+                time: _formatSolarTime(sunrise),
+                label: 'Sonnenaufgang',
+                iconColor: orthaAccent,
+              ),
+            ),
+            Container(
+              width: 1,
+              height: 44,
+              margin: const EdgeInsets.symmetric(horizontal: 8),
+              color: orthaBorder.withValues(alpha: 0.75),
+            ),
+            Expanded(
+              child: _SolarTimeItem(
+                icon: Icons.nightlight_round,
+                time: _formatSolarTime(sunset),
+                label: 'Sonnenuntergang',
+                iconColor: const Color(0xFF5E74A6),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SolarTimeItem extends StatelessWidget {
+  final IconData icon;
+  final String time;
+  final String label;
+  final Color iconColor;
+
+  const _SolarTimeItem({
+    required this.icon,
+    required this.time,
+    required this.label,
+    required this.iconColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        OrthaGlowIcon(
+          icon: icon,
+          size: 24,
+          color: iconColor,
+          style: OrthaGlowIconStyle.silver,
+          glow: OrthaLightEngine.normal,
+          intensity: 0.78,
+        ),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                time,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: orthaPrimaryText,
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: orthaSecondaryText, fontSize: 11),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+String _formatSolarTime(String value) {
+  final trimmed = value.trim();
+
+  if (trimmed.isEmpty) {
+    return '–';
+  }
+
+  final parsed = DateTime.tryParse(trimmed);
+
+  if (parsed != null) {
+    final hour = parsed.hour.toString().padLeft(2, '0');
+    final minute = parsed.minute.toString().padLeft(2, '0');
+
+    return '$hour:$minute Uhr';
+  }
+
+  final separator = trimmed.indexOf('T');
+
+  if (separator >= 0 && trimmed.length >= separator + 6) {
+    return '${trimmed.substring(separator + 1, separator + 6)} Uhr';
+  }
+
+  return trimmed;
+}
+
+class _WeatherMetaItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _WeatherMetaItem({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 18, color: orthaSecondaryText),
+        const SizedBox(width: 7),
+        Text(
+          label,
+          style: const TextStyle(color: orthaSecondaryText, fontSize: 13),
+        ),
+      ],
+    );
+  }
+}
